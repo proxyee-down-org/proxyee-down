@@ -31,7 +31,7 @@ public class HttpDownIntercept extends HttpProxyIntercept {
             }
         }
         if (!downFlag) {  //再根据URL和CONTENT_TYPE来判断是否下载请求
-            if (httpRequest.uri().matches("\\.[^.]+$")) { //url后缀为.xxx
+            if (httpRequest.uri().matches("^.*\\.[^.]+$")) { //url后缀为.xxx
                 String contentType = httpHeaders.get(HttpHeaderNames.CONTENT_TYPE);
                 if (contentType != null
                         && contentType.contains("application/")
