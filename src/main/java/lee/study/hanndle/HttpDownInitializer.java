@@ -1,132 +1,120 @@
 package lee.study.hanndle;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
-import io.netty.handler.codec.http.*;
-import lee.study.proxyee.NettyHttpProxyServer;
-
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.util.ReferenceCountUtil;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import lee.study.down.HttpDownCallback;
+import lee.study.proxyee.server.HttpProxyServer;
 
 public class HttpDownInitializer extends ChannelInitializer {
 
-    private File file;
-    private boolean isSsl;
-    private int connections;
-    private List<File> chunkFileList;
+  private boolean isSsl;
+  private int index;
+  private File file;
+  private AtomicInteger doneConnections;
+  private AtomicLong fileDownSize;
+  private HttpDownCallback callback;
 
-    public HttpDownInitializer(File file, boolean isSsl, int connections, List<File> chunkFileList) {
-        this.file = file;
-        this.isSsl = isSsl;
-        this.connections = connections;
-        this.chunkFileList = chunkFileList;
+  private FileChannel fileChannel;
+  private long downSize = 0;
+  private int connections;
+
+  public HttpDownInitializer(boolean isSsl, int index, File file,
+      AtomicInteger doneConnections, AtomicLong fileDownSize,
+      HttpDownCallback callback) throws Exception {
+    this.isSsl = isSsl;
+    this.index = index;
+    this.file = file;
+    this.doneConnections = doneConnections;
+    this.fileDownSize = fileDownSize;
+    this.callback = callback;
+
+    fileChannel = new RandomAccessFile(file, "rw").getChannel();
+    connections = doneConnections.get();
+  }
+
+  @Override
+  protected void initChannel(Channel ch) throws Exception {
+    if (isSsl) {
+      ch.pipeline().addLast(HttpProxyServer.clientSslCtx.newHandler(ch.alloc()));
     }
+    ch.pipeline().addLast("httpCodec", new HttpClientCodec());
+    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
-    @Override
-    protected void initChannel(Channel ch) throws Exception {
-        if (isSsl) {
-            ch.pipeline().addLast(NettyHttpProxyServer.clientSslCtx.newHandler(ch.alloc()));
-        }
-        ch.pipeline().addLast("httpCodec", new HttpClientCodec());
-        ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-
-            private File chunkFile;
-            private OutputStream outputStream;
-            private long fileSize;
-            private long chunkSize = -1;
-            private long downSize = 0;
-
-            @Override
-            public void channelRead(ChannelHandlerContext ctx0, Object msg0) throws Exception {
-                if (msg0 instanceof HttpResponse) {
-                    HttpResponse response = (HttpResponse) msg0;
-                    if (response.status().code() != 200 && response.status().code() != 206) {
-                        System.out.println("下载失败");
-                        ctx0.channel().close();
-                    } else {
-                        String contentRange = response.headers().get(HttpHeaderNames.CONTENT_RANGE);
-                        fileSize = Long.valueOf(response.headers().get(HttpHeaderNames.CONTENT_LENGTH));
-                        if (contentRange != null) {
-                            Pattern pattern = Pattern.compile("\\d+-\\d+");
-                            Matcher matcher = pattern.matcher(contentRange);
-                            String range = contentRange;
-                            if (matcher.find()) {
-                                range = matcher.group(0);
-                                chunkSize = Arrays.stream(range.split("-")).mapToLong((t) -> Long.valueOf(t)).reduce(0, (k, v) -> v - k);
-                            }
-                            System.out.println(ctx0.channel().id()+"\t下载文件块：" + range);
-                            chunkFile = new File("chunk_" + Math.abs(file.hashCode()) + "_" + range + ".tmp");
-                            if (chunkFile.exists()) {
-                                chunkFile.delete();
-                            }
-                            chunkFile.createNewFile();
-                            outputStream = new FileOutputStream(chunkFile);
-                        } else {
-                            System.out.println("下载文件：" + response.headers().get(HttpHeaderNames.CONTENT_LENGTH));
-                            outputStream = new FileOutputStream(file);
-                        }
-                    }
-                } else {
-                    HttpContent content = (HttpContent) msg0;
-                    ByteBuf byteBuf = content.content();
-                    int readBytes = byteBuf.readableBytes();
-                    downSize += readBytes;
-                    byteBuf.readBytes(outputStream, readBytes);
-                    System.out.println(ctx0.channel().id()+"\t下载进度:" + String.format("%.2f", (downSize * 100 / Double.valueOf(chunkSize != -1 ? chunkSize : fileSize))) + "%");
-                    if (msg0 instanceof DefaultLastHttpContent) {
-                        outputStream.close();
-                        ctx0.channel().close();
-                        chunkFileList.add(chunkFile);
-                        //下载完成
-                        if (chunkFileList.size() == connections) {
-                            System.out.println("下载完成，合并成一个文件");
-                            try (
-                                    FileChannel appendChannel = new FileOutputStream(file, true).getChannel();
-                            ) {
-                                ByteBuffer buffer = ByteBuffer.allocate(8192);
-                                chunkFileList.stream()
-                                        .sorted((f1, f2) -> (Long.valueOf(f1.getName().split("_")[2].split("-")[0]) > Long.valueOf(f2.getName().split("_")[2].split("-")[0]) ? 1 : -1))
-                                        .forEach((f) -> {
-                                            try (
-                                                    FileChannel chunkChannel = new FileInputStream(f).getChannel()
-                                            ) {
-                                                while(chunkChannel.read(buffer)!=-1){
-                                                    buffer.flip();
-                                                    appendChannel.write(buffer);
-                                                    buffer.clear();
-                                                }
-                                            } catch (Exception e) {
-                                                e.printStackTrace();
-                                            } finally {
-                                                f.delete();
-                                            }
-                                        });
-                            }catch (Exception e){
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
+      @Override
+      public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        try {
+          if (msg instanceof HttpContent) {
+            HttpContent httpContent = (HttpContent) msg;
+            ByteBuf byteBuf = httpContent.content();
+            int readableBytes = byteBuf.readableBytes();
+            long fileSize = file.length();
+            long chunk = fileSize / connections;
+            long start = index * chunk;
+            long end = index + 1 == connections ? (index + 1) * chunk + fileSize % connections - 1
+                : (index + 1) * chunk - 1;
+            byteBuf.readBytes(fileChannel, start + downSize, readableBytes);
+            downSize += readableBytes;
+            callback
+                .progress(index, downSize, end - start + 1, fileDownSize.addAndGet(readableBytes),
+                    fileSize);
+            //分段下载完成关闭
+            if (httpContent instanceof LastHttpContent) {
+              fileChannel.close();
+              if (doneConnections.decrementAndGet() == 0) {
+                //文件下载完成回调
+                callback.done(index);
+                ctx.channel().close();
+              }
             }
-        });
-    }
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        } finally {
+          ReferenceCountUtil.release(msg);
+        }
+      }
+    });
+  }
 
-    public static void main(String[] args) {
-        Arrays.asList("chunk_123312321_0-123.tmp", "chunk_123312321_500-789.tmp", "chunk_123312321_124-499.tmp").stream()
-                .sorted((s1, s2) -> (Long.valueOf(s1.split("_")[2].split("-")[0]) > Long.valueOf(s2.split("_")[2].split("-")[0]) ? 1 : -1))
-                .forEach((file) -> {
-                    System.out.println(file);
-                });
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    super.exceptionCaught(ctx, cause);
+    ctx.channel().close();
+  }
+
+  @Override
+  public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+    super.channelUnregistered(ctx);
+    ctx.channel().close();
+  }
+
+  public static void main(String[] args) throws Exception {
+    int connections = 2;
+    long fileSize = 76351;
+    long chunk = fileSize / connections;
+    for (int index = 0; index < 2; index++) {
+      long start = index * chunk;
+      long end = index + 1 == connections ? (index + 1) * chunk + fileSize % connections - 1
+          : (index + 1) * chunk - 1;
+      System.out.println(start + "\t" + end);
     }
+    ByteBuf byteBuf = Unpooled.buffer(5);
+    byteBuf.writeBytes(new byte[]{1,2,3,4});
+    System.out.println(byteBuf.readableBytes());
+  }
 }
