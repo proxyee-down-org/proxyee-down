@@ -35,7 +35,11 @@ module.exports = {
       '/api':{
         target:'http://127.0.0.1:9000',
         changeOrigin: true
-      }
+      },
+      '/ws':{
+        target:'http://127.0.0.1:9000',
+        ws: true,
+      },
     },
     // CSS Sourcemaps off by default because relative paths are "buggy"
     // with this option, according to the CSS-Loader README

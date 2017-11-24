@@ -18,11 +18,13 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lee.study.down.HttpDownCallback;
+import lee.study.model.TaskInfo;
 import lee.study.proxyee.server.HttpProxyServer;
 
 public class HttpDownInitializer extends ChannelInitializer {
 
   private boolean isSsl;
+  private TaskInfo taskInfo;
   private int index;
   private File file;
   private AtomicInteger doneConnections;
@@ -33,10 +35,11 @@ public class HttpDownInitializer extends ChannelInitializer {
   private long downSize = 0;
   private int connections;
 
-  public HttpDownInitializer(boolean isSsl, int index, File file,
+  public HttpDownInitializer(boolean isSsl, TaskInfo taskInfo, int index, File file,
       AtomicInteger doneConnections, AtomicLong fileDownSize,
       HttpDownCallback callback) throws Exception {
     this.isSsl = isSsl;
+    this.taskInfo = taskInfo;
     this.index = index;
     this.file = file;
     this.doneConnections = doneConnections;
@@ -70,14 +73,16 @@ public class HttpDownInitializer extends ChannelInitializer {
             byteBuf.readBytes(fileChannel, start + downSize, readableBytes);
             downSize += readableBytes;
             callback
-                .progress(index, downSize, end - start + 1, fileDownSize.addAndGet(readableBytes),
+                .progress(taskInfo, taskInfo.getChunkInfoList().get(index), downSize, end - start + 1,
+                    fileDownSize.addAndGet(readableBytes),
                     fileSize);
-            //分段下载完成关闭
+            //分段下载完成关闭fileChannel
             if (httpContent instanceof LastHttpContent) {
               fileChannel.close();
+              callback.chunkDone(taskInfo, taskInfo.getChunkInfoList().get(index));
+              //文件下载完成回调
               if (doneConnections.decrementAndGet() == 0) {
-                //文件下载完成回调
-                callback.done(index);
+                callback.done(taskInfo);
                 ctx.channel().close();
               }
             }
@@ -88,19 +93,19 @@ public class HttpDownInitializer extends ChannelInitializer {
           ReferenceCountUtil.release(msg);
         }
       }
+
+      @Override
+      public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        ctx.channel().close();
+      }
+
+      @Override
+      public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        super.channelUnregistered(ctx);
+        ctx.channel().close();
+      }
     });
-  }
-
-  @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-    super.exceptionCaught(ctx, cause);
-    ctx.channel().close();
-  }
-
-  @Override
-  public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-    super.channelUnregistered(ctx);
-    ctx.channel().close();
   }
 
   public static void main(String[] args) throws Exception {
@@ -114,7 +119,7 @@ public class HttpDownInitializer extends ChannelInitializer {
       System.out.println(start + "\t" + end);
     }
     ByteBuf byteBuf = Unpooled.buffer(5);
-    byteBuf.writeBytes(new byte[]{1,2,3,4});
+    byteBuf.writeBytes(new byte[]{1, 2, 3, 4});
     System.out.println(byteBuf.readableBytes());
   }
 }

@@ -1,12 +1,11 @@
 package lee.study.intercept;
 
 import io.netty.channel.Channel;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.*;
-import io.netty.util.AsciiString;
 import lee.study.HttpDownServer;
 import lee.study.down.HttpDown;
-import lee.study.model.HttpDownModel;
+import lee.study.model.HttpDownInfo;
+import lee.study.model.TaskInfo;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 
 public class HttpDownIntercept extends HttpProxyIntercept {
@@ -36,19 +35,21 @@ public class HttpDownIntercept extends HttpProxyIntercept {
         }
       }
       if (!downFlag) {  //再根据URL和CONTENT_TYPE来判断是否下载请求
-        if (httpRequest.uri().matches("^.*\\.[^./]+$")) { //url后缀为.xxx
+        if (httpRequest.uri().matches("^.*\\.[^./]{1,5}$")) { //url后缀为.xxx
           String contentType = httpHeaders.get(HttpHeaderNames.CONTENT_TYPE);
           if (contentType != null
               && contentType.contains("application/")
               && !contentType.contains("javascript")
               && !contentType.contains("x-navimap")
+              && !contentType.contains("font-")
               && !contentType.contains("json")
               && !contentType.contains("shockwave-flash")) {
-            //css中加载.ttf字体文件情况排除
+            //字体文件情况排除 referer为.css后缀 uri为.woff或.ttf
             try {
               String referer = httpRequest.headers().get(HttpHeaderNames.REFERER);
-              if (referer != null && contentType.contains("application/octet-stream") && httpRequest
-                  .uri().matches("^.*\\.(?:wo|t)tf[^.]*$") && referer.matches("^.*\\.css[^.]*$")) {
+              if (referer != null && contentType.contains("application/octet-stream") &&
+                  (referer.matches("^.*\\.(?i)css[^.]*$") || httpRequest.uri()
+                      .matches("^.*\\.(?i)(?:wof|tt)f[^.]*$"))) {
                 downFlag = false;
               } else {
                 downFlag = true;
@@ -70,13 +71,15 @@ public class HttpDownIntercept extends HttpProxyIntercept {
         for (String key : httpResponse.headers().names()) {
           resHeaders.set(key, httpHeaders.get(key));
         }
-        HttpDown.DownInfo downInfo = HttpDown
-            .getDownInfo(httpRequest, resHeaders, HttpDownServer.loopGroup);
-        HttpDownServer.downContent.add(new HttpDownModel(downInfo, httpRequest, resHeaders));
+        TaskInfo taskInfo = HttpDown
+            .getTaskInfo(httpRequest, resHeaders, HttpDownServer.loopGroup);
+        HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest, resHeaders);
+        HttpDownServer.downContent.put(httpDownInfo.getId(),httpDownInfo);
         httpHeaders.clear();
         httpResponse.setStatus(HttpResponseStatus.OK);
         httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-        String js = "<script>window.top.location.href='https://localhost:8443/#/newTask/"+(HttpDownServer.downContent.size() - 1)+"';</script>";
+        String js = "<script>window.top.location.href='https://localhost:8443/#/newTask/" + (
+            HttpDownServer.downContent.size() - 1) + "';</script>";
         HttpContent content = new DefaultLastHttpContent();
         content.content().writeBytes(js.getBytes());
         httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, js.getBytes().length);
