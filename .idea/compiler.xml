@@ -6,13 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="http-proxy-down" />
         <module name="proxyee-down" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="http-proxy-down" target="1.6" />
-      <module name="proxyee" target="1.5" />
       <module name="proxyee-down" target="1.8" />
     </bytecodeTargetLevel>
   </component>

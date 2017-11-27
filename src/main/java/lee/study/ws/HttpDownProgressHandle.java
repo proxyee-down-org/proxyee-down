@@ -62,10 +62,13 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
           Map<String, Object> msg = new HashMap<>();
           msg.put("type", type);
           msg.put("taskInfo", taskInfo);
-          session.sendMessage(new TextMessage(JSON.toJSONString(msg)));
+          TextMessage message = new TextMessage(JSON.toJSONString(msg));
+          synchronized (session){
+            session.sendMessage(message);
+          }
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }

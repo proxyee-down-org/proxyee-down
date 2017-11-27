@@ -2,6 +2,7 @@ package lee.study.intercept;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.*;
+import java.util.Map.Entry;
 import lee.study.HttpDownServer;
 import lee.study.down.HttpDown;
 import lee.study.model.HttpDownInfo;
@@ -19,6 +20,20 @@ public class HttpDownIntercept extends HttpProxyIntercept {
     return true;
   }
 
+  /**
+   * 检测是请求头是否有自定义X-，正常触发超链接下载是不会出现X-打头的扩展请求头
+   * @param httpHeaders
+   * @return
+   */
+  private boolean checkExtendHead(HttpHeaders httpHeaders) {
+    for (Entry<String, String> entry : httpHeaders){
+      if(entry.getKey().indexOf("x-")==0||entry.getKey().indexOf("X-")==0){
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public boolean afterResponse(Channel clientChannel, Channel proxyChannel,
       final HttpResponse httpResponse) {
@@ -29,8 +44,7 @@ public class HttpDownIntercept extends HttpProxyIntercept {
       if (disposition != null) {  //先根据CONTENT_DISPOSITION:ATTACHMENT来判断是否下载请求
         //没有Range请求头(audio标签发起的)并且不是ajax请求(没有X-Requested-With请求头)
         if (disposition.contains(HttpHeaderValues.ATTACHMENT) && !httpRequest.headers()
-            .contains(HttpHeaderNames.RANGE) && !httpRequest.headers()
-            .contains("x-requested-with")) {
+            .contains(HttpHeaderNames.RANGE) && !checkExtendHead(httpRequest.headers())) {
           downFlag = true;
         }
       }
@@ -74,7 +88,7 @@ public class HttpDownIntercept extends HttpProxyIntercept {
         TaskInfo taskInfo = HttpDown
             .getTaskInfo(httpRequest, resHeaders, HttpDownServer.loopGroup);
         HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest, resHeaders);
-        HttpDownServer.downContent.put(httpDownInfo.getId(),httpDownInfo);
+        HttpDownServer.downContent.put(httpDownInfo.getId(), httpDownInfo);
         httpHeaders.clear();
         httpResponse.setStatus(HttpResponseStatus.OK);
         httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");

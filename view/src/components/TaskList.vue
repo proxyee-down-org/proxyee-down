@@ -21,7 +21,7 @@
               <el-progress type="circle"
                            :percentage="progress(task)"
                            :status="status(task)"
-                           :width="250"
+                           :width="200"
                            slot="reference"></el-progress>
             </el-popover>
             <div>

@@ -102,6 +102,7 @@ public class DownController {
             }
           });
     } catch (Exception e) {
+      e.printStackTrace();
       return "N";
     }
     return "Y";
