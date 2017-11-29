@@ -1,9 +1,22 @@
 package lee.study;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.DefaultLastHttpContent;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.stream.ChunkedWriteHandler;
+import org.springframework.http.HttpStatus;
 
 public class TestServer {
 
@@ -21,6 +34,7 @@ public class TestServer {
 
             @Override
             protected void initChannel(Channel ch) throws Exception {
+              ch.pipeline().addLast(new HttpServerCodec());
               ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
                 @Override
                 public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
@@ -47,8 +61,20 @@ public class TestServer {
 
                 @Override
                 public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                  super.channelRead(ctx, msg);
-                  System.out.println("channelRead");
+                  System.out.println("111111111111");
+                  HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1,
+                      HttpResponseStatus.OK);
+                  byte[] content = "hello".getBytes();
+                  /*httpResponse.headers()
+                      .set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);*/
+                  httpResponse.headers()
+                      .set(HttpHeaderNames.CONTENT_LENGTH,content.length);
+                  HttpContent httpContent = new DefaultLastHttpContent();
+                  httpContent.content().writeBytes(content);
+                  ctx.channel().write(httpResponse);
+                  ctx.channel().writeAndFlush(httpContent);
+                  /*String httpResponse = "HTTP/1.1 200 OK\r\ncontent-length: 5\r\n\r\nhello";
+                  ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(httpResponse.getBytes()));*/
                 }
 
                 @Override

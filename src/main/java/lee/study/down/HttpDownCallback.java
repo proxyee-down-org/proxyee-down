@@ -13,7 +13,7 @@ public interface HttpDownCallback {
       long fileDownSize,
       long fileTotalSize);
 
-  void error(TaskInfo taskInfo, ChunkInfo chunkInfo);
+  void error(TaskInfo taskInfo, ChunkInfo chunkInfo,Throwable cause);
 
   void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo);
 

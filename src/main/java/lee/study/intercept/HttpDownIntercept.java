@@ -2,49 +2,30 @@ package lee.study.intercept;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.*;
-import java.util.Map.Entry;
+import io.netty.util.ReferenceCountUtil;
 import lee.study.HttpDownServer;
 import lee.study.down.HttpDown;
 import lee.study.model.HttpDownInfo;
 import lee.study.model.TaskInfo;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
+import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
+import lee.study.util.HttpDownUtil;
 
 public class HttpDownIntercept extends HttpProxyIntercept {
 
-  private HttpRequest httpRequest;
-  private boolean downFlag = false;
-
   @Override
-  public boolean beforeRequest(Channel channel, HttpRequest httpRequest) {
-    this.httpRequest = httpRequest;
-    return true;
-  }
-
-  /**
-   * 检测是请求头是否有自定义X-，正常触发超链接下载是不会出现X-打头的扩展请求头
-   * @param httpHeaders
-   * @return
-   */
-  private boolean checkExtendHead(HttpHeaders httpHeaders) {
-    for (Entry<String, String> entry : httpHeaders){
-      if(entry.getKey().indexOf("x-")==0||entry.getKey().indexOf("X-")==0){
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean afterResponse(Channel clientChannel, Channel proxyChannel,
-      final HttpResponse httpResponse) {
-    downFlag = false;
+  public void afterResponse(Channel clientChannel, Channel proxyChannel,
+      final HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
+    boolean downFlag = false;
     if ((httpResponse.status().code() + "").indexOf("20") == 0) { //响应码为20x
       HttpHeaders httpHeaders = httpResponse.headers();
       String disposition = httpHeaders.get(HttpHeaderNames.CONTENT_DISPOSITION);
       if (disposition != null) {  //先根据CONTENT_DISPOSITION:ATTACHMENT来判断是否下载请求
         //没有Range请求头(audio标签发起的)并且不是ajax请求(没有X-Requested-With请求头)
+        //检测是请求头是否有自定义X-，正常触发超链接下载是不会出现X-打头的扩展请求头
         if (disposition.contains(HttpHeaderValues.ATTACHMENT) && !httpRequest.headers()
-            .contains(HttpHeaderNames.RANGE) && !checkExtendHead(httpRequest.headers())) {
+            .contains(HttpHeaderNames.RANGE) && !HttpDownUtil
+            .checkHeadKey(httpRequest.headers(), "^(?i)X-.*$")) {
           downFlag = true;
         }
       }
@@ -76,6 +57,7 @@ public class HttpDownIntercept extends HttpProxyIntercept {
         }
       }
       if (downFlag) {   //如果是下载，跳转到前端下载页面
+        proxyChannel.close(); //关闭原始下载连接
         System.out.println("=====================下载===========================");
         System.out.println(httpRequest.toString());
         System.out.println("------------------------------------------------");
@@ -100,18 +82,9 @@ public class HttpDownIntercept extends HttpProxyIntercept {
         clientChannel.writeAndFlush(httpResponse);
         clientChannel.writeAndFlush(content);
         clientChannel.close();
-        clientChannel.close();
-        return false;
+        return;
       }
     }
-    return true;
-  }
-
-  @Override
-  public boolean afterResponse(Channel channel, Channel proxyChannel, HttpContent httpContent) {
-    if (downFlag) { //如果是下载丢弃真实服务器数据
-      return false;
-    }
-    return true;
+    super.afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
   }
 }

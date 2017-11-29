@@ -1,5 +1,11 @@
 package lee.study.controller;
 
+import com.alibaba.fastjson.JSON;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import lee.study.HttpDownServer;
@@ -59,8 +65,7 @@ public class DownController {
               taskInfo.setStatus(1);
               taskInfo.setStartTime(System.currentTimeMillis());
               taskInfo.setChunkInfoList(new ArrayList<>());
-              HttpDownProgressHandle.sendMsg("start",taskInfo);
-
+              HttpDownProgressHandle.sendMsg("start", taskInfo);
             }
 
             @Override
@@ -84,21 +89,21 @@ public class DownController {
             }
 
             @Override
-            public void error(TaskInfo taskInfo, ChunkInfo chunkInfo) {
+            public void error(TaskInfo taskInfo, ChunkInfo chunkInfo, Throwable cause) {
 
             }
 
             @Override
             public void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo) {
               chunkInfo.setStatus(2);
-              HttpDownProgressHandle.sendMsg("chunkDone",taskInfo);
+              HttpDownProgressHandle.sendMsg("chunkDone", taskInfo);
             }
 
             @Override
             public void done(TaskInfo taskInfo) {
               taskInfo.setStatus(2);
               taskInfo.setLastTime(System.currentTimeMillis());
-              HttpDownProgressHandle.sendMsg("done",taskInfo);
+              HttpDownProgressHandle.sendMsg("done", taskInfo);
             }
           });
     } catch (Exception e) {

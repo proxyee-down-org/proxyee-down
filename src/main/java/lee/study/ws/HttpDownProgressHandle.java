@@ -22,7 +22,9 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
         if(HttpDownServer.downContent!=null&&HttpDownServer.downContent.size()>0){
           for (Entry<Integer, HttpDownInfo> entry : HttpDownServer.downContent.entrySet()) {
             HttpDownInfo httpDownModel = entry.getValue();
+            long lastTime = System.currentTimeMillis();
             if (httpDownModel.getTaskInfo().getStatus() == 1) {
+              httpDownModel.getTaskInfo().setLastTime(lastTime);
               sendMsg("progress",httpDownModel.getTaskInfo());
             }
           }

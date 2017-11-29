@@ -96,6 +96,7 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        callback.error(taskInfo,taskInfo.getChunkInfoList().get(index),cause);
         super.exceptionCaught(ctx, cause);
         ctx.channel().close();
       }

@@ -7,7 +7,7 @@
             <el-popover
               placement="right"
               title="下载详情"
-              width="500"
+              width="300"
               trigger="click">
               <ul class="task-list">
                 <li v-for="chunk in task.chunkInfoList">
@@ -227,7 +227,7 @@
 
   .task-list li > div {
     display: inline-block;
-    width: 70%;
+    width: 75%;
   }
 
   .task-list li > span {

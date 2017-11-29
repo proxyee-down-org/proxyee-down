@@ -1,16 +1,16 @@
 <component name="libraryTable">
   <library name="Maven: lee.study:proxyee:1.0-SNAPSHOT">
     <CLASSES>
-      <root url="jar://G:/data/maven/lee/study/proxyee/1.0-SNAPSHOT/proxyee-1.0-SNAPSHOT.jar!/" />
+      <root url="jar://F:/datas/maven_data/lee/study/proxyee/1.0-SNAPSHOT/proxyee-1.0-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://G:/data/maven/lee/study/proxyee/1.0-SNAPSHOT/proxyee-1.0-SNAPSHOT-javadoc.jar!/" />
+      <root url="jar://F:/datas/maven_data/lee/study/proxyee/1.0-SNAPSHOT/proxyee-1.0-SNAPSHOT-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://G:/data/maven/lee/study/proxyee/1.0-SNAPSHOT/proxyee-1.0-SNAPSHOT-sources.jar!/" />
       <root url="file://G:/data/maven/lee/study/proxyee" />
       <root url="file://$PROJECT_DIR$/../proxyee/src/main/java" />
       <root url="file://$PROJECT_DIR$/../proxyee/src/test/java" />
+      <root url="jar://F:/datas/maven_data/lee/study/proxyee/1.0-SNAPSHOT/proxyee-1.0-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
