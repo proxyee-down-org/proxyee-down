@@ -26,6 +26,7 @@
             </el-popover>
             <div>
               <p>{{speed(task)}}kb/s</p>
+              <p>{{task.speed}}kb/s</p>
               <p>{{task.fileName}}</p>
               <p>{{task.fileSize}}byte</p>
             </div>
@@ -191,10 +192,14 @@
         }
       })
       this.ws.onmessage = (e) => {
-        var msg = eval('(' + e.data + ')');
+        let msg = eval('(' + e.data + ')');
         if (msg.type != 'start') {
           this.tasks.forEach((task, index) => {
             if (task.id == msg.taskInfo.id) {
+              /*let unitTime = (msg.taskInfo.lastTime - task.lastTime) / 1000;
+              let unitDownSize = (this.fileDownSize(msg.taskInfo) - this.fileDownSize(task)) / 1024;
+              //计算瞬时下载速度kb/s
+              msg.taskInfo.speed = Math.floor(unitDownSize / unitTime);*/
               Vue.set(this.tasks, index, msg.taskInfo);
               return false;
             }

@@ -19,19 +19,19 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
   private static Thread progressThread = new Thread(() -> {
     try {
       while (true) {
-        if(HttpDownServer.downContent!=null&&HttpDownServer.downContent.size()>0){
-          for (Entry<Integer, HttpDownInfo> entry : HttpDownServer.downContent.entrySet()) {
+        if (HttpDownServer.downContent != null && HttpDownServer.downContent.size() > 0) {
+          for (Entry<String, HttpDownInfo> entry : HttpDownServer.downContent.entrySet()) {
             HttpDownInfo httpDownModel = entry.getValue();
             long lastTime = System.currentTimeMillis();
             if (httpDownModel.getTaskInfo().getStatus() == 1) {
               httpDownModel.getTaskInfo().setLastTime(lastTime);
-              sendMsg("progress",httpDownModel.getTaskInfo());
+              sendMsg("progress", httpDownModel.getTaskInfo());
             }
           }
-          TimeUnit.MILLISECONDS.sleep(300);
+          TimeUnit.MILLISECONDS.sleep(200);
         }
       }
-    }  catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   });
@@ -65,7 +65,7 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
           msg.put("type", type);
           msg.put("taskInfo", taskInfo);
           TextMessage message = new TextMessage(JSON.toJSONString(msg));
-          synchronized (session){
+          synchronized (session) {
             session.sendMessage(message);
           }
         }

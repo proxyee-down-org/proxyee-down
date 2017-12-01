@@ -70,14 +70,16 @@ public class HttpDownInitializer extends ChannelInitializer {
             long start = index * chunk;
             long end = index + 1 == connections ? (index + 1) * chunk + fileSize % connections - 1
                 : (index + 1) * chunk - 1;
+            long chunkTotalSize = end - start + 1;
             byteBuf.readBytes(fileChannel, start + downSize, readableBytes);
             downSize += readableBytes;
             callback
-                .progress(taskInfo, taskInfo.getChunkInfoList().get(index), downSize, end - start + 1,
+                .progress(taskInfo, taskInfo.getChunkInfoList().get(index), downSize,
+                    chunkTotalSize,
                     fileDownSize.addAndGet(readableBytes),
                     fileSize);
             //分段下载完成关闭fileChannel
-            if (httpContent instanceof LastHttpContent) {
+            if (httpContent instanceof LastHttpContent || downSize == chunkTotalSize) {
               fileChannel.close();
               callback.chunkDone(taskInfo, taskInfo.getChunkInfoList().get(index));
               //文件下载完成回调
@@ -96,7 +98,7 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        callback.error(taskInfo,taskInfo.getChunkInfoList().get(index),cause);
+        callback.error(taskInfo, taskInfo.getChunkInfoList().get(index), cause);
         super.exceptionCaught(ctx, cause);
         ctx.channel().close();
       }

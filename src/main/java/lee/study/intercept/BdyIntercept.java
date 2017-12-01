@@ -40,7 +40,7 @@ public class BdyIntercept extends HttpProxyIntercept {
         proxyChannel.pipeline().fireChannelRead(httpResponse);
       }
       //直接调用默认拦截器，跳过下载拦截器
-      super.afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
+      pipeline.getDefault().afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
     } else {
       isMatch = false;
       pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
@@ -71,7 +71,7 @@ public class BdyIntercept extends HttpProxyIntercept {
         for(ByteBuf byteBuf:contents){
           lastHttpContent.content().writeBytes(byteBuf);
         }
-        super.afterResponse(clientChannel, proxyChannel, lastHttpContent, pipeline);
+        pipeline.getDefault().afterResponse(clientChannel, proxyChannel, lastHttpContent, pipeline);
         for(ByteBuf byteBuf:contents){
           ReferenceCountUtil.release(byteBuf);
         }

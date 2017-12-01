@@ -23,6 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,8 +59,9 @@ public class HttpDown {
    */
   public static TaskInfo getTaskInfo(HttpRequest httpRequest, HttpHeaders resHeaders,
       NioEventLoopGroup loopGroup) {
-    TaskInfo taskInfo = new TaskInfo(getDownFileName(httpRequest, resHeaders),
-        getDownFileSize(resHeaders), false, 1, "", 0, 0,0, null);
+    TaskInfo taskInfo = new TaskInfo(
+        UUID.randomUUID().toString(), getDownFileName(httpRequest, resHeaders),
+        getDownFileSize(resHeaders), false, 1, "", 0, 0, 0, null);
     //chunked编码不支持断点下载
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       CountDownLatch cdl = new CountDownLatch(1);
@@ -182,7 +184,8 @@ public class HttpDown {
         long end = i + 1 == connections ?
             (i + 1) * chunk + downModel.getTaskInfo().getFileSize() % connections - 1
             : (i + 1) * chunk - 1;
-        ChunkInfo chunkInfo = new ChunkInfo(0, end - start + 1, 0,0,1);
+        ChunkInfo chunkInfo = new ChunkInfo(UUID.randomUUID().toString(), 0, end - start + 1, 0, 0,
+            1);
         callback.chunkStart(downModel.getTaskInfo(), chunkInfo);
         cf.addListener((ChannelFutureListener) future -> {
           if (future.isSuccess()) {

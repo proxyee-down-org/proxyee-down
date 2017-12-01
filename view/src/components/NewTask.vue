@@ -54,6 +54,7 @@
         this.form.fileName = res.fileName;
         this.form.fileSize = res.fileSize;
         this.form.supportRange = res.supportRange;
+        this.form.connections = res.connections;
       })
     }
   }

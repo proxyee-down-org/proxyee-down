@@ -3,8 +3,10 @@ package lee.study;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lee.study.intercept.BdyBatchDownIntercept;
 import lee.study.intercept.BdyIntercept;
 import lee.study.intercept.HttpDownIntercept;
+import lee.study.intercept.HttpDownSniffIntercept;
 import lee.study.model.HttpDownInfo;
 import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
@@ -18,7 +20,7 @@ public class HttpDownServer {
 
   public static NioEventLoopGroup loopGroup = new NioEventLoopGroup(1);
 
-  public static final Map<Integer, HttpDownInfo> downContent = new ConcurrentHashMap<>();
+  public static final Map<String, HttpDownInfo> downContent = new ConcurrentHashMap<>();
   public static Map<String, WebSocketSession> wsContent = new ConcurrentHashMap<>();
 
   public static void main(String[] args) throws Exception {
@@ -28,7 +30,9 @@ public class HttpDownServer {
       @Override
       public void init(HttpProxyInterceptPipeline pipeline) {
         pipeline.addLast(new BdyIntercept());
-        //pipeline.addLast(new HttpDownIntercept());
+        pipeline.addLast(new HttpDownSniffIntercept());
+        pipeline.addLast(new BdyBatchDownIntercept());
+        pipeline.addLast(new HttpDownIntercept());
       }
     }).start(9999);
   }
