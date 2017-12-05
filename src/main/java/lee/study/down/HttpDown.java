@@ -7,7 +7,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
@@ -22,14 +21,12 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lee.study.HttpDownServer;
 import lee.study.hanndle.HttpDownInitializer;
 import lee.study.model.ChunkInfo;
 import lee.study.model.HttpDownInfo;
@@ -60,8 +57,8 @@ public class HttpDown {
   public static TaskInfo getTaskInfo(HttpRequest httpRequest, HttpHeaders resHeaders,
       NioEventLoopGroup loopGroup) {
     TaskInfo taskInfo = new TaskInfo(
-        UUID.randomUUID().toString(), getDownFileName(httpRequest, resHeaders),
-        getDownFileSize(resHeaders), false, 1, "", 0, 0, 0, null);
+        UUID.randomUUID().toString(), "", getDownFileName(httpRequest, resHeaders), 1,
+        getDownFileSize(resHeaders), false, 0, 0, 0, 0, null);
     //chunked编码不支持断点下载
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       CountDownLatch cdl = new CountDownLatch(1);
@@ -154,10 +151,10 @@ public class HttpDown {
     }
   }
 
-  public static void fastDown(HttpDownInfo downModel, int connections,
-      EventLoopGroup loopGroup, String path, HttpDownCallback callback) throws Exception {
+  /*public static void fastDown(HttpDownInfo downModel, int connections,
+      EventLoopGroup LOOP_GROUP, String path, HttpDownCallback callback) throws Exception {
     RequestProto requestProto = ProtoUtil.getRequestProto(downModel.getRequest());
-    File file = new File(path + "/" + downModel.getTaskInfo().getFileName());
+    File file = new File(path + File.separator + downModel.getTaskInfo().getFileName());
     if (file.exists()) {
       file.delete();
     }
@@ -166,7 +163,7 @@ public class HttpDown {
     ) {
       randomAccessFile.setLength(downModel.getTaskInfo().getFileSize());
       Bootstrap bootstrap = new Bootstrap();
-      bootstrap.group(loopGroup) // 注册线程池
+      bootstrap.group(LOOP_GROUP) // 注册线程池
           .channel(NioSocketChannel.class); // 使用NioSocketChannel来作为连接用的channel类
       long chunk = downModel.getTaskInfo().getFileSize() / connections;
       AtomicInteger doneConnections = new AtomicInteger(connections);
@@ -199,6 +196,49 @@ public class HttpDown {
       throw e;
     }
 
-  }
+  }*/
 
+  public static void fastDown(HttpDownInfo httpDownInfo, HttpDownCallback callback)
+      throws Exception {
+    TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+    RequestProto requestProto = ProtoUtil.getRequestProto(httpDownInfo.getRequest());
+    File file = new File(taskInfo.getFilePath() + File.separator + taskInfo.getFileName());
+    if (file.exists()) {
+      file.delete();
+    }
+    try (
+        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")
+    ) {
+      randomAccessFile.setLength(taskInfo.getTotalSize());
+      Bootstrap bootstrap = new Bootstrap();
+      bootstrap.group(HttpDownServer.LOOP_GROUP) // 注册线程池
+          .channel(NioSocketChannel.class); // 使用NioSocketChannel来作为连接用的channel类
+      //文件下载开始回调
+      taskInfo.setStatus(1);
+      taskInfo.setStartTime(System.currentTimeMillis());
+      callback.start(taskInfo);
+      for (int i = 0; i < taskInfo.getConnections(); i++) {
+        ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
+        ChannelFuture cf = bootstrap
+            .handler(
+                new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
+            .connect(requestProto.getHost(), requestProto.getPort());
+        //分段下载开始回调
+        chunkInfo.setStatus(1);
+        chunkInfo.setStartTime(System.currentTimeMillis());
+        callback.chunkStart(taskInfo, chunkInfo);
+        cf.addListener((ChannelFutureListener) future -> {
+          if (future.isSuccess()) {
+            httpDownInfo.getRequest().headers()
+                .set(HttpHeaderNames.RANGE,
+                    "bytes=" + chunkInfo.getStartPosition() + "-" + chunkInfo.getEndPosition());
+            future.channel().writeAndFlush(httpDownInfo.getRequest());
+          }
+        });
+      }
+    } catch (Exception e) {
+      throw e;
+    }
+
+  }
 }

@@ -1,7 +1,6 @@
 package lee.study.hanndle;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,12 +11,10 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import lee.study.down.HttpDownCallback;
+import lee.study.model.ChunkInfo;
 import lee.study.model.TaskInfo;
 import lee.study.proxyee.server.HttpProxyServer;
 
@@ -25,29 +22,21 @@ public class HttpDownInitializer extends ChannelInitializer {
 
   private boolean isSsl;
   private TaskInfo taskInfo;
-  private int index;
-  private File file;
-  private AtomicInteger doneConnections;
-  private AtomicLong fileDownSize;
+  private ChunkInfo chunkInfo;
   private HttpDownCallback callback;
 
   private FileChannel fileChannel;
-  private long downSize = 0;
-  private int connections;
 
-  public HttpDownInitializer(boolean isSsl, TaskInfo taskInfo, int index, File file,
-      AtomicInteger doneConnections, AtomicLong fileDownSize,
+  public HttpDownInitializer(boolean isSsl, TaskInfo taskInfo, ChunkInfo chunkInfo,
       HttpDownCallback callback) throws Exception {
     this.isSsl = isSsl;
     this.taskInfo = taskInfo;
-    this.index = index;
-    this.file = file;
-    this.doneConnections = doneConnections;
-    this.fileDownSize = fileDownSize;
+    this.chunkInfo = chunkInfo;
     this.callback = callback;
 
-    fileChannel = new RandomAccessFile(file, "rw").getChannel();
-    connections = doneConnections.get();
+    this.fileChannel = new RandomAccessFile(
+        new File(taskInfo.getFilePath() + File.separator + taskInfo.getFileName()), "rw")
+        .getChannel();
   }
 
   @Override
@@ -65,25 +54,25 @@ public class HttpDownInitializer extends ChannelInitializer {
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
-            long fileSize = file.length();
-            long chunk = fileSize / connections;
-            long start = index * chunk;
-            long end = index + 1 == connections ? (index + 1) * chunk + fileSize % connections - 1
-                : (index + 1) * chunk - 1;
-            long chunkTotalSize = end - start + 1;
-            byteBuf.readBytes(fileChannel, start + downSize, readableBytes);
-            downSize += readableBytes;
-            callback
-                .progress(taskInfo, taskInfo.getChunkInfoList().get(index), downSize,
-                    chunkTotalSize,
-                    fileDownSize.addAndGet(readableBytes),
-                    fileSize);
+            byteBuf.readBytes(fileChannel, chunkInfo.getStartPosition() + chunkInfo.getDownSize(),
+                readableBytes);
+            //文件已下载大小
+            chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
+            taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
+            callback.progress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
-            if (httpContent instanceof LastHttpContent || downSize == chunkTotalSize) {
+            if (httpContent instanceof LastHttpContent || chunkInfo.getDownSize() == chunkInfo
+                .getTotalSize()) {
               fileChannel.close();
-              callback.chunkDone(taskInfo, taskInfo.getChunkInfoList().get(index));
-              //文件下载完成回调
-              if (doneConnections.decrementAndGet() == 0) {
+              //分段下载完成回调
+              chunkInfo.setStatus(2);
+              chunkInfo.setLastTime(System.currentTimeMillis());
+              callback.chunkDone(taskInfo, chunkInfo);
+              if (taskInfo.getChunkInfoList().stream()
+                  .allMatch((chunk) -> chunk.getStatus() == 2)) {
+                //文件下载完成回调
+                taskInfo.setStatus(2);
+                taskInfo.setLastTime(System.currentTimeMillis());
                 callback.done(taskInfo);
                 ctx.channel().close();
               }
@@ -98,7 +87,9 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        callback.error(taskInfo, taskInfo.getChunkInfoList().get(index), cause);
+        taskInfo.setStatus(3);
+        chunkInfo.setStatus(3);
+        callback.error(taskInfo, chunkInfo, cause);
         super.exceptionCaught(ctx, cause);
         ctx.channel().close();
       }
@@ -109,6 +100,11 @@ public class HttpDownInitializer extends ChannelInitializer {
         ctx.channel().close();
       }
     });
+  }
+
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    super.exceptionCaught(ctx, cause);
   }
 
   public static void main(String[] args) throws Exception {

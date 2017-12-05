@@ -88,18 +88,18 @@ devMiddleware.waitUntilValid(() => {
       _reject(err)
     }
     process.env.PORT = port
-    var uri = 'https://localhost:' + port
+    var uri = 'http://localhost:' + port
     console.log('> Listening at ' + uri + '\n')
     // when env is testing, don't need open it
     if (autoOpenBrowser && process.env.NODE_ENV !== 'testing') {
       opn(uri)
     }
-    const privateKey  = fs.readFileSync('./ssl/server_private.pem', 'utf8');
+    /*const privateKey  = fs.readFileSync('./ssl/server_private.pem', 'utf8');
     const certificate = fs.readFileSync('./ssl/server.crt', 'utf8');
     const credentials = {key: privateKey, cert: certificate};
     server = https.createServer(credentials,app);
-    server.listen(port);
-    // server = app.listen(credentials,port)
+    server.listen(port);*/
+    server = app.listen(port)
     _resolve()
   })
 })

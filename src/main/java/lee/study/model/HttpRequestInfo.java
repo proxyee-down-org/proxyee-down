@@ -1,16 +1,12 @@
 package lee.study.model;
 
 import io.netty.handler.codec.DecoderResult;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,10 +15,12 @@ import lombok.Data;
 @AllArgsConstructor
 public class HttpRequestInfo implements HttpRequest, Serializable {
 
+  private static final long serialVersionUID = -4521453515739581677L;
   private HttpVer version;
   private String method;
   private String uri;
-  private Map<String, String> headers;
+  private HttpHeaders headers;
+
 
 
   @Override
@@ -55,9 +53,6 @@ public class HttpRequestInfo implements HttpRequest, Serializable {
 
   @Override
   public HttpRequest setUri(String uri) {
-    if (uri == null) {
-      throw new NullPointerException("uri");
-    }
     this.uri = uri;
     return this;
   }
@@ -90,13 +85,7 @@ public class HttpRequestInfo implements HttpRequest, Serializable {
 
   @Override
   public HttpHeaders headers() {
-    HttpHeaders httpHeaders = new DefaultHttpHeaders();
-    if (headers != null) {
-      for (Entry<String, String> entry : headers.entrySet()) {
-        httpHeaders.set(entry.getKey(), entry.getValue());
-      }
-    }
-    return httpHeaders;
+    return headers;
   }
 
   @Deprecated
@@ -115,7 +104,7 @@ public class HttpRequestInfo implements HttpRequest, Serializable {
 
   }
 
-  public static enum HttpVer {
+  public enum HttpVer {
     HTTP_1_0, HTTP_1_1
   }
 
@@ -127,11 +116,11 @@ public class HttpRequestInfo implements HttpRequest, Serializable {
       } else {
         version = HttpVer.HTTP_1_1;
       }
-      Map<String, String> headers = new HashMap<>();
+      HttpHeadsInfo httpHeadsInfo = new HttpHeadsInfo();
       for (Entry<String, String> entry : httpRequest.headers()) {
-        headers.put(entry.getKey(), entry.getValue());
+        httpHeadsInfo.set(entry.getKey(), entry.getValue());
       }
-      new HttpRequestInfo(version, httpRequest.method().toString(), httpRequest.uri(), headers);
+      return new HttpRequestInfo(version, httpRequest.method().toString(), httpRequest.uri(), httpHeadsInfo);
     }
     return httpRequest;
   }

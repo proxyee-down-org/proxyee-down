@@ -1,7 +1,7 @@
 <template>
   <el-form ref="form" :model="form" label-width="80px" size="medium">
     <el-form-item label="文件名">{{form.fileName}}</el-form-item>
-    <el-form-item label="文件大小">{{form.fileSize}}</el-form-item>
+    <el-form-item label="文件大小">{{totalSizeText}}</el-form-item>
     <el-form-item label="支持分段">{{supportRangeText}}</el-form-item>
     <el-form-item label="分段数">
       <el-input v-model="form.connections" :disabled="!form.supportRange"/>
@@ -17,13 +17,15 @@
 </template>
 
 <script>
+  import Util from '../common/util'
+
   export default {
     data() {
       return {
         form: {
           id: this.$route.params.id,
           fileName: '',
-          fileSize: '',
+          totalSize: 0,
           supportRange: false,
           connections: 1,
           path: 'f:/down',
@@ -31,9 +33,11 @@
       }
     },
     computed: {
-      supportRangeText: function () {
-        // `this` 指向 vm 实例
+      supportRangeText() {
         return this.form.supportRange ? '支持' : '不支持';
+      },
+      totalSizeText() {
+        return Util.sizeFmt(this.form.totalSize)
       }
     },
     methods: {
@@ -52,7 +56,7 @@
       .then((response) => {
         let res = response.data;
         this.form.fileName = res.fileName;
-        this.form.fileSize = res.fileSize;
+        this.form.totalSize = res.totalSize;
         this.form.supportRange = res.supportRange;
         this.form.connections = res.connections;
       })

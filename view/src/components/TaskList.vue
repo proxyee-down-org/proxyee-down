@@ -3,19 +3,19 @@
     <el-row type="flex" justify="center">
       <el-col :span="20">
         <el-row v-for="row in Math.ceil(tasks.length/cellSize)" :key="row">
-          <el-col :span="8" v-for="task in rowTasks(row)" class="task-list-container" :key="row.id">
+          <el-col :span="8" v-for="task in rowTasks(row)" class="task-list-container"
+                  :key="task.id">
             <el-popover
               placement="right"
               title="下载详情"
-              width="300"
+              width="400"
               trigger="click">
               <ul class="task-list">
-                <li v-for="chunk in task.chunkInfoList">
+                <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                   <el-progress :text-inside="true" :stroke-width="18"
-                               :percentage="chunkProgress(chunk)"
+                               :percentage="progress(chunk)"
                                :status="status(chunk)"></el-progress>
-                  <span>{{chunkSpeed(chunk)}}kb/s</span>
-                  <!--<span>{{chunk.totalSize}}byte</span>-->
+                  <span>{{sizeFmt(speed(chunk))}}/s</span>
                 </li>
               </ul>
               <el-progress type="circle"
@@ -24,11 +24,10 @@
                            :width="200"
                            slot="reference"></el-progress>
             </el-popover>
-            <div>
-              <p>{{speed(task)}}kb/s</p>
-              <p>{{task.speed}}kb/s</p>
+            <div class="file-detail">
+              <p>{{sizeFmt(speed(task))}}/s</p>
               <p>{{task.fileName}}</p>
-              <p>{{task.fileSize}}byte</p>
+              <p>{{sizeFmt(task.totalSize)}}</p>
             </div>
           </el-col>
         </el-row>
@@ -41,6 +40,7 @@
 </template>
 
 <script>
+  import Util from '../common/util'
   import Vue from 'vue'
 
   export default {
@@ -49,13 +49,10 @@
       return {
         tasks: [],
         cellSize: 3,
-        ws: new WebSocket('wss://localhost:8443/ws/progress'),
+        ws: new WebSocket('ws://localhost:8999/ws/progress'),
       }
     },
     methods: {
-      taskIndex(i, j) {
-        return (i - 1) * this.cellSize + j - 1;
-      },
       rowTasks(row) {
         let ret = [];
         let start = (row - 1) * this.cellSize;
@@ -67,20 +64,9 @@
         }
         return ret;
       },
-      fileDownSize(task) {
-        let chunkInfoList = task.chunkInfoList;
-        if (chunkInfoList && chunkInfoList.length > 0) {
-          return chunkInfoList.map((chunk) => {
-            return chunk.downSize;
-          }).reduce((chunk1, chunk2) => {
-            return chunk1 + chunk2;
-          });
-        }
-        return 0;
-      },
       progress(task) {
-        let fileDownSize = this.fileDownSize(task);
-        let fileTotalSize = task.fileSize;
+        let fileDownSize = task.downSize;
+        let fileTotalSize = task.totalSize;
         if (fileDownSize && fileTotalSize) {
           return Math.floor(fileDownSize * 100 / fileTotalSize);
         }
@@ -90,29 +76,8 @@
         if (task.lastTime) {
           //下载了多少秒
           let usedTime = (task.lastTime - task.startTime) / 1000;
-          //下载了多少kb
-          let fileDownSize = this.fileDownSize(task) / 1024;
-          //计算下载速度kb/s
-          return Math.floor(fileDownSize / usedTime);
-        }
-        return 0;
-      },
-      chunkProgress(chunk) {
-        let fileDownSize = chunk.downSize;
-        let fileTotalSize = chunk.totalSize;
-        if (fileDownSize && fileTotalSize) {
-          return Math.floor(fileDownSize * 100 / fileTotalSize);
-        }
-        return 0;
-      },
-      chunkSpeed(chunk) {
-        if (chunk.lastTime) {
-          //下载了多少秒
-          let usedTime = (chunk.lastTime - chunk.startTime) / 1000;
-          //下载了多少kb
-          let fileDownSize = chunk.downSize / 1024;
-          //计算下载速度kb/s
-          return Math.floor(fileDownSize / usedTime);
+          //计算下载速度
+          return Math.floor(task.downSize / usedTime)
         }
         return 0;
       },
@@ -125,68 +90,18 @@
           default:
             return null;
         }
-      }
+      },
+      sizeFmt(size) {
+        return Util.sizeFmt(size);
+      },
     },
     created() {
-      /*this.tasks.push({
-        fileName: 'test.txt',
-        fileSize: 90000,
-        supportRange: true,
-        connections: 8,
-        filePath: 'f:/',
-        startTime: 0,
-        lastTime: 0,
-        status: 1,
-        chunkInfoList: [{speed:100,percentage:20},{speed:100,percentage:20},{speed:100,percentage:20},{speed:100,percentage:20},{speed:100,percentage:20},{speed:100,percentage:20},{speed:100,percentage:20},{speed:100,percentage:20},]
-      });
-      this.tasks.push({
-        fileName: 'test.txt',
-        fileSize: 90000,
-        supportRange: true,
-        connections: 8,
-        filePath: 'f:/',
-        startTime: 0,
-        lastTime: 0,
-        status: 1,
-        chunkInfoList: []
-      });
-      this.tasks.push({
-        fileName: 'test.txt',
-        fileSize: 90000,
-        supportRange: true,
-        connections: 8,
-        filePath: 'f:/',
-        startTime: 0,
-        lastTime: 0,
-        status: 1,
-        chunkInfoList: []
-      });
-      this.tasks.push({
-        fileName: 'test.txt',
-        fileSize: 90000,
-        supportRange: true,
-        connections: 8,
-        filePath: 'f:/',
-        startTime: 0,
-        lastTime: 0,
-        status: 1,
-        chunkInfoList: []
-      });
-      this.tasks.push({
-        fileName: 'test.txt',
-        fileSize: 90000,
-        supportRange: true,
-        connections: 8,
-        filePath: 'f:/',
-        startTime: 0,
-        lastTime: 0,
-        status: 1,
-        chunkInfoList: []
-      });*/
       this.$http.get("api/getTaskList")
       .then((response) => {
         if (response.data && response.data.length) {
-          response.data.forEach((task) => {
+          response.data.sort((task1, task2) => {
+            return task1.startTime - task2.startTime;
+          }).forEach((task) => {
             this.tasks.push(task);
           });
         }
@@ -196,10 +111,6 @@
         if (msg.type != 'start') {
           this.tasks.forEach((task, index) => {
             if (task.id == msg.taskInfo.id) {
-              /*let unitTime = (msg.taskInfo.lastTime - task.lastTime) / 1000;
-              let unitDownSize = (this.fileDownSize(msg.taskInfo) - this.fileDownSize(task)) / 1024;
-              //计算瞬时下载速度kb/s
-              msg.taskInfo.speed = Math.floor(unitDownSize / unitTime);*/
               Vue.set(this.tasks, index, msg.taskInfo);
               return false;
             }
@@ -207,10 +118,12 @@
 
         }
       }
-    },
+    }
+    ,
     destroyed() {
       this.ws.close();
-    },
+    }
+    ,
   }
 </script>
 
@@ -238,5 +151,9 @@
   .task-list li > span {
     padding-left: 20px;
     float: right;
+  }
+
+  .file-detail{
+    font-size: 15px;
   }
 </style>

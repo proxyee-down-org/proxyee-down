@@ -17,10 +17,10 @@
                 <i class="el-icon-menu"></i>
                 <span slot="title">任务</span>
               </el-menu-item>
-              <el-menu-item index="3">
+              <!--<el-menu-item index="3">
                 <i class="el-icon-setting"></i>
                 <span slot="title">设置</span>
-              </el-menu-item>
+              </el-menu-item>-->
             </el-menu>
           </el-aside>
           <el-main>

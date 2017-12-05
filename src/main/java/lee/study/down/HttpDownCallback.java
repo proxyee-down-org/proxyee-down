@@ -9,9 +9,7 @@ public interface HttpDownCallback {
 
   void chunkStart(TaskInfo taskInfo,ChunkInfo chunkInfo);
 
-  void progress(TaskInfo taskInfo, ChunkInfo chunkInfo, long chunkDownSize, long chunkTotalSize,
-      long fileDownSize,
-      long fileTotalSize);
+  void progress(TaskInfo taskInfo, ChunkInfo chunkInfo);
 
   void error(TaskInfo taskInfo, ChunkInfo chunkInfo,Throwable cause);
 

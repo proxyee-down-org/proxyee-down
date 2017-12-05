@@ -10,6 +10,10 @@ import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 import lee.study.util.HttpDownUtil;
 
+/**
+ * 处理百度云合并下载
+ * 最大为16M一段
+ */
 public class BdyBatchDownIntercept extends HttpProxyIntercept {
 
   //16M
@@ -24,9 +28,9 @@ public class BdyBatchDownIntercept extends HttpProxyIntercept {
       long fileSize = HttpDown.getDownFileSize(resHeaders);
       //百度合并下载分段最多为16M
       int connections = (int) Math.ceil(fileSize / CHUNK_16M);
-      TaskInfo taskInfo = new TaskInfo(
-          UUID.randomUUID().toString(), HttpDown.getDownFileName(httpRequest, resHeaders), fileSize,
-          true, connections, "", 0, 0, 0, null);
+      TaskInfo taskInfo = new TaskInfo(UUID.randomUUID().toString(), "",
+          HttpDown.getDownFileName(httpRequest, resHeaders), connections, fileSize, true, 0, 0, 0,
+          0, null);
       HttpDownUtil.startDownTask(taskInfo, httpRequest, httpResponse, clientChannel);
       return;
     }

@@ -1,12 +1,12 @@
 package lee.study.ws;
 
 import com.alibaba.fastjson.JSON;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import lee.study.HttpDownServer;
+import lee.study.model.ChunkInfo;
 import lee.study.model.HttpDownInfo;
 import lee.study.model.TaskInfo;
 import org.springframework.web.socket.CloseStatus;
@@ -19,14 +19,16 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
   private static Thread progressThread = new Thread(() -> {
     try {
       while (true) {
-        if (HttpDownServer.downContent != null && HttpDownServer.downContent.size() > 0) {
-          for (Entry<String, HttpDownInfo> entry : HttpDownServer.downContent.entrySet()) {
-            HttpDownInfo httpDownModel = entry.getValue();
-            long lastTime = System.currentTimeMillis();
-            if (httpDownModel.getTaskInfo().getStatus() == 1) {
-              httpDownModel.getTaskInfo().setLastTime(lastTime);
-              sendMsg("progress", httpDownModel.getTaskInfo());
+        if (HttpDownServer.DOWN_CONTENT != null && HttpDownServer.DOWN_CONTENT.size() > 0) {
+          for (Entry<String, HttpDownInfo> entry : HttpDownServer.DOWN_CONTENT.entrySet()) {
+            TaskInfo taskInfo = entry.getValue().getTaskInfo();
+            if (taskInfo.getStatus() == 1) {
+              taskInfo.setLastTime(System.currentTimeMillis());
+              for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+                chunkInfo.setLastTime(System.currentTimeMillis());
+              }
             }
+            sendMsg("progress", taskInfo);
           }
           TimeUnit.MILLISECONDS.sleep(200);
         }
@@ -43,7 +45,7 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-    HttpDownServer.wsContent.put(session.getId(), session);
+    HttpDownServer.WS_CONTENT.put(session.getId(), session);
   }
 
   @Override
@@ -53,12 +55,12 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-    HttpDownServer.wsContent.remove(session.getId());
+    HttpDownServer.WS_CONTENT.remove(session.getId());
   }
 
   public static void sendMsg(String type, TaskInfo taskInfo) {
     try {
-      for (Entry<String, WebSocketSession> entry : HttpDownServer.wsContent.entrySet()) {
+      for (Entry<String, WebSocketSession> entry : HttpDownServer.WS_CONTENT.entrySet()) {
         WebSocketSession session = entry.getValue();
         if (session.isOpen()) {
           Map<String, Object> msg = new HashMap<>();

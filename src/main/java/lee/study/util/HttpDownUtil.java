@@ -8,8 +8,13 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Map.Entry;
-import java.util.UUID;
 import lee.study.HttpDownServer;
 import lee.study.model.HttpDownInfo;
 import lee.study.model.HttpRequestInfo;
@@ -65,12 +70,12 @@ public class HttpDownUtil {
     HttpHeaders httpHeaders = httpResponse.headers();
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo,
         HttpRequestInfo.adapter(httpRequest));
-    HttpDownServer.downContent.put(taskInfo.getId(), httpDownInfo);
+    HttpDownServer.DOWN_CONTENT.put(taskInfo.getId(), httpDownInfo);
     httpHeaders.clear();
     httpResponse.setStatus(HttpResponseStatus.OK);
     httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
     String js =
-        "<script>window.top.location.href='https://localhost:8443/#/newTask/" + httpDownInfo
+        "<script>window.top.location.href='http://localhost:"+HttpDownServer.VIEW_SERVER_PORT+"/#/newTask/" + httpDownInfo
             .getTaskInfo().getId()
             + "';</script>";
     HttpContent content = new DefaultLastHttpContent();
@@ -79,5 +84,21 @@ public class HttpDownUtil {
     clientChannel.writeAndFlush(httpResponse);
     clientChannel.writeAndFlush(content);
     clientChannel.close();
+  }
+
+  public static void serialize(Serializable object, String path) throws IOException {
+    try (
+        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(path))
+    ) {
+      outputStream.writeObject(object);
+    }
+  }
+
+  public static Object deserialize(String path) throws IOException, ClassNotFoundException {
+    try (
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))
+    ) {
+      return ois.readObject();
+    }
   }
 }
