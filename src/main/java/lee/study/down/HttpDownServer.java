@@ -84,6 +84,6 @@ public class HttpDownServer implements InitializingBean {
   }
 
   public static void main(String[] args) throws Exception {
-    start(9999);
+    start(args.length==0?9999:Integer.parseInt(args[0]));
   }
 }

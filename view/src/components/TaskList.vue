@@ -50,7 +50,7 @@
       return {
         tasks: [],
         cellSize: 3,
-        ws: new WebSocket('ws://localhost:8999/ws/progress'),
+        ws: new WebSocket('ws://'+window.location.host+'/ws/progress'),
       }
     },
     methods: {
