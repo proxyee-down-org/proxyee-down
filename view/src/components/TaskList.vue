@@ -6,7 +6,7 @@
           <el-col :span="8" v-for="task in rowTasks(row)" class="task-list-container"
                   :key="task.id">
             <el-popover
-              placement="right"
+              placement="right-end"
               title="下载详情"
               width="400"
               trigger="click">
@@ -26,6 +26,7 @@
             </el-popover>
             <div class="file-detail">
               <p>{{sizeFmt(speed(task))}}/s</p>
+              <p>{{leftTime(task)}}</p>
               <p>{{task.fileName}}</p>
               <p>{{sizeFmt(task.totalSize)}}</p>
             </div>
@@ -80,6 +81,17 @@
           return Math.floor(task.downSize / usedTime)
         }
         return 0;
+      },
+      leftTime(task) {
+        if (task.status == 2) {
+          return '已完成';
+        }
+        let speed = this.speed(task);
+        if (speed) {
+          return Util.timeFmt((task.totalSize - task.downSize) / speed);
+        } else {
+          return '未知';
+        }
       },
       status(task) {
         switch (task.status) {
@@ -153,7 +165,7 @@
     float: right;
   }
 
-  .file-detail{
+  .file-detail {
     font-size: 15px;
   }
 </style>

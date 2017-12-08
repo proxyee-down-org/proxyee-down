@@ -1,4 +1,4 @@
-package lee.study.form;
+package lee.study.down.form;
 
 import lombok.Data;
 

@@ -1,7 +1,9 @@
-package lee.study.model;
+package lee.study.down.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.List;
+import lee.study.down.dispatch.HttpDownCallback;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -21,4 +23,7 @@ public class TaskInfo implements Serializable {
   private long lastTime;
   private int status; //0.待下载 1.下载中 2.下载完成 3.下载失败
   private List<ChunkInfo> chunkInfoList;
+
+  @JsonIgnore
+  private transient HttpDownCallback callback;
 }

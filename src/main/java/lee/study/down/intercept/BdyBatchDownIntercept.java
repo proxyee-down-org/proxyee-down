@@ -1,14 +1,13 @@
-package lee.study.intercept;
+package lee.study.down.intercept;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
 import java.util.UUID;
-import lee.study.down.HttpDown;
-import lee.study.model.TaskInfo;
+import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.util.HttpDownUtil;
+import lee.study.down.util.HttpDownUtil;
 
 /**
  * 处理百度云合并下载
@@ -25,12 +24,12 @@ public class BdyBatchDownIntercept extends HttpProxyIntercept {
     if (HttpDownUtil.checkReferer(httpRequest, "^https?://pan.baidu.com/disk/home.*$")
         && HttpDownUtil.checkUrl(httpRequest, "^.*method=batchdownload.*$")) {
       HttpHeaders resHeaders = httpResponse.headers();
-      long fileSize = HttpDown.getDownFileSize(resHeaders);
+      long fileSize = HttpDownUtil.getDownFileSize(resHeaders);
       //百度合并下载分段最多为16M
       int connections = (int) Math.ceil(fileSize / CHUNK_16M);
       TaskInfo taskInfo = new TaskInfo(UUID.randomUUID().toString(), "",
-          HttpDown.getDownFileName(httpRequest, resHeaders), connections, fileSize, true, 0, 0, 0,
-          0, null);
+          HttpDownUtil.getDownFileName(httpRequest, resHeaders), connections, fileSize, true, 0, 0, 0,
+          0, null,null);
       HttpDownUtil.startDownTask(taskInfo, httpRequest, httpResponse, clientChannel);
       return;
     }

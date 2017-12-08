@@ -1,17 +1,14 @@
-package lee.study.controller;
+package lee.study.down.controller;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import lee.study.HttpDownServer;
-import lee.study.down.HttpDown;
-import lee.study.down.HttpDownCallback;
-import lee.study.form.DownForm;
-import lee.study.model.ChunkInfo;
-import lee.study.model.HttpDownInfo;
-import lee.study.model.TaskInfo;
-import lee.study.util.HttpDownUtil;
-import lee.study.ws.HttpDownProgressHandle;
+import lee.study.down.HttpDownServer;
+import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.form.DownForm;
+import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.HttpDownInfo;
+import lee.study.down.model.TaskInfo;
+import lee.study.down.util.HttpDownUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,24 +55,25 @@ public class DownController {
         ChunkInfo chunkInfo = new ChunkInfo();
         chunkInfo.setIndex(i);
         long chunkSize = taskInfo.getTotalSize() / downForm.getConnections();
-        chunkInfo.setStartPosition(i * chunkSize);
+        chunkInfo.setOriStartPosition(i * chunkSize);
+        chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
         if (i == downForm.getConnections() - 1) { //最后一个连接去下载多出来的字节
           chunkSize += taskInfo.getTotalSize() % downForm.getConnections();
         }
-        chunkInfo.setEndPosition(chunkInfo.getStartPosition() + chunkSize - 1);
+        chunkInfo.setEndPosition(chunkInfo.getOriStartPosition() + chunkSize - 1);
         chunkInfo.setTotalSize(chunkSize);
         chunkInfoList.add(chunkInfo);
       }
       taskInfo.setChunkInfoList(chunkInfoList);
-      HttpDownUtil.serialize(httpDownModel,
+      /*HttpDownUtil.serialize(httpDownModel,
           httpDownModel.getTaskInfo().getFilePath() + File.separator
-              + httpDownModel.getTaskInfo().getFileName() + ".cfg");
-      HttpDown.fastDown(httpDownModel, new HttpDownCallback() {
+              + httpDownModel.getTaskInfo().getFileName() + ".cfg");*/
+      HttpDownUtil.taskDown(httpDownModel, new HttpDownCallback() {
 
         @Override
         public void start(TaskInfo taskInfo) {
           //标记为下载中并记录开始时间
-          HttpDownProgressHandle.sendMsg("start", taskInfo);
+          HttpDownServer.sendMsg("start", taskInfo);
         }
 
         @Override
@@ -90,17 +88,21 @@ public class DownController {
 
         @Override
         public void error(TaskInfo taskInfo, ChunkInfo chunkInfo, Throwable cause) {
-
+          try {
+            HttpDownUtil.retryDown(taskInfo, chunkInfo);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
 
         @Override
         public void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo) {
-          HttpDownProgressHandle.sendMsg("chunkDone", taskInfo);
+          HttpDownServer.sendMsg("chunkDone", taskInfo);
         }
 
         @Override
         public void done(TaskInfo taskInfo) {
-          HttpDownProgressHandle.sendMsg("done", taskInfo);
+          HttpDownServer.sendMsg("done", taskInfo);
         }
       });
     } catch (Exception e) {

@@ -1,4 +1,4 @@
-package lee.study.down;
+package lee.study.down.util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -11,44 +11,105 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.nio.channels.FileChannel;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lee.study.HttpDownServer;
-import lee.study.hanndle.HttpDownInitializer;
-import lee.study.model.ChunkInfo;
-import lee.study.model.HttpDownInfo;
-import lee.study.model.TaskInfo;
+import lee.study.down.HttpDownServer;
+import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.hanndle.HttpDownInitializer;
+import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.HttpDownInfo;
+import lee.study.down.model.HttpRequestInfo;
+import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.server.HttpProxyServer;
 import lee.study.proxyee.util.ProtoUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
-public class HttpDown {
+public class HttpDownUtil {
 
-  public static void main(String[] args) throws URISyntaxException, UnsupportedEncodingException {
-    long fileSize = 106;
-    int connections = 1;
-    long chunk = fileSize / connections;
-    for (int i = 0; i < connections; i++) {
-      long start = i * chunk;
-      long end = (i + 1) * chunk - 1;
-      if (i + 1 == connections) {
-        end += fileSize % connections;
+  /**
+   * 检测请求头是否存在
+   */
+  public static boolean checkHeadKey(HttpHeaders httpHeaders, String regex) {
+    for (Entry<String, String> entry : httpHeaders) {
+      if (entry.getKey().matches(regex)) {
+        return true;
       }
-      System.out.println("bytes=" + start + "-" + end);
     }
+    return false;
+  }
+
+  /**
+   * 检测url是否匹配
+   */
+  public static boolean checkUrl(HttpRequest httpRequest, String regex) {
+    return checkHead(httpRequest, HttpHeaderNames.HOST, regex);
+  }
+
+  /**
+   * 检测Referer是否匹配
+   */
+  public static boolean checkReferer(HttpRequest httpRequest, String regex) {
+    return checkHead(httpRequest, HttpHeaderNames.REFERER, regex);
+  }
+
+  /**
+   * 检测某个http头是否匹配
+   */
+  public static boolean checkHead(HttpRequest httpRequest, CharSequence headName, String regex) {
+    String host = httpRequest.headers().get(headName);
+    if (host != null && regex != null) {
+      String url;
+      if (httpRequest.uri().indexOf("/") == 0) {
+        url = host + httpRequest.uri();
+      } else {
+        url = httpRequest.uri();
+      }
+      return url.matches(regex);
+    }
+    return false;
+  }
+
+  public static void startDownTask(TaskInfo taskInfo, HttpRequest httpRequest,
+      HttpResponse httpResponse, Channel clientChannel) {
+    HttpHeaders httpHeaders = httpResponse.headers();
+    HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo,
+        HttpRequestInfo.adapter(httpRequest));
+    HttpDownServer.DOWN_CONTENT.put(taskInfo.getId(), httpDownInfo);
+    httpHeaders.clear();
+    httpResponse.setStatus(HttpResponseStatus.OK);
+    httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
+    String js =
+        "<script>window.top.location.href='http://localhost:" + HttpDownServer.VIEW_SERVER_PORT
+            + "/#/newTask/" + httpDownInfo
+            .getTaskInfo().getId()
+            + "';</script>";
+    HttpContent content = new DefaultLastHttpContent();
+    content.content().writeBytes(js.getBytes());
+    httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, js.getBytes().length);
+    clientChannel.writeAndFlush(httpResponse);
+    clientChannel.writeAndFlush(content);
+    clientChannel.close();
   }
 
   /**
@@ -58,7 +119,7 @@ public class HttpDown {
       NioEventLoopGroup loopGroup) {
     TaskInfo taskInfo = new TaskInfo(
         UUID.randomUUID().toString(), "", getDownFileName(httpRequest, resHeaders), 1,
-        getDownFileSize(resHeaders), false, 0, 0, 0, 0, null);
+        getDownFileSize(resHeaders), false, 0, 0, 0, 0, null, null);
     //chunked编码不支持断点下载
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       CountDownLatch cdl = new CountDownLatch(1);
@@ -151,56 +212,10 @@ public class HttpDown {
     }
   }
 
-  /*public static void fastDown(HttpDownInfo downModel, int connections,
-      EventLoopGroup LOOP_GROUP, String path, HttpDownCallback callback) throws Exception {
-    RequestProto requestProto = ProtoUtil.getRequestProto(downModel.getRequest());
-    File file = new File(path + File.separator + downModel.getTaskInfo().getFileName());
-    if (file.exists()) {
-      file.delete();
-    }
-    try (
-        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")
-    ) {
-      randomAccessFile.setLength(downModel.getTaskInfo().getFileSize());
-      Bootstrap bootstrap = new Bootstrap();
-      bootstrap.group(LOOP_GROUP) // 注册线程池
-          .channel(NioSocketChannel.class); // 使用NioSocketChannel来作为连接用的channel类
-      long chunk = downModel.getTaskInfo().getFileSize() / connections;
-      AtomicInteger doneConnections = new AtomicInteger(connections);
-      AtomicLong fileDownSize = new AtomicLong();
-      callback.start(downModel.getTaskInfo());
-      for (int i = 0; i < connections; i++) {
-        ChannelFuture cf = bootstrap
-            .handler(
-                new HttpDownInitializer(requestProto.getSsl(), downModel.getTaskInfo(), i, file,
-                    doneConnections,
-                    fileDownSize, callback))
-            .connect(requestProto.getHost(), requestProto.getPort());
-        //计算Range
-        long start = i * chunk;
-        long end = i + 1 == connections ?
-            (i + 1) * chunk + downModel.getTaskInfo().getFileSize() % connections - 1
-            : (i + 1) * chunk - 1;
-        ChunkInfo chunkInfo = new ChunkInfo(UUID.randomUUID().toString(), 0, end - start + 1, 0, 0,
-            1);
-        callback.chunkStart(downModel.getTaskInfo(), chunkInfo);
-        cf.addListener((ChannelFutureListener) future -> {
-          if (future.isSuccess()) {
-            downModel.getRequest().headers()
-                .set(HttpHeaderNames.RANGE, "bytes=" + start + "-" + end);
-            future.channel().writeAndFlush(downModel.getRequest());
-          }
-        });
-      }
-    } catch (Exception e) {
-      throw e;
-    }
-
-  }*/
-
-  public static void fastDown(HttpDownInfo httpDownInfo, HttpDownCallback callback)
+  public static void taskDown(HttpDownInfo httpDownInfo, HttpDownCallback callback)
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+    taskInfo.setCallback(callback);
     RequestProto requestProto = ProtoUtil.getRequestProto(httpDownInfo.getRequest());
     File file = new File(taskInfo.getFilePath() + File.separator + taskInfo.getFileName());
     if (file.exists()) {
@@ -210,16 +225,14 @@ public class HttpDown {
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")
     ) {
       randomAccessFile.setLength(taskInfo.getTotalSize());
-      Bootstrap bootstrap = new Bootstrap();
-      bootstrap.group(HttpDownServer.LOOP_GROUP) // 注册线程池
-          .channel(NioSocketChannel.class); // 使用NioSocketChannel来作为连接用的channel类
       //文件下载开始回调
       taskInfo.setStatus(1);
       taskInfo.setStartTime(System.currentTimeMillis());
       callback.start(taskInfo);
-      for (int i = 0; i < taskInfo.getConnections(); i++) {
-        ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
-        ChannelFuture cf = bootstrap
+      for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
+        chunkDown(httpDownInfo, taskInfo.getChunkInfoList().get(i), requestProto);
+        /*ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
+        ChannelFuture cf = HttpDownServer.DOWN_BOOT
             .handler(
                 new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
             .connect(requestProto.getHost(), requestProto.getPort());
@@ -234,11 +247,77 @@ public class HttpDown {
                     "bytes=" + chunkInfo.getStartPosition() + "-" + chunkInfo.getEndPosition());
             future.channel().writeAndFlush(httpDownInfo.getRequest());
           }
-        });
+        });*/
       }
     } catch (Exception e) {
       throw e;
     }
+  }
 
+  public static void chunkDown(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo,
+      RequestProto requestProto)
+      throws Exception {
+    TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+    HttpDownCallback callback = taskInfo.getCallback();
+    ChannelFuture cf = HttpDownServer.DOWN_BOOT
+        .handler(
+            new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
+        .connect(requestProto.getHost(), requestProto.getPort());
+    cf.addListener((ChannelFutureListener) future -> {
+      if (future.isSuccess()) {
+        httpDownInfo.getRequest().headers()
+            .set(HttpHeaderNames.RANGE,
+                "bytes=" + chunkInfo.getNowStartPosition() + "-" + chunkInfo.getEndPosition());
+        future.channel().writeAndFlush(httpDownInfo.getRequest());
+      } else {
+        //失败等30s重试
+        TimeUnit.SECONDS.sleep(30);
+        retryDown(taskInfo,chunkInfo);
+      }
+    });
+  }
+
+  /**
+   * 下载重试
+   */
+  public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
+      throws Exception {
+    safeClose(chunkInfo.getChannel(),chunkInfo.getFileChannel());
+    chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
+    RequestProto requestProto = ProtoUtil
+        .getRequestProto(httpDownInfo.getRequest());
+    chunkDown(httpDownInfo, chunkInfo, requestProto);
+  }
+
+  public static void safeClose(Channel channel,FileChannel fileChannel){
+    try {
+      if (channel != null && channel.isOpen()) {
+        //关闭旧的下载连接
+        channel.close();
+      }
+      if (fileChannel != null && fileChannel.isOpen()) {
+        //关闭旧的下载文件连接
+        fileChannel.close();
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void serialize(Serializable object, String path) throws IOException {
+    try (
+        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(path))
+    ) {
+      outputStream.writeObject(object);
+    }
+  }
+
+  public static Object deserialize(String path) throws IOException, ClassNotFoundException {
+    try (
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))
+    ) {
+      return ois.readObject();
+    }
   }
 }

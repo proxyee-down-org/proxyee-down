@@ -1,4 +1,4 @@
-package lee.study.intercept;
+package lee.study.down.intercept;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -7,7 +7,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.util.HttpDownUtil;
+import lee.study.down.util.HttpDownUtil;
 
 public class HttpDownSniffIntercept extends HttpProxyIntercept {
 

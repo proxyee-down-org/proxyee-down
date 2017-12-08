@@ -1,4 +1,4 @@
-package lee.study.hanndle;
+package lee.study.down.hanndle;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -11,11 +11,15 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import lee.study.down.HttpDownCallback;
-import lee.study.model.ChunkInfo;
-import lee.study.model.TaskInfo;
+import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.TaskInfo;
+import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.server.HttpProxyServer;
 
 public class HttpDownInitializer extends ChannelInitializer {
@@ -33,14 +37,11 @@ public class HttpDownInitializer extends ChannelInitializer {
     this.taskInfo = taskInfo;
     this.chunkInfo = chunkInfo;
     this.callback = callback;
-
-    this.fileChannel = new RandomAccessFile(
-        new File(taskInfo.getFilePath() + File.separator + taskInfo.getFileName()), "rw")
-        .getChannel();
   }
 
   @Override
   protected void initChannel(Channel ch) throws Exception {
+    this.chunkInfo.setChannel(ch);
     if (isSsl) {
       ch.pipeline().addLast(HttpProxyServer.clientSslCtx.newHandler(ch.alloc()));
     }
@@ -54,8 +55,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
-            byteBuf.readBytes(fileChannel, chunkInfo.getStartPosition() + chunkInfo.getDownSize(),
-                readableBytes);
+            fileChannel.write(byteBuf.nioBuffer());
             //文件已下载大小
             chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
             taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
@@ -77,6 +77,19 @@ public class HttpDownInitializer extends ChannelInitializer {
                 ctx.channel().close();
               }
             }
+          } else {
+            fileChannel = new RandomAccessFile(
+                taskInfo.getFilePath() + File.separator + taskInfo.getFileName(), "rw")
+                .getChannel();
+            fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+            chunkInfo.setFileChannel(fileChannel);
+            //分段下载开始回调
+            chunkInfo.setStatus(1);
+            //只初始化一次
+            if (chunkInfo.getStartTime() <= 0) {
+              chunkInfo.setStartTime(System.currentTimeMillis());
+              callback.chunkStart(taskInfo, chunkInfo);
+            }
           }
         } catch (Exception e) {
           e.printStackTrace();
@@ -87,11 +100,13 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        taskInfo.setStatus(3);
+//        taskInfo.setStatus(3);
+        System.out.println(
+            "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getChannel().id() + "\t"
+                + chunkInfo.getDownSize());
         chunkInfo.setStatus(3);
         callback.error(taskInfo, chunkInfo, cause);
-        super.exceptionCaught(ctx, cause);
-        ctx.channel().close();
+        //super.exceptionCaught(ctx, cause);
       }
 
       @Override
@@ -107,18 +122,4 @@ public class HttpDownInitializer extends ChannelInitializer {
     super.exceptionCaught(ctx, cause);
   }
 
-  public static void main(String[] args) throws Exception {
-    int connections = 2;
-    long fileSize = 76351;
-    long chunk = fileSize / connections;
-    for (int index = 0; index < 2; index++) {
-      long start = index * chunk;
-      long end = index + 1 == connections ? (index + 1) * chunk + fileSize % connections - 1
-          : (index + 1) * chunk - 1;
-      System.out.println(start + "\t" + end);
-    }
-    ByteBuf byteBuf = Unpooled.buffer(5);
-    byteBuf.writeBytes(new byte[]{1, 2, 3, 4});
-    System.out.println(byteBuf.readableBytes());
-  }
 }

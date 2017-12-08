@@ -1,4 +1,4 @@
-package lee.study.ws;
+package lee.study.down.ws;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

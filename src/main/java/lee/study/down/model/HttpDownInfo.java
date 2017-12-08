@@ -1,4 +1,4 @@
-package lee.study.model;
+package lee.study.down.model;
 
 import io.netty.handler.codec.http.HttpRequest;
 import java.io.Serializable;

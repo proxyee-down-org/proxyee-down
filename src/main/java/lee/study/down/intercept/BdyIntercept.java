@@ -1,4 +1,4 @@
-package lee.study.intercept;
+package lee.study.down.intercept;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.util.HttpDownUtil;
+import lee.study.down.util.HttpDownUtil;
 
 /**
  * 破解百度云PC浏览器版大文件下载限制

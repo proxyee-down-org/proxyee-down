@@ -1,4 +1,4 @@
-package lee.study.model;
+package lee.study.down.model;
 
 import io.netty.handler.codec.http.HttpHeaders;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import lee.study.util.HttpDownUtil;
+import lee.study.down.util.HttpDownUtil;
 
 public class HttpHeadsInfo extends HttpHeaders implements Serializable {
 
@@ -163,11 +163,5 @@ public class HttpHeadsInfo extends HttpHeaders implements Serializable {
   public HttpHeaders clear() {
     map.clear();
     return this;
-  }
-
-  public static void main(String[] args) throws IOException, ClassNotFoundException {
-    HttpDownInfo httpDownInfo = (HttpDownInfo) HttpDownUtil
-        .deserialize("E:\\study\\proxyee-down\\target\\classes\\宽带.jpg.cfg");
-    System.out.println(httpDownInfo.toString());
   }
 }

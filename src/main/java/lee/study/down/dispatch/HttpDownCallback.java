@@ -1,7 +1,7 @@
-package lee.study.down;
+package lee.study.down.dispatch;
 
-import lee.study.model.ChunkInfo;
-import lee.study.model.TaskInfo;
+import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.TaskInfo;
 
 public interface HttpDownCallback {
 

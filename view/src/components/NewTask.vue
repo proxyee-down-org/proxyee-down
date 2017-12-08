@@ -10,8 +10,8 @@
       <el-input v-model="form.path"/>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="onSubmit">创建</el-button>
-      <el-button>取消</el-button>
+      <el-button type="primary" @click="onSubmit" :disabled="load">创建</el-button>
+      <el-button @click="onCancle">取消</el-button>
     </el-form-item>
   </el-form>
 </template>
@@ -22,6 +22,7 @@
   export default {
     data() {
       return {
+        load: true,
         form: {
           id: this.$route.params.id,
           fileName: '',
@@ -48,10 +49,12 @@
             this.$router.push('/')
           }
         })
+      },
+      onCancle() {
+        window.history.go(-1);
       }
     },
     created() {
-
       this.$http.get('api/getTask?id=' + this.form.id)
       .then((response) => {
         let res = response.data;
@@ -59,6 +62,7 @@
         this.form.totalSize = res.totalSize;
         this.form.supportRange = res.supportRange;
         this.form.connections = res.connections;
+        this.load = false;
       })
     }
   }
