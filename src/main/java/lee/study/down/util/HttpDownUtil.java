@@ -182,8 +182,8 @@ public class HttpDownUtil {
         for (int i = 0; i < chs.length; i++) {
           bts[i] = (byte) chs[i];
         }
-        fileName = new String(bts);
         try {
+          fileName = new String(bts, "UTF-8");
           fileName = URLDecoder.decode(fileName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
           fileName = null;
@@ -272,7 +272,7 @@ public class HttpDownUtil {
       } else {
         //失败等30s重试
         TimeUnit.SECONDS.sleep(30);
-        retryDown(taskInfo,chunkInfo);
+        retryDown(taskInfo, chunkInfo);
       }
     });
   }
@@ -282,7 +282,7 @@ public class HttpDownUtil {
    */
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
-    safeClose(chunkInfo.getChannel(),chunkInfo.getFileChannel());
+    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
     chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
     HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
     RequestProto requestProto = ProtoUtil
@@ -290,7 +290,7 @@ public class HttpDownUtil {
     chunkDown(httpDownInfo, chunkInfo, requestProto);
   }
 
-  public static void safeClose(Channel channel,FileChannel fileChannel){
+  public static void safeClose(Channel channel, FileChannel fileChannel) {
     try {
       if (channel != null && channel.isOpen()) {
         //关闭旧的下载连接
