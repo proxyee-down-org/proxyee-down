@@ -29,7 +29,7 @@
           totalSize: 0,
           supportRange: false,
           connections: 1,
-          path: 'f:/down',
+          path: '',
         },
       }
     },
@@ -45,8 +45,10 @@
       onSubmit() {
         this.$http.post('api/startTask', this.form)
         .then((response) => {
-          if (response.data == 'Y') {
+          if (response.data.result == 'Y') {
             this.$router.push('/')
+          }else{
+            this.$message(response.data.msg);
           }
         })
       },

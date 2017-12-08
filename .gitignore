@@ -33,4 +33,5 @@ yarn-error.log*
 *.sln
 
 # vue.js build
-src/main/resources/view
+src/main/resources/view/
+target/
