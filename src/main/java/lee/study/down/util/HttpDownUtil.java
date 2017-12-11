@@ -304,20 +304,4 @@ public class HttpDownUtil {
       e.printStackTrace();
     }
   }
-
-  public static void serialize(Serializable object, String path) throws IOException {
-    try (
-        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(path))
-    ) {
-      outputStream.writeObject(object);
-    }
-  }
-
-  public static Object deserialize(String path) throws IOException, ClassNotFoundException {
-    try (
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))
-    ) {
-      return ois.readObject();
-    }
-  }
 }

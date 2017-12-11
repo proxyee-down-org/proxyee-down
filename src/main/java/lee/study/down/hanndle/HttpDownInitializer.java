@@ -16,6 +16,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
@@ -100,10 +103,8 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//        taskInfo.setStatus(3);
         System.out.println(
-            "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getChannel().id() + "\t"
-                + chunkInfo.getDownSize());
+            "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         chunkInfo.setStatus(3);
         callback.error(taskInfo, chunkInfo, cause);
         //super.exceptionCaught(ctx, cause);
@@ -120,6 +121,19 @@ public class HttpDownInitializer extends ChannelInitializer {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     super.exceptionCaught(ctx, cause);
+  }
+
+  public static void main(String[] args) throws IOException {
+    byte[] bts1 = new byte[26];
+    for (byte i = 0, j = 'a'; i < bts1.length; i++, j++) {
+      bts1[i] = j;
+    }
+    byte[] bts2 = new byte[26];
+    for (byte i = 0, j = 'A'; i < bts2.length; i++, j++) {
+      bts2[i] = j;
+    }
+    Files.write(Paths.get("f:/down/test1.txt"), bts1);
+    Files.write(Paths.get("f:/down/test2.txt"), bts2);
   }
 
 }

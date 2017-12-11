@@ -1,13 +1,16 @@
 package lee.study.down.dispatch;
 
+import java.io.File;
+import java.io.Serializable;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import lee.study.down.HttpDownServer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.util.ByteUtil;
 
-public class HttpDownProgressPushTask extends Thread{
+public class HttpDownProgressEventTask extends Thread {
 
   @Override
   public void run() {
@@ -24,6 +27,9 @@ public class HttpDownProgressPushTask extends Thread{
                 }
               }
             }
+            //保存任务进度记录
+            ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
+                taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
             HttpDownServer.sendMsg("progress", taskInfo);
           }
           TimeUnit.MILLISECONDS.sleep(200);

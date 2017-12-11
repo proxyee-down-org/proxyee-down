@@ -25,12 +25,18 @@ public class HttpDownErrorCheckTask extends Thread {
             TaskInfo taskInfo = entry.getValue().getTaskInfo();
             if (taskInfo.getStatus() == 1) {
               for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
-                if (chunkInfo.getStatus() == 1) {
+                //待下载
+                if (chunkInfo.getStatus() == 0) {
+                  System.out.println(
+                      "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                  HttpDownUtil.retryDown(taskInfo, chunkInfo);
+                } else if (chunkInfo.getStatus() == 1) {
                   String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
                   Long downSize = flagMap.get(key);
                   //下载失败
-                  if (downSize != null && downSize == chunkInfo.getDownSize()) {
-                    System.out.println("60秒内无响应重试："+chunkInfo.getIndex()+"\t"+chunkInfo.getChannel().id()+"\t"+chunkInfo.getDownSize());
+                  if ((downSize != null && downSize == chunkInfo.getDownSize())) {
+                    System.out.println(
+                        "60秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                     chunkInfo.setStatus(3);
                     HttpDownUtil.retryDown(taskInfo, chunkInfo);
                   } else {

@@ -1,12 +1,14 @@
 package lee.study.down.controller;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lee.study.down.HttpDownServer;
 import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.dispatch.HttpDownStartCallback;
 import lee.study.down.form.DownForm;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
@@ -73,46 +75,7 @@ public class HttpDownController {
             chunkInfoList.add(chunkInfo);
           }
           taskInfo.setChunkInfoList(chunkInfoList);
-      /*HttpDownUtil.serialize(httpDownModel,
-          httpDownModel.getTaskInfo().getFilePath() + File.separator
-              + httpDownModel.getTaskInfo().getFileName() + ".cfg");*/
-          HttpDownUtil.taskDown(httpDownModel, new HttpDownCallback() {
-
-            @Override
-            public void start(TaskInfo taskInfo) {
-              //标记为下载中并记录开始时间
-              HttpDownServer.sendMsg("start", taskInfo);
-            }
-
-            @Override
-            public void chunkStart(TaskInfo taskInfo, ChunkInfo chunkInfo) {
-
-            }
-
-            @Override
-            public void progress(TaskInfo taskInfo, ChunkInfo chunkInfo) {
-
-            }
-
-            @Override
-            public void error(TaskInfo taskInfo, ChunkInfo chunkInfo, Throwable cause) {
-              try {
-                HttpDownUtil.retryDown(taskInfo, chunkInfo);
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            }
-
-            @Override
-            public void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo) {
-              HttpDownServer.sendMsg("chunkDone", taskInfo);
-            }
-
-            @Override
-            public void done(TaskInfo taskInfo) {
-              HttpDownServer.sendMsg("done", taskInfo);
-            }
-          });
+          HttpDownUtil.taskDown(httpDownModel, new HttpDownStartCallback());
         } catch (Exception e) {
           e.printStackTrace();
           map.put("msg", "服务器异常！");
@@ -121,7 +84,7 @@ public class HttpDownController {
       } else {
         map.put("msg", "路径不存在！");
       }
-    }else{
+    } else {
       map.put("msg", "路径不能为空！");
     }
     return map;

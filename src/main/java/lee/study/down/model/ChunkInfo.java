@@ -1,5 +1,6 @@
 package lee.study.down.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.channel.Channel;
 import java.io.Serializable;
 import java.nio.channels.FileChannel;
@@ -21,7 +22,9 @@ public class ChunkInfo implements Serializable {
   private long lastTime = 0;
   private int status = 0; //0.待下载 //1.下载中 2.下载完成 3.下载失败
 
+  @JsonIgnore
   private transient Channel channel;
+  @JsonIgnore
   private transient FileChannel fileChannel;
 
   public ChunkInfo() {
