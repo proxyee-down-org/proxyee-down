@@ -50,7 +50,7 @@
       return {
         tasks: [],
         cellSize: 3,
-        ws: new WebSocket('ws://'+window.location.host+'/ws/progress'),
+        ws: new WebSocket('ws://' + window.location.host + '/ws/progress'),
       }
     },
     methods: {
@@ -108,7 +108,7 @@
       },
     },
     created() {
-      this.$http.get("api/getTaskList")
+      this.$http.get('api/getTaskList')
       .then((response) => {
         if (response.data && response.data.length) {
           response.data.sort((task1, task2) => {
@@ -117,7 +117,7 @@
             this.tasks.push(task);
           });
         }
-      })
+      });
       this.ws.onmessage = (e) => {
         let msg = eval('(' + e.data + ')');
         if (msg.type != 'start') {
@@ -129,7 +129,7 @@
           });
 
         }
-      }
+      };
     }
     ,
     destroyed() {
