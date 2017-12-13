@@ -15,7 +15,7 @@
 ```
 git clone https://github.com/monkeyWie/proxyee-down.git
 cd proxyee-down/view
-npm run install
+npm install
 npm run build
 cd ..
 mvn clean package
