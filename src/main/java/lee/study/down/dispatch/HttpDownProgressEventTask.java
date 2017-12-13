@@ -32,8 +32,8 @@ public class HttpDownProgressEventTask extends Thread {
               HttpDownServer.sendMsg("progress", taskInfo);
             }
           }
-          TimeUnit.MILLISECONDS.sleep(200);
         }
+        TimeUnit.MILLISECONDS.sleep(200);
       }
     } catch (Exception e) {
       e.printStackTrace();

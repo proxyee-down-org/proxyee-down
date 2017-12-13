@@ -1,5 +1,8 @@
 export default {
   sizeFmt(size) {
+    if(size<=0){
+      return "未知大小";
+    }
     let unit = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
     let pow = 0;
     let temp = size;

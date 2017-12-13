@@ -46,8 +46,8 @@ public class HttpDownErrorCheckTask extends Thread {
               }
             }
           }
-          TimeUnit.MILLISECONDS.sleep(60000);
         }
+        TimeUnit.MILLISECONDS.sleep(60000);
       }
     } catch (Exception e) {
       e.printStackTrace();
