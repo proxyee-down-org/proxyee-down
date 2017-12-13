@@ -125,7 +125,7 @@ public class HttpDownServer implements InitializingBean {
             if(cause instanceof ConnectException){
               System.out.println("连接超时:"+cause.toString());
             }else if (cause instanceof IOException){
-              System.out.println("网络异常:"+cause.toString());
+              System.out.println("IO异常:"+cause.toString());
             }else{
               cause.printStackTrace();
             }
