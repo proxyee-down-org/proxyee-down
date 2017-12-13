@@ -13,6 +13,12 @@
   ![](https://img.shields.io/badge/JAVA-1.8%2B-brightgreen.svg) ![](https://img.shields.io/badge/maven-3.0%2B-brightgreen.svg) ![](https://img.shields.io/badge/node.js-8.0%2B-brightgreen.svg)
 #### 编译
 ```
+#proxyee依赖编译
+git clone https://github.com/monkeyWie/proxyee.git
+cd proxyee
+mvn clean install
+
+#proxyee-down编译
 git clone https://github.com/monkeyWie/proxyee-down.git
 cd proxyee-down/view
 npm install
