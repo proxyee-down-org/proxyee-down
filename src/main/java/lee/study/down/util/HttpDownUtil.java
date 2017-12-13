@@ -147,9 +147,8 @@ public class HttpDownUtil {
                       if (httpResponse.status().equals(HttpResponseStatus.PARTIAL_CONTENT)) {
                         taskInfo.setSupportRange(true);
                       }
-                      cdl.countDown();
-                    } else if (msg0 instanceof DefaultLastHttpContent) {
                       ctx0.channel().close();
+                      cdl.countDown();
                     }
                   }
                 });

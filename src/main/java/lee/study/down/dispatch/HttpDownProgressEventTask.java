@@ -26,11 +26,11 @@ public class HttpDownProgressEventTask extends Thread {
                   chunkInfo.setLastTime(System.currentTimeMillis());
                 }
               }
+              //保存任务进度记录
+              ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
+                  taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
+              HttpDownServer.sendMsg("progress", taskInfo);
             }
-            //保存任务进度记录
-            ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
-                taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
-            HttpDownServer.sendMsg("progress", taskInfo);
           }
           TimeUnit.MILLISECONDS.sleep(200);
         }
