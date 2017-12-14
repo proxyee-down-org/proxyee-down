@@ -81,6 +81,10 @@
           return Math.floor(task.downSize / usedTime)
         }
         return 0;
+        /*if (task.intervalTime) {
+          return Math.floor(task.intervalDownSize / (task.intervalTime / 1000))
+        }
+        return 0;*/
       },
       leftTime(task) {
         if (task.status == 2) {
@@ -123,6 +127,12 @@
         if (msg.type != 'start') {
           this.tasks.forEach((task, index) => {
             if (task.id == msg.taskInfo.id) {
+              /*msg.taskInfo.intervalTime = msg.taskInfo.lastTime - task.lastTime;
+              msg.taskInfo.intervalDownSize = msg.taskInfo.downSize - task.downSize;
+              msg.taskInfo.chunkInfoList.forEach((chunk,index) => {
+                chunk.intervalTime = chunk.lastTime - task.chunkInfoList[index].lastTime;
+                chunk.intervalDownSize = chunk.downSize - task.chunkInfoList[index].downSize;
+              });*/
               Vue.set(this.tasks, index, msg.taskInfo);
               return false;
             }

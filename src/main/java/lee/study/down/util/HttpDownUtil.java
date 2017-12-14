@@ -18,13 +18,8 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.channels.FileChannel;
@@ -39,8 +34,8 @@ import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.hanndle.HttpDownInitializer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
-import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.proxyee.model.HttpRequestInfo;
 import lee.study.proxyee.server.HttpProxyServer;
 import lee.study.proxyee.util.ProtoUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
@@ -93,8 +88,9 @@ public class HttpDownUtil {
   public static void startDownTask(TaskInfo taskInfo, HttpRequest httpRequest,
       HttpResponse httpResponse, Channel clientChannel) {
     HttpHeaders httpHeaders = httpResponse.headers();
-    HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo,
-        HttpRequestInfo.adapter(httpRequest));
+    /*HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo,
+        HttpRequestInfo.adapter(httpRequest));*/
+    HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest);
     HttpDownServer.DOWN_CONTENT.put(taskInfo.getId(), httpDownInfo);
     httpHeaders.clear();
     httpResponse.setStatus(HttpResponseStatus.OK);
@@ -119,7 +115,7 @@ public class HttpDownUtil {
       NioEventLoopGroup loopGroup) {
     TaskInfo taskInfo = new TaskInfo(
         UUID.randomUUID().toString(), "", getDownFileName(httpRequest, resHeaders), 1,
-        getDownFileSize(resHeaders), false, 0, 0, 0, 0, null, null);
+        getDownFileSize(resHeaders), false, 0, 0, 0, 0);
     //chunked编码不支持断点下载
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       CountDownLatch cdl = new CountDownLatch(1);
@@ -157,8 +153,15 @@ public class HttpDownUtil {
             });
         ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort()).sync();
         //请求下载一个字节测试是否支持断点下载
+        HttpRequestInfo requestInfo = (HttpRequestInfo) httpRequest;
         httpRequest.headers().set(HttpHeaderNames.RANGE, "bytes=0-0");
         cf.channel().writeAndFlush(httpRequest);
+        if (requestInfo.content() != null) {
+          //请求体写入
+          HttpContent content = new DefaultLastHttpContent();
+          content.content().writeBytes(requestInfo.content());
+          cf.channel().writeAndFlush(content);
+        }
         cdl.await(30, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         e.printStackTrace();
@@ -190,7 +193,7 @@ public class HttpDownUtil {
       }
     }
     if (fileName == null) {
-      Pattern pattern = Pattern.compile("^.*/([^/]*)$");
+      Pattern pattern = Pattern.compile("^.*/([^/]*\\.[^./]{1,5})(\\?[^?]*)?$");
       Matcher matcher = pattern.matcher(httpRequest.uri());
       if (matcher.find()) {
         fileName = matcher.group(1);
@@ -223,7 +226,9 @@ public class HttpDownUtil {
     try (
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")
     ) {
-      randomAccessFile.setLength(taskInfo.getTotalSize());
+      if (taskInfo.getTotalSize() > 0) {
+        randomAccessFile.setLength(taskInfo.getTotalSize());
+      }
       //文件下载开始回调
       taskInfo.setStatus(1);
       taskInfo.setStartTime(System.currentTimeMillis());
@@ -264,10 +269,19 @@ public class HttpDownUtil {
         .connect(requestProto.getHost(), requestProto.getPort());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
-        httpDownInfo.getRequest().headers()
-            .set(HttpHeaderNames.RANGE,
-                "bytes=" + chunkInfo.getNowStartPosition() + "-" + chunkInfo.getEndPosition());
+        HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
+        if (httpDownInfo.getTaskInfo().isSupportRange()) {
+          requestInfo.headers()
+              .set(HttpHeaderNames.RANGE,
+                  "bytes=" + chunkInfo.getNowStartPosition() + "-" + chunkInfo.getEndPosition());
+        }
         future.channel().writeAndFlush(httpDownInfo.getRequest());
+        if (requestInfo.content() != null) {
+          //请求体写入
+          HttpContent content = new DefaultLastHttpContent();
+          content.content().writeBytes(requestInfo.content());
+          future.channel().writeAndFlush(content);
+        }
       } else {
         //失败等30s重试
         TimeUnit.SECONDS.sleep(30);
@@ -282,7 +296,9 @@ public class HttpDownUtil {
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+    if (taskInfo.isSupportRange()) {
+      chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+    }
     HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
     RequestProto requestProto = ProtoUtil
         .getRequestProto(httpDownInfo.getRequest());

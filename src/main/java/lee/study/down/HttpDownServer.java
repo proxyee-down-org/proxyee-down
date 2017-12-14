@@ -6,7 +6,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.HashMap;
@@ -21,7 +20,7 @@ import lee.study.down.intercept.BdyIntercept;
 import lee.study.down.intercept.HttpDownIntercept;
 import lee.study.down.intercept.HttpDownSniffIntercept;
 import lee.study.down.model.HttpDownInfo;
-import lee.study.down.model.RecordInfo;
+import lee.study.down.model.TaskBaseInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.proxyee.exception.HttpProxyExceptionHandle;
@@ -29,6 +28,7 @@ import lee.study.proxyee.intercept.CertDownIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 import lee.study.proxyee.server.HttpProxyServer;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationHome;
@@ -46,6 +46,7 @@ public class HttpDownServer implements InitializingBean {
   public static final String HOME_PATH = new ApplicationHome(HttpDownServer.class).getDir()
       .getPath();
   public static final String RECORD_PATH = HOME_PATH + File.separator + "records.inf";
+  public static final Map<String, TaskBaseInfo> RECORD_CONTENT = new ConcurrentHashMap<>();
   public static final Map<String, WebSocketSession> WS_CONTENT = new ConcurrentHashMap<>();
   public static final Map<String, HttpDownInfo> DOWN_CONTENT = new ConcurrentHashMap<>();
 
@@ -84,24 +85,30 @@ public class HttpDownServer implements InitializingBean {
     //读取之前的下载信息
     File file = new File(RECORD_PATH);
     if (file.exists()) {
-      try (
-          FileInputStream inputStream = new FileInputStream(file);
-      ) {
-        byte[] head = new byte[4];
-        while (inputStream.read(head) != -1) {
-          byte[] body = new byte[ByteUtil.btsToInt(head)];
-          inputStream.read(body);
-          RecordInfo recordInfo = (RecordInfo) ByteUtil.deserialize(body);
-          HttpDownInfo httpDownInfo = (HttpDownInfo) ByteUtil.deserialize(
-              recordInfo.getFilePath() + File.separator + recordInfo.getFileName() + ".inf");
-          TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-          taskInfo.setCallback(new HttpDownStartCallback());
-          //全部标记为失败
-          taskInfo.getChunkInfoList().forEach(chunk -> chunk.setStatus(0));
-          DOWN_CONTENT.put(taskInfo.getId(), httpDownInfo);
+      try {
+        RECORD_CONTENT.putAll((Map) ByteUtil.deserialize(RECORD_PATH));
+        for (Entry<String, TaskBaseInfo> entry : RECORD_CONTENT.entrySet()) {
+          HttpDownInfo httpDownInfo;
+          TaskBaseInfo taskBaseInfo = entry.getValue();
+          File taskInfoFile = new File(
+              taskBaseInfo.getFilePath() + File.separator + taskBaseInfo.getFileName() + ".inf");
+          if (taskInfoFile.exists()) {
+            //下载中的还原之前的状态
+            httpDownInfo = (HttpDownInfo) ByteUtil.deserialize(taskInfoFile.getPath());
+            TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+            taskInfo.setCallback(new HttpDownStartCallback());
+            //全部标记为失败,等待重新下载
+            taskInfo.getChunkInfoList().forEach(chunk -> chunk.setStatus(3));
+          } else {
+            //下载完成的
+            TaskInfo temp = new TaskInfo();
+            BeanUtils.copyProperties(taskBaseInfo, temp);
+            httpDownInfo = new HttpDownInfo(temp, null);
+          }
+          DOWN_CONTENT.put(taskBaseInfo.getId(), httpDownInfo);
         }
       } catch (Exception e) {
-        e.printStackTrace();
+        System.out.println("加载配置文件失败：" + e.getMessage());
       }
     }
 
@@ -119,21 +126,21 @@ public class HttpDownServer implements InitializingBean {
             pipeline.addLast(new HttpDownIntercept());
           }
         })
-        .httpProxyExceptionHandle(new HttpProxyExceptionHandle(){
+        .httpProxyExceptionHandle(new HttpProxyExceptionHandle() {
           @Override
           public void beforeCatch(Channel clientChannel, Throwable cause) {
-            if(cause instanceof ConnectException){
-              System.out.println("连接超时:"+cause.toString());
-            }else if (cause instanceof IOException){
-              System.out.println("IO异常:"+cause.toString());
-            }else{
+            if (cause instanceof ConnectException) {
+              System.out.println("连接超时:" + cause.toString());
+            } else if (cause instanceof IOException) {
+              System.out.println("IO异常:" + cause.toString());
+            } else {
               cause.printStackTrace();
             }
           }
 
           @Override
           public void afterCatch(Channel clientChannel, Channel proxyChannel, Throwable cause) {
-            beforeCatch(clientChannel,cause);
+            beforeCatch(clientChannel, cause);
           }
         })
         .start(port);

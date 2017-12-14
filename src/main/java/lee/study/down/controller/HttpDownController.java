@@ -28,7 +28,8 @@ public class HttpDownController {
   @RequestMapping("/getTask")
   @ResponseBody
   public TaskInfo getTask(@RequestParam String id) {
-    return HttpDownServer.DOWN_CONTENT.get(id).getTaskInfo();
+    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(id);
+    return httpDownInfo == null ? null : httpDownInfo.getTaskInfo();
   }
 
   @RequestMapping("/getTaskList")
@@ -59,20 +60,30 @@ public class HttpDownController {
           HttpDownInfo httpDownModel = HttpDownServer.DOWN_CONTENT.get(downForm.getId());
           TaskInfo taskInfo = httpDownModel.getTaskInfo();
           taskInfo.setFilePath(downForm.getPath());
-          taskInfo.setConnections(downForm.getConnections());
-          //计算chunk列表
           List<ChunkInfo> chunkInfoList = new ArrayList<>();
-          for (int i = 0; i < downForm.getConnections(); i++) {
-            ChunkInfo chunkInfo = new ChunkInfo();
-            chunkInfo.setIndex(i);
-            long chunkSize = taskInfo.getTotalSize() / downForm.getConnections();
-            chunkInfo.setOriStartPosition(i * chunkSize);
-            chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
-            if (i == downForm.getConnections() - 1) { //最后一个连接去下载多出来的字节
-              chunkSize += taskInfo.getTotalSize() % downForm.getConnections();
+          if (taskInfo.getTotalSize() > 0) {  //非chunked编码
+            if (taskInfo.isSupportRange()) {
+              taskInfo.setConnections(downForm.getConnections());
             }
-            chunkInfo.setEndPosition(chunkInfo.getOriStartPosition() + chunkSize - 1);
-            chunkInfo.setTotalSize(chunkSize);
+            //计算chunk列表
+            for (int i = 0; i < downForm.getConnections(); i++) {
+              ChunkInfo chunkInfo = new ChunkInfo();
+              chunkInfo.setIndex(i);
+              long chunkSize = taskInfo.getTotalSize() / downForm.getConnections();
+              chunkInfo.setOriStartPosition(i * chunkSize);
+              chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
+              if (i == downForm.getConnections() - 1) { //最后一个连接去下载多出来的字节
+                chunkSize += taskInfo.getTotalSize() % downForm.getConnections();
+              }
+              chunkInfo.setEndPosition(chunkInfo.getOriStartPosition() + chunkSize - 1);
+              chunkInfo.setTotalSize(chunkSize);
+              chunkInfoList.add(chunkInfo);
+            }
+          } else { //chunked下载
+            ChunkInfo chunkInfo = new ChunkInfo();
+            chunkInfo.setIndex(0);
+            chunkInfo.setNowStartPosition(0);
+            chunkInfo.setOriStartPosition(0);
             chunkInfoList.add(chunkInfo);
           }
           taskInfo.setChunkInfoList(chunkInfoList);

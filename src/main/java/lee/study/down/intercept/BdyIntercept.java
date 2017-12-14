@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
@@ -46,8 +47,8 @@ public class BdyIntercept extends HttpProxyIntercept {
   private ByteBuf contentBuf;
 
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpResponse httpResponse,
-      HttpProxyInterceptPipeline pipeline) throws Exception {
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
+      HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
     if (HttpDownUtil.checkUrl(httpRequest, "^pan.baidu.com/disk/home.*$")
         && "text/html".equalsIgnoreCase(httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       isMatch = true;
@@ -65,15 +66,17 @@ public class BdyIntercept extends HttpProxyIntercept {
         contentBuf.writeBytes(hookJs.getBytes());
       }
       //直接调用默认拦截器，跳过下载拦截器
-      pipeline.getDefault().afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
+      pipeline.getDefault()
+          .afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse, pipeline);
     } else {
       isMatch = false;
-      pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
+      pipeline.afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse);
     }
   }
 
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpContent httpContent,
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
+      HttpResponse httpResponse, HttpContent httpContent,
       HttpProxyInterceptPipeline pipeline) throws Exception {
     if (isMatch) {
       try {
@@ -89,13 +92,14 @@ public class BdyIntercept extends HttpProxyIntercept {
           HttpContent hookHttpContent = new DefaultLastHttpContent();
           hookHttpContent.content().writeBytes(baos.toByteArray());
           pipeline.getDefault()
-              .afterResponse(clientChannel, proxyChannel, hookHttpContent, pipeline);
+              .afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse,
+                  hookHttpContent, pipeline);
         }
       } finally {
         ReferenceCountUtil.release(httpContent);
       }
     } else {
-      pipeline.afterResponse(clientChannel, proxyChannel, httpContent);
+      pipeline.afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse, httpContent);
     }
   }
 

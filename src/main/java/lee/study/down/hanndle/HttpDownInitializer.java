@@ -84,7 +84,9 @@ public class HttpDownInitializer extends ChannelInitializer {
             fileChannel = new RandomAccessFile(
                 taskInfo.getFilePath() + File.separator + taskInfo.getFileName(), "rw")
                 .getChannel();
-            fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+            if(taskInfo.isSupportRange()){
+              fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+            }
             chunkInfo.setFileChannel(fileChannel);
             //分段下载开始回调
             chunkInfo.setStatus(1);

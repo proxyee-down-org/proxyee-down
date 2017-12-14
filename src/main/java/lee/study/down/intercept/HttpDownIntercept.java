@@ -1,6 +1,7 @@
 package lee.study.down.intercept;
 
 import io.netty.channel.Channel;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import lee.study.down.HttpDownServer;
 import lee.study.down.model.TaskInfo;
@@ -11,11 +12,10 @@ import lee.study.down.util.HttpDownUtil;
 public class HttpDownIntercept extends HttpProxyIntercept {
 
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel,
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
       HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
     TaskInfo taskInfo = HttpDownUtil
         .getTaskInfo(httpRequest, httpResponse.headers(), HttpDownServer.LOOP_GROUP);
     HttpDownUtil.startDownTask(taskInfo, httpRequest, httpResponse, clientChannel);
-    return;
   }
 }

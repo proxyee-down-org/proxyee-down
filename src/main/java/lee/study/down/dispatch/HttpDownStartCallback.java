@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import lee.study.down.HttpDownServer;
 import lee.study.down.model.ChunkInfo;
-import lee.study.down.model.RecordInfo;
+import lee.study.down.model.TaskBaseInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.HttpDownUtil;
@@ -18,9 +18,8 @@ public class HttpDownStartCallback implements HttpDownCallback {
   public void start(TaskInfo taskInfo) {
     try {
       //保存下载记录
-      RecordInfo recordInfo = new RecordInfo(taskInfo.getId(), taskInfo.getFilePath(),
-          taskInfo.getFileName());
-      ByteUtil.appendObject(recordInfo, HttpDownServer.RECORD_PATH);
+      HttpDownServer.RECORD_CONTENT.put(taskInfo.getId(), taskInfo);
+      ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
       //保存任务进度记录
       ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
           taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
@@ -58,12 +57,29 @@ public class HttpDownStartCallback implements HttpDownCallback {
   @Override
   public void done(TaskInfo taskInfo) {
     try {
-      //保存任务进度记录
-      ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
-          taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
+      //更改任务下载状态为已完成
+      if (taskInfo.getTotalSize() == -1) {  //chunked编码最后更新文件大小
+        taskInfo.setTotalSize(taskInfo.getDownSize());
+        taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
+      }
+      TaskBaseInfo taskBaseInfo = HttpDownServer.RECORD_CONTENT.get(taskInfo.getId());
+      taskBaseInfo.setStatus(2);
+      if (taskBaseInfo.getTotalSize() == -1) {  //chunked编码最后更新文件大小
+        taskBaseInfo.setTotalSize(taskInfo.getDownSize());
+      }
+      ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
+      //删除任务进度记录文件
+      synchronized (taskInfo) {
+        Files.deleteIfExists(
+            Paths.get(taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf"));
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
     HttpDownServer.sendMsg("done", taskInfo);
+  }
+
+  private static void updateTotalSize(TaskBaseInfo taskInfo) {
+
   }
 }

@@ -17,16 +17,16 @@ public class HttpDownErrorCheckTask extends Thread {
 
   @Override
   public void run() {
-    try {
-      Map<String, Long> flagMap = new HashMap<>();
-      while (true) {
+    Map<String, Long> flagMap = new HashMap<>();
+    while (true) {
+      try {
         if (HttpDownServer.DOWN_CONTENT != null && HttpDownServer.DOWN_CONTENT.size() > 0) {
           for (Entry<String, HttpDownInfo> entry : HttpDownServer.DOWN_CONTENT.entrySet()) {
             TaskInfo taskInfo = entry.getValue().getTaskInfo();
             if (taskInfo.getStatus() == 1) {
               for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
                 //待下载
-                if (chunkInfo.getStatus() == 0) {
+                if (chunkInfo.getStatus() == 3) {
                   System.out.println(
                       "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                   HttpDownUtil.retryDown(taskInfo, chunkInfo);
@@ -48,9 +48,9 @@ public class HttpDownErrorCheckTask extends Thread {
           }
         }
         TimeUnit.MILLISECONDS.sleep(60000);
+      } catch (Exception e) {
+        e.printStackTrace();
       }
-    } catch (Exception e) {
-      e.printStackTrace();
     }
   }
 }

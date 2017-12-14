@@ -1,19 +1,63 @@
 package lee.study.down.intercept;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.util.ReferenceCountUtil;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.down.util.HttpDownUtil;
+import lee.study.proxyee.model.HttpRequestInfo;
 
 public class HttpDownSniffIntercept extends HttpProxyIntercept {
 
+  private ByteBuf content;
+
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel,
-      final HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
+  public void beforeRequest(Channel clientChannel, HttpRequest httpRequest,
+      HttpProxyInterceptPipeline pipeline) throws Exception {
+    String contentLength = httpRequest.headers().get(HttpHeaderNames.CONTENT_LENGTH);
+    //缓存request content
+    if (contentLength != null) {
+      content = PooledByteBufAllocator.DEFAULT.buffer();
+    }
+    pipeline.beforeRequest(clientChannel, httpRequest);
+  }
+
+  @Override
+  public void beforeRequest(Channel clientChannel, HttpRequest httpRequest, HttpContent httpContent,
+      HttpProxyInterceptPipeline pipeline) throws Exception {
+    if (content != null) {
+      ByteBuf temp = httpContent.content().slice();
+      content.writeBytes(temp);
+      if (httpContent instanceof LastHttpContent) {
+        try {
+          byte[] contentBts = new byte[content.readableBytes()];
+          content.readBytes(contentBts);
+          ((HttpRequestInfo) httpRequest).setContent(contentBts);
+        } finally {
+          ReferenceCountUtil.release(content);
+          content = null; //状态回归
+        }
+      }
+    }
+    pipeline.beforeRequest(clientChannel, httpRequest, httpContent);
+  }
+
+  public static void main(String[] args) {
+    ByteBuf content = PooledByteBufAllocator.DEFAULT.heapBuffer();
+    System.out.println(content.refCnt());
+  }
+
+  @Override
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
+      HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
     boolean downFlag = false;
     if ((httpResponse.status().code() + "").indexOf("20") == 0) { //响应码为20x
       HttpHeaders httpResHeaders = httpResponse.headers();
@@ -36,9 +80,15 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
         System.out.println("------------------------------------------------");
         System.out.println(httpResponse.toString());
         System.out.println("================================================");
-        pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
+        pipeline.afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse);
+      } else {
+        HttpRequestInfo httpRequestInfo = (HttpRequestInfo) httpRequest;
+        if (httpRequestInfo.content() != null) {
+          httpRequestInfo.setContent(null);
+        }
       }
     }
-    pipeline.getDefault().afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
+    pipeline.getDefault()
+        .afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse, pipeline);
   }
 }
