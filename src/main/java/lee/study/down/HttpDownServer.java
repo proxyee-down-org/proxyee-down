@@ -98,7 +98,11 @@ public class HttpDownServer implements InitializingBean {
             TaskInfo taskInfo = httpDownInfo.getTaskInfo();
             taskInfo.setCallback(new HttpDownStartCallback());
             //全部标记为失败,等待重新下载
-            taskInfo.getChunkInfoList().forEach(chunk -> chunk.setStatus(3));
+            taskInfo.getChunkInfoList().forEach(chunk -> {
+              if (chunk.getStatus() == 1) {
+                chunk.setStatus(3);
+              }
+            });
           } else {
             //下载完成的
             TaskInfo temp = new TaskInfo();
