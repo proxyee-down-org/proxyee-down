@@ -88,13 +88,7 @@ public class HttpDownInitializer extends ChannelInitializer {
               fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
             }
             chunkInfo.setFileChannel(fileChannel);
-            //分段下载开始回调
-            chunkInfo.setStatus(1);
-            //只初始化一次
-            if (chunkInfo.getStartTime() <= 0) {
-              chunkInfo.setStartTime(System.currentTimeMillis());
-              callback.chunkStart(taskInfo, chunkInfo);
-            }
+            callback.chunkStart(taskInfo, chunkInfo);
           }
         } catch (Exception e) {
           e.printStackTrace();

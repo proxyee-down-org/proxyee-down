@@ -34,6 +34,7 @@ import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 public class BdyIntercept extends HttpProxyIntercept {
 
   private boolean isMatch = false;
+  private boolean isGzip = false;
   private List<ByteBuf> contents;
   private static final String hookJs = "<script>"
       + "var hook=function(){return 'GYun';};"
@@ -57,11 +58,14 @@ public class BdyIntercept extends HttpProxyIntercept {
       }
       //解压gzip响应
       if ("gzip".equalsIgnoreCase(httpResponse.headers().get(HttpHeaderNames.CONTENT_ENCODING))) {
+        isGzip = true;
         pipeline.reset3();
         proxyChannel.pipeline().addAfter("httpCodec", "decompress", new HttpContentDecompressor());
         proxyChannel.pipeline().fireChannelRead(httpResponse);
-      } else {
-        httpResponse.headers().set(HttpHeaderNames.CONTENT_ENCODING, HttpHeaderValues.GZIP);
+      } else{
+        if(isGzip){
+          httpResponse.headers().set(HttpHeaderNames.CONTENT_ENCODING, HttpHeaderValues.GZIP);
+        }
         contentBuf = PooledByteBufAllocator.DEFAULT.buffer();
         contentBuf.writeBytes(hookJs.getBytes());
       }
@@ -82,15 +86,18 @@ public class BdyIntercept extends HttpProxyIntercept {
       try {
         contentBuf.writeBytes(httpContent.content());
         if (httpContent instanceof LastHttpContent) {
-          //转化成gzip编码
-          byte[] temp = new byte[contentBuf.readableBytes()];
-          contentBuf.readBytes(temp);
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          GZIPOutputStream outputStream = new GZIPOutputStream(baos);
-          outputStream.write(temp);
-          outputStream.finish();
           HttpContent hookHttpContent = new DefaultLastHttpContent();
-          hookHttpContent.content().writeBytes(baos.toByteArray());
+          if(isGzip){ //转化成gzip编码
+            byte[] temp = new byte[contentBuf.readableBytes()];
+            contentBuf.readBytes(temp);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            GZIPOutputStream outputStream = new GZIPOutputStream(baos);
+            outputStream.write(temp);
+            outputStream.finish();
+            hookHttpContent.content().writeBytes(baos.toByteArray());
+          }else{
+            hookHttpContent.content().writeBytes(contentBuf);
+          }
           pipeline.getDefault()
               .afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse,
                   hookHttpContent, pipeline);

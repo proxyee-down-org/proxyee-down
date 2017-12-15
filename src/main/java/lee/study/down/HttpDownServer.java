@@ -43,8 +43,10 @@ public class HttpDownServer implements InitializingBean {
   public static final NioEventLoopGroup LOOP_GROUP = new NioEventLoopGroup(1);
   public static final Bootstrap DOWN_BOOT = new Bootstrap().group(LOOP_GROUP)
       .channel(NioSocketChannel.class);
-  public static final String HOME_PATH = new ApplicationHome(HttpDownServer.class).getDir()
-      .getPath();
+  public static final String HOME_PATH =
+      System.getProperty("appdir") != null ? System.getProperty("appdir") //exe4j打包
+          : new ApplicationHome(HttpDownServer.class).getDir()
+              .getPath();
   public static final String RECORD_PATH = HOME_PATH + File.separator + "records.inf";
   public static final Map<String, TaskBaseInfo> RECORD_CONTENT = new ConcurrentHashMap<>();
   public static final Map<String, WebSocketSession> WS_CONTENT = new ConcurrentHashMap<>();

@@ -11,7 +11,7 @@ import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
 
 /**
- * 1分钟内没有下载判断为失败，进行重试
+ * 30秒内没有下载判断为失败，进行重试
  */
 public class HttpDownErrorCheckTask extends Thread {
 
@@ -36,7 +36,7 @@ public class HttpDownErrorCheckTask extends Thread {
                   //下载失败
                   if ((downSize != null && downSize == chunkInfo.getDownSize())) {
                     System.out.println(
-                        "60秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                        "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                     chunkInfo.setStatus(3);
                     HttpDownUtil.retryDown(taskInfo, chunkInfo);
                   } else {
@@ -47,7 +47,7 @@ public class HttpDownErrorCheckTask extends Thread {
             }
           }
         }
-        TimeUnit.MILLISECONDS.sleep(60000);
+        TimeUnit.MILLISECONDS.sleep(30000);
       } catch (Exception e) {
         e.printStackTrace();
       }

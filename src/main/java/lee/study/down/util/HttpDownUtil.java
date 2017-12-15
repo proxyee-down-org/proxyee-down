@@ -234,24 +234,11 @@ public class HttpDownUtil {
       taskInfo.setStartTime(System.currentTimeMillis());
       callback.start(taskInfo);
       for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
-        chunkDown(httpDownInfo, taskInfo.getChunkInfoList().get(i), requestProto);
-        /*ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
-        ChannelFuture cf = HttpDownServer.DOWN_BOOT
-            .handler(
-                new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
-            .connect(requestProto.getHost(), requestProto.getPort());
-        //分段下载开始回调
+        ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
+        //避免分段下载速度比总的下载速度大太多的问题
         chunkInfo.setStatus(1);
-        chunkInfo.setStartTime(System.currentTimeMillis());
-        callback.chunkStart(taskInfo, chunkInfo);
-        cf.addListener((ChannelFutureListener) future -> {
-          if (future.isSuccess()) {
-            httpDownInfo.getRequest().headers()
-                .set(HttpHeaderNames.RANGE,
-                    "bytes=" + chunkInfo.getStartPosition() + "-" + chunkInfo.getEndPosition());
-            future.channel().writeAndFlush(httpDownInfo.getRequest());
-          }
-        });*/
+        chunkInfo.setStartTime(taskInfo.getStartTime());
+        chunkDown(httpDownInfo, chunkInfo, requestProto);
       }
     } catch (Exception e) {
       throw e;
@@ -281,6 +268,7 @@ public class HttpDownUtil {
           HttpContent content = new DefaultLastHttpContent();
           content.content().writeBytes(requestInfo.content());
           future.channel().writeAndFlush(content);
+          requestInfo.setContent(null); //help GC
         }
       } else {
         //失败等30s重试
