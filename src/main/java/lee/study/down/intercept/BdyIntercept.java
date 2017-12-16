@@ -48,9 +48,9 @@ public class BdyIntercept extends HttpProxyIntercept {
   private ByteBuf contentBuf;
 
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
-      HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
-    if (HttpDownUtil.checkUrl(httpRequest, "^pan.baidu.com/disk/home.*$")
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpResponse httpResponse,
+      HttpProxyInterceptPipeline pipeline) throws Exception {
+    if (HttpDownUtil.checkUrl(pipeline.getHttpRequest(), "^pan.baidu.com/disk/home.*$")
         && "text/html".equalsIgnoreCase(httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       isMatch = true;
       if (contents == null) {
@@ -62,8 +62,8 @@ public class BdyIntercept extends HttpProxyIntercept {
         pipeline.reset3();
         proxyChannel.pipeline().addAfter("httpCodec", "decompress", new HttpContentDecompressor());
         proxyChannel.pipeline().fireChannelRead(httpResponse);
-      } else{
-        if(isGzip){
+      } else {
+        if (isGzip) {
           httpResponse.headers().set(HttpHeaderNames.CONTENT_ENCODING, HttpHeaderValues.GZIP);
         }
         contentBuf = PooledByteBufAllocator.DEFAULT.buffer();
@@ -71,23 +71,22 @@ public class BdyIntercept extends HttpProxyIntercept {
       }
       //直接调用默认拦截器，跳过下载拦截器
       pipeline.getDefault()
-          .afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse, pipeline);
+          .afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
     } else {
       isMatch = false;
-      pipeline.afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse);
+      pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
     }
   }
 
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
-      HttpResponse httpResponse, HttpContent httpContent,
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpContent httpContent,
       HttpProxyInterceptPipeline pipeline) throws Exception {
     if (isMatch) {
       try {
         contentBuf.writeBytes(httpContent.content());
         if (httpContent instanceof LastHttpContent) {
           HttpContent hookHttpContent = new DefaultLastHttpContent();
-          if(isGzip){ //转化成gzip编码
+          if (isGzip) { //转化成gzip编码
             byte[] temp = new byte[contentBuf.readableBytes()];
             contentBuf.readBytes(temp);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -95,18 +94,17 @@ public class BdyIntercept extends HttpProxyIntercept {
             outputStream.write(temp);
             outputStream.finish();
             hookHttpContent.content().writeBytes(baos.toByteArray());
-          }else{
+          } else {
             hookHttpContent.content().writeBytes(contentBuf);
           }
           pipeline.getDefault()
-              .afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse,
-                  hookHttpContent, pipeline);
+              .afterResponse(clientChannel, proxyChannel, hookHttpContent, pipeline);
         }
       } finally {
         ReferenceCountUtil.release(httpContent);
       }
     } else {
-      pipeline.afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse, httpContent);
+      pipeline.afterResponse(clientChannel, proxyChannel, httpContent);
     }
   }
 

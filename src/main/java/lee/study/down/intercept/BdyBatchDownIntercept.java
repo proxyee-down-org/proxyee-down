@@ -19,21 +19,21 @@ public class BdyBatchDownIntercept extends HttpProxyIntercept {
   private final static double CHUNK_16M = 1024 * 1024 * 16;
 
   @Override
-  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpRequest httpRequest,
-      HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) throws Exception {
-    if (HttpDownUtil.checkReferer(httpRequest, "^https?://pan.baidu.com/disk/home.*$")
-        && HttpDownUtil.checkUrl(httpRequest, "^.*method=batchdownload.*$")) {
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpResponse httpResponse,
+      HttpProxyInterceptPipeline pipeline) throws Exception {
+    if (HttpDownUtil.checkReferer(pipeline.getHttpRequest(), "^https?://pan.baidu.com/disk/home.*$")
+        && HttpDownUtil.checkUrl(pipeline.getHttpRequest(), "^.*method=batchdownload.*$")) {
       HttpHeaders resHeaders = httpResponse.headers();
       long fileSize = HttpDownUtil.getDownFileSize(resHeaders);
       //百度合并下载分段最多为16M
       int connections = (int) Math.ceil(fileSize / CHUNK_16M);
       TaskInfo taskInfo = new TaskInfo(UUID.randomUUID().toString(), "",
-          HttpDownUtil.getDownFileName(httpRequest, resHeaders), connections,
+          HttpDownUtil.getDownFileName(pipeline.getHttpRequest(), resHeaders), connections,
           fileSize, true, 0, 0, 0,
           0);
-      HttpDownUtil.startDownTask(taskInfo, httpRequest, httpResponse, clientChannel);
+      HttpDownUtil.startDownTask(taskInfo, pipeline.getHttpRequest(), httpResponse, clientChannel);
       return;
     }
-    pipeline.afterResponse(clientChannel, proxyChannel, httpRequest, httpResponse);
+    pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
   }
 }
