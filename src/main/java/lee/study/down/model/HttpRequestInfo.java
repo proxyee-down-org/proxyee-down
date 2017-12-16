@@ -8,11 +8,12 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.io.Serializable;
 import java.util.Map.Entry;
-import lee.study.proxyee.model.HttpHeadsInfo;
+import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpRequestInfo implements HttpRequest, Serializable {
 
   private static final long serialVersionUID = -4521453515739581677L;
+  private RequestProto requestProto;
   private HttpVer version;
   private String method;
   private String uri;
@@ -35,6 +36,15 @@ public class HttpRequestInfo implements HttpRequest, Serializable {
 
   public byte[] content() {
     return content;
+  }
+
+  public RequestProto requestProto() {
+    return requestProto;
+  }
+
+  public HttpRequest setRequestProto(RequestProto requestProto) {
+    this.requestProto = requestProto;
+    return this;
   }
 
   @Override

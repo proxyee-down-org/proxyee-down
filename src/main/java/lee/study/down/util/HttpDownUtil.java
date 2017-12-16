@@ -34,8 +34,8 @@ import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.hanndle.HttpDownInitializer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
+import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.proxyee.model.HttpRequestInfo;
 import lee.study.proxyee.server.HttpProxyServer;
 import lee.study.proxyee.util.ProtoUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
@@ -88,8 +88,6 @@ public class HttpDownUtil {
   public static void startDownTask(TaskInfo taskInfo, HttpRequest httpRequest,
       HttpResponse httpResponse, Channel clientChannel) {
     HttpHeaders httpHeaders = httpResponse.headers();
-    /*HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo,
-        HttpRequestInfo.adapter(httpRequest));*/
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest);
     HttpDownServer.DOWN_CONTENT.put(taskInfo.getId(), httpDownInfo);
     httpHeaders.clear();
@@ -120,7 +118,8 @@ public class HttpDownUtil {
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       CountDownLatch cdl = new CountDownLatch(1);
       try {
-        final ProtoUtil.RequestProto requestProto = ProtoUtil.getRequestProto(httpRequest);
+        HttpRequestInfo requestInfo = (HttpRequestInfo) httpRequest;
+        RequestProto requestProto = requestInfo.requestProto();
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(loopGroup) // 注册线程池
             .channel(NioSocketChannel.class) // 使用NioSocketChannel来作为连接用的channel类
@@ -153,7 +152,6 @@ public class HttpDownUtil {
             });
         ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort()).sync();
         //请求下载一个字节测试是否支持断点下载
-        HttpRequestInfo requestInfo = (HttpRequestInfo) httpRequest;
         httpRequest.headers().set(HttpHeaderNames.RANGE, "bytes=0-0");
         cf.channel().writeAndFlush(httpRequest);
         if (requestInfo.content() != null) {
@@ -218,7 +216,6 @@ public class HttpDownUtil {
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     taskInfo.setCallback(callback);
-    RequestProto requestProto = ProtoUtil.getRequestProto(httpDownInfo.getRequest());
     File file = new File(taskInfo.getFilePath() + File.separator + taskInfo.getFileName());
     if (file.exists()) {
       file.delete();
@@ -238,29 +235,31 @@ public class HttpDownUtil {
         //避免分段下载速度比总的下载速度大太多的问题
         chunkInfo.setStatus(1);
         chunkInfo.setStartTime(taskInfo.getStartTime());
-        chunkDown(httpDownInfo, chunkInfo, requestProto);
+        chunkDown(httpDownInfo, chunkInfo);
       }
     } catch (Exception e) {
       throw e;
     }
   }
 
-  public static void chunkDown(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo,
-      RequestProto requestProto)
+  public static void chunkDown(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo)
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     HttpDownCallback callback = taskInfo.getCallback();
+    HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
+    RequestProto requestProto = requestInfo.requestProto();
     ChannelFuture cf = HttpDownServer.DOWN_BOOT
         .handler(
             new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
         .connect(requestProto.getHost(), requestProto.getPort());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
-        HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
         if (httpDownInfo.getTaskInfo().isSupportRange()) {
           requestInfo.headers()
               .set(HttpHeaderNames.RANGE,
                   "bytes=" + chunkInfo.getNowStartPosition() + "-" + chunkInfo.getEndPosition());
+        } else {
+          requestInfo.headers().remove(HttpHeaderNames.RANGE);
         }
         future.channel().writeAndFlush(httpDownInfo.getRequest());
         if (requestInfo.content() != null) {
@@ -288,9 +287,7 @@ public class HttpDownUtil {
       chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
     }
     HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
-    RequestProto requestProto = ProtoUtil
-        .getRequestProto(httpDownInfo.getRequest());
-    chunkDown(httpDownInfo, chunkInfo, requestProto);
+    chunkDown(httpDownInfo, chunkInfo);
   }
 
   public static void safeClose(Channel channel, FileChannel fileChannel) {

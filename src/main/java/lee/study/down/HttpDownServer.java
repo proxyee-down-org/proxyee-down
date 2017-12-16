@@ -14,7 +14,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import lee.study.down.dispatch.HttpDownErrorCheckTask;
 import lee.study.down.dispatch.HttpDownProgressEventTask;
-import lee.study.down.dispatch.HttpDownStartCallback;
+import lee.study.down.dispatch.DefaultHttpDownCallback;
 import lee.study.down.intercept.BdyBatchDownIntercept;
 import lee.study.down.intercept.BdyIntercept;
 import lee.study.down.intercept.HttpDownIntercept;
@@ -98,7 +98,7 @@ public class HttpDownServer implements InitializingBean {
             //下载中的还原之前的状态
             httpDownInfo = (HttpDownInfo) ByteUtil.deserialize(taskInfoFile.getPath());
             TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-            taskInfo.setCallback(new HttpDownStartCallback());
+            taskInfo.setCallback(new DefaultHttpDownCallback());
             //全部标记为失败,等待重新下载
             taskInfo.getChunkInfoList().forEach(chunk -> {
               if (chunk.getStatus() == 1) {

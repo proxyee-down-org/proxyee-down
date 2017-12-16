@@ -1,15 +1,12 @@
 package lee.study.down.controller;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lee.study.down.HttpDownServer;
-import lee.study.down.dispatch.HttpDownCallback;
-import lee.study.down.dispatch.HttpDownStartCallback;
+import lee.study.down.dispatch.DefaultHttpDownCallback;
 import lee.study.down.form.DownForm;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
@@ -87,7 +84,7 @@ public class HttpDownController {
             chunkInfoList.add(chunkInfo);
           }
           taskInfo.setChunkInfoList(chunkInfoList);
-          HttpDownUtil.taskDown(httpDownModel, new HttpDownStartCallback());
+          HttpDownUtil.taskDown(httpDownModel, new DefaultHttpDownCallback());
         } catch (Exception e) {
           e.printStackTrace();
           map.put("msg", "服务器异常！");

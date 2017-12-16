@@ -11,9 +11,9 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
+import lee.study.down.model.HttpRequestInfo;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.proxyee.model.HttpRequestInfo;
 
 public class HttpDownSniffIntercept extends HttpProxyIntercept {
 
@@ -22,10 +22,10 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
   @Override
   public void beforeRequest(Channel clientChannel, HttpRequest httpRequest,
       HttpProxyInterceptPipeline pipeline) throws Exception {
+    pipeline.setHttpRequest(HttpRequestInfo.adapter(httpRequest));
     String contentLength = httpRequest.headers().get(HttpHeaderNames.CONTENT_LENGTH);
     //缓存request content
     if (contentLength != null) {
-      pipeline.setHttpRequest(HttpRequestInfo.adapter(httpRequest));
       content = PooledByteBufAllocator.DEFAULT.buffer();
     }
     pipeline.beforeRequest(clientChannel, httpRequest);
@@ -69,6 +69,7 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
           downFlag = true;
         }
       }
+      HttpRequestInfo httpRequestInfo = (HttpRequestInfo) pipeline.getHttpRequest();
       if (downFlag) {   //如果是下载
         proxyChannel.close();//关闭嗅探下载连接
         System.out.println("=====================下载===========================");
@@ -76,15 +77,15 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
         System.out.println("------------------------------------------------");
         System.out.println(httpResponse.toString());
         System.out.println("================================================");
+        //原始的请求协议
+        httpRequestInfo.setRequestProto(pipeline.getRequestProto());
         pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
-      } else if(pipeline.getHttpRequest() instanceof HttpRequestInfo){
-        HttpRequestInfo httpRequestInfo = (HttpRequestInfo) pipeline.getHttpRequest();
+      } else {
         if (httpRequestInfo.content() != null) {
           httpRequestInfo.setContent(null);
         }
       }
     }
-    pipeline.getDefault()
-        .afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
+    pipeline.getDefault().afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
   }
 }

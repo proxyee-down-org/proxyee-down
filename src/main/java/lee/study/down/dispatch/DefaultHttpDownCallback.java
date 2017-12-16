@@ -12,7 +12,7 @@ import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.HttpDownUtil;
 
-public class HttpDownStartCallback implements HttpDownCallback {
+public class DefaultHttpDownCallback implements HttpDownCallback {
 
   @Override
   public void start(TaskInfo taskInfo) {

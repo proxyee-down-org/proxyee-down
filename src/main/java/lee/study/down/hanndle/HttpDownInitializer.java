@@ -1,7 +1,6 @@
 package lee.study.down.hanndle;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -11,18 +10,14 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.server.HttpProxyServer;
 
 public class HttpDownInitializer extends ChannelInitializer {
