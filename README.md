@@ -32,3 +32,5 @@ cd target
 //指定代理服务器端口9999
 java -jar  proxyee-down-1.0-SNAPSHOT.jar 9999
 ```
+#### 其他
+QQ群：11352304，欢迎大家进群交流
