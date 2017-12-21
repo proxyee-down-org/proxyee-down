@@ -15,10 +15,10 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import lee.study.down.HttpDownServer;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.proxyee.server.HttpProxyServer;
 
 public class HttpDownInitializer extends ChannelInitializer {
 
@@ -41,7 +41,7 @@ public class HttpDownInitializer extends ChannelInitializer {
   protected void initChannel(Channel ch) throws Exception {
     this.chunkInfo.setChannel(ch);
     if (isSsl) {
-      ch.pipeline().addLast(HttpProxyServer.clientSslCtx.newHandler(ch.alloc()));
+      ch.pipeline().addLast(HttpDownServer.CLIENT_SSL_CONTEXT.newHandler(ch.alloc()));
     }
     ch.pipeline().addLast("httpCodec", new HttpClientCodec());
     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
@@ -50,6 +50,9 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
           if (msg instanceof HttpContent) {
+            if (!fileChannel.isOpen()) {
+              return;
+            }
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
@@ -79,9 +82,10 @@ public class HttpDownInitializer extends ChannelInitializer {
             fileChannel = new RandomAccessFile(
                 taskInfo.getFilePath() + File.separator + taskInfo.getFileName(), "rw")
                 .getChannel();
-            if(taskInfo.isSupportRange()){
+            if (taskInfo.isSupportRange()) {
               fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
             }
+            chunkInfo.setStatus(1);
             chunkInfo.setFileChannel(fileChannel);
             callback.chunkStart(taskInfo, chunkInfo);
           }
