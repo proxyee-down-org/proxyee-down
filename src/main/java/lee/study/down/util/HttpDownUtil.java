@@ -17,6 +17,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -36,8 +37,6 @@ import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.proxyee.server.HttpProxyServer;
-import lee.study.proxyee.util.ProtoUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpDownUtil {
@@ -110,7 +109,7 @@ public class HttpDownUtil {
    * 检测是否支持断点下载
    */
   public static TaskInfo getTaskInfo(HttpRequest httpRequest, HttpHeaders resHeaders,
-      NioEventLoopGroup loopGroup) {
+      SslContext clientSslCtx,NioEventLoopGroup loopGroup) {
     TaskInfo taskInfo = new TaskInfo(
         UUID.randomUUID().toString(), "", getDownFileName(httpRequest, resHeaders), 1,
         getDownFileSize(resHeaders), false, 0, 0, 0, 0);
@@ -128,7 +127,7 @@ public class HttpDownUtil {
               @Override
               protected void initChannel(Channel ch) throws Exception {
                 if (requestProto.getSsl()) {
-                  ch.pipeline().addLast(HttpProxyServer.clientSslCtx.newHandler(ch.alloc()));
+                  ch.pipeline().addLast(clientSslCtx.newHandler(ch.alloc()));
                 }
                 ch.pipeline().addLast("httpCodec", new HttpClientCodec());
                 ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
