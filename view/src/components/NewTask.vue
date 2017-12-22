@@ -7,7 +7,7 @@
       <el-input v-model="form.connections" :disabled="!form.supportRange"/>
     </el-form-item>
     <el-form-item label="路径">
-      <el-input v-model="form.path"/>
+      <file-choose v-model="form.path"></file-choose>
     </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="onSubmit" :disabled="load">创建</el-button>
@@ -18,6 +18,7 @@
 
 <script>
   import Util from '../common/util'
+  import FileChoose from './FileChoose'
 
   export default {
     data() {
@@ -33,22 +34,26 @@
         },
       }
     },
+    components: {
+      FileChoose
+    },
     computed: {
       supportRangeText() {
         return this.form.supportRange ? '支持' : '不支持';
       },
       totalSizeText() {
-        return Util.sizeFmt(this.form.totalSize)
+        return Util.sizeFmt(this.form.totalSize,'未知');
       }
     },
     methods: {
       onSubmit() {
         this.$http.post('api/startTask', this.form)
         .then((response) => {
-          if (response.data.result == 'Y') {
+          let result = response.data;
+          if (result.status == 200) {
             this.$router.push('/')
-          }else{
-            this.$message(response.data.msg);
+          } else {
+            this.$message(result.msg);
           }
         })
       },
@@ -59,13 +64,24 @@
     created() {
       this.$http.get('api/getTask?id=' + this.form.id)
       .then((response) => {
-        let res = response.data;
-        this.form.fileName = res.fileName;
-        this.form.totalSize = res.totalSize;
-        this.form.supportRange = res.supportRange;
-        this.form.connections = res.connections;
-        this.load = false;
+        let result = response.data;
+        if (result.status == 200) {
+          this.form.fileName = result.data.fileName;
+          this.form.totalSize = result.data.totalSize;
+          this.form.supportRange = result.data.supportRange;
+          this.form.connections = result.data.connections;
+          this.load = false;
+        } else {
+          this.$message(result.msg);
+        }
       })
     }
   }
 </script>
+
+
+<style scoped>
+  .el-input {
+    width: 50%;
+  }
+</style>

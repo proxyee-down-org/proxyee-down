@@ -27,10 +27,12 @@ public class BdyBatchDownIntercept extends HttpProxyIntercept {
       long fileSize = HttpDownUtil.getDownFileSize(resHeaders);
       //百度合并下载分段最多为16M
       int connections = (int) Math.ceil(fileSize / CHUNK_16M);
-      TaskInfo taskInfo = new TaskInfo(UUID.randomUUID().toString(), "",
-          HttpDownUtil.getDownFileName(pipeline.getHttpRequest(), resHeaders), connections,
-          fileSize, true, 0, 0, 0,
-          0);
+      TaskInfo taskInfo = new TaskInfo()
+          .setId(UUID.randomUUID().toString())
+          .setFileName(HttpDownUtil.getDownFileName(pipeline.getHttpRequest(), resHeaders))
+          .setTotalSize(HttpDownUtil.getDownFileSize(resHeaders))
+          .setConnections(connections)
+          .setSupportRange(true);
       HttpDownUtil.startDownTask(taskInfo, pipeline.getHttpRequest(), httpResponse, clientChannel);
       return;
     }

@@ -10,25 +10,25 @@
               title="下载详情"
               width="400"
               trigger="click">
-              <ul class="task-list">
+              <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=20}">
                 <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                   <el-progress :text-inside="true" :stroke-width="18"
-                               :percentage="progress(chunk)"
+                               :percentage="totalProgress||progress(chunk)"
                                :status="status(chunk)"></el-progress>
-                  <span>{{sizeFmt(speed(chunk))}}/s</span>
+                  <span>{{sizeFmt(speed(chunk),'0B')}}/s</span>
                 </li>
               </ul>
               <el-progress type="circle"
-                           :percentage="progress(task)"
+                           :percentage="totalProgress||progress(task)"
                            :status="status(task)"
                            :width="200"
                            slot="reference"></el-progress>
             </el-popover>
             <div class="file-detail">
-              <p>{{sizeFmt(speed(task))}}/s</p>
+              <p>{{sizeFmt(speed(task),'0B')}}/s</p>
               <p>{{leftTime(task)}}</p>
               <p>{{task.fileName}}</p>
-              <p>{{sizeFmt(task.totalSize)}}</p>
+              <p>{{sizeFmt(task.totalSize,'未知大小')}}</p>
             </div>
           </el-col>
         </el-row>
@@ -45,11 +45,11 @@
   import Vue from 'vue'
 
   export default {
-    name: 'taskList',
     data() {
       return {
         tasks: [],
         cellSize: 3,
+        totalProgress: 0,
         ws: new WebSocket('ws://' + window.location.host + '/ws/progress'),
       }
     },
@@ -68,7 +68,7 @@
       progress(task) {
         let fileDownSize = task.downSize;
         let fileTotalSize = task.totalSize;
-        if (fileDownSize && fileTotalSize) {
+        if (fileDownSize > 0 && fileTotalSize > 0) {
           return Math.floor(fileDownSize * 100 / fileTotalSize);
         }
         return 0;
@@ -81,14 +81,14 @@
           return Math.floor(task.downSize / usedTime)
         }
         return 0;
-        /*if (task.intervalTime) {
-          return Math.floor(task.intervalDownSize / (task.intervalTime / 1000))
-        }
-        return 0;*/
       },
       leftTime(task) {
         if (task.status == 2) {
           return '已完成';
+        }
+        if (task.status == 5) {
+          this.totalProgress = 100;
+          return '合并文件中';
         }
         let speed = this.speed(task);
         if (speed) {
@@ -107,37 +107,46 @@
             return null;
         }
       },
-      sizeFmt(size) {
-        return Util.sizeFmt(size);
+      sizeFmt(size,def) {
+        return Util.sizeFmt(size,def);
       },
     },
     created() {
       this.$http.get('api/getTaskList')
       .then((response) => {
-        if (response.data && response.data.length) {
-          response.data.sort((task1, task2) => {
-            return task1.startTime - task2.startTime;
-          }).forEach((task) => {
-            this.tasks.push(task);
-          });
+        let result = response.data;
+        if (result.status == 200) {
+          if (result.data) {
+            result.data.sort((task1, task2) => {
+              return task1.startTime - task2.startTime;
+            }).forEach((task) => {
+              this.tasks.push(task);
+            });
+          }
+        } else {
+          this.$message(result.msg);
         }
       });
       this.ws.onmessage = (e) => {
         let msg = eval('(' + e.data + ')');
-        if (msg.type != 'start') {
-          this.tasks.forEach((task, index) => {
-            if (task.id == msg.taskInfo.id) {
-              /*msg.taskInfo.intervalTime = msg.taskInfo.lastTime - task.lastTime;
-              msg.taskInfo.intervalDownSize = msg.taskInfo.downSize - task.downSize;
-              msg.taskInfo.chunkInfoList.forEach((chunk,index) => {
-                chunk.intervalTime = chunk.lastTime - task.chunkInfoList[index].lastTime;
-                chunk.intervalDownSize = chunk.downSize - task.chunkInfoList[index].downSize;
-              });*/
-              Vue.set(this.tasks, index, msg.taskInfo);
-              return false;
-            }
+        if (msg) {
+          this.tasks = msg.sort((task1, task2) => {
+            return task1.startTime - task2.startTime;
           });
-
+          /*this.msg.forEach((task1)=>{
+            this.tasks.forEach((task2, index2) => {
+              if (task2.id == task1.id) {
+                /!*msg.taskInfo.intervalTime = msg.taskInfo.lastTime - task.lastTime;
+                msg.taskInfo.intervalDownSize = msg.taskInfo.downSize - task.downSize;
+                msg.taskInfo.chunkInfoList.forEach((chunk,index) => {
+                  chunk.intervalTime = chunk.lastTime - task.chunkInfoList[index].lastTime;
+                  chunk.intervalDownSize = chunk.downSize - task.chunkInfoList[index].downSize;
+                });*!/
+                Vue.set(this.tasks, index2, task1);
+                return false;
+              }
+            });
+          });*/
         }
       };
     }
@@ -160,6 +169,11 @@
     padding: 0px;
   }
 
+  .task-list-scroll {
+    overflow-y: auto;
+    height: 560px;
+  }
+
   .task-list li {
     list-style: none;
     padding-bottom: 8px;
@@ -167,11 +181,12 @@
 
   .task-list li > div {
     display: inline-block;
-    width: 75%;
+    width: 70%;
   }
 
   .task-list li > span {
     padding-left: 20px;
+    padding-right: 5px;
     float: right;
   }
 

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -109,10 +110,11 @@ public class HttpDownUtil {
    * 检测是否支持断点下载
    */
   public static TaskInfo getTaskInfo(HttpRequest httpRequest, HttpHeaders resHeaders,
-      SslContext clientSslCtx,NioEventLoopGroup loopGroup) {
-    TaskInfo taskInfo = new TaskInfo(
-        UUID.randomUUID().toString(), "", getDownFileName(httpRequest, resHeaders), 1,
-        getDownFileSize(resHeaders), false, 0, 0, 0, 0);
+      SslContext clientSslCtx, NioEventLoopGroup loopGroup) {
+    TaskInfo taskInfo = new TaskInfo()
+        .setId(UUID.randomUUID().toString())
+        .setFileName(getDownFileName(httpRequest, resHeaders))
+        .setTotalSize(getDownFileSize(resHeaders));
     //chunked编码不支持断点下载
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       CountDownLatch cdl = new CountDownLatch(1);
@@ -203,27 +205,33 @@ public class HttpDownUtil {
    * 取下载文件的总大小
    */
   public static long getDownFileSize(HttpHeaders resHeaders) {
-    String contentLength = resHeaders.get(HttpHeaderNames.CONTENT_LENGTH);
-    if (contentLength != null) {
-      return Long.valueOf(resHeaders.get(HttpHeaderNames.CONTENT_LENGTH));
+    String contentRange = resHeaders.get(HttpHeaderNames.CONTENT_RANGE);
+    if (contentRange != null) {
+      Pattern pattern = Pattern.compile("^[^\\d]*(\\d+)-(\\d+)/.*$");
+      Matcher matcher = pattern.matcher(contentRange);
+      if (matcher.find()) {
+        long startSize = Long.parseLong(matcher.group(1));
+        long endSize = Long.parseLong(matcher.group(2));
+        return endSize - startSize + 1;
+      }
     } else {
-      return -1;
+      String contentLength = resHeaders.get(HttpHeaderNames.CONTENT_LENGTH);
+      if (contentLength != null) {
+        return Long.valueOf(resHeaders.get(HttpHeaderNames.CONTENT_LENGTH));
+      }
     }
+    return 0;
   }
 
   public static void taskDown(HttpDownInfo httpDownInfo, HttpDownCallback callback)
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     taskInfo.setCallback(callback);
-    File file = new File(taskInfo.getFilePath() + File.separator + taskInfo.getFileName());
-    if (file.exists()) {
-      file.delete();
-    }
-    try (
-        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw")
-    ) {
-      if (taskInfo.getTotalSize() > 0) {
-        randomAccessFile.setLength(taskInfo.getTotalSize());
+    try {
+      if (taskInfo.getChunkInfoList().size() > 1) {
+        FileUtil.createDir(taskInfo.buildChunksPath(), true);
+      } else {
+        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
       }
       //文件下载开始回调
       taskInfo.setStatus(1);
@@ -253,14 +261,16 @@ public class HttpDownUtil {
         .connect(requestProto.getHost(), requestProto.getPort());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
-        if (httpDownInfo.getTaskInfo().isSupportRange()) {
-          requestInfo.headers()
-              .set(HttpHeaderNames.RANGE,
-                  "bytes=" + chunkInfo.getNowStartPosition() + "-" + chunkInfo.getEndPosition());
-        } else {
-          requestInfo.headers().remove(HttpHeaderNames.RANGE);
+        synchronized (requestInfo) {
+          if (httpDownInfo.getTaskInfo().isSupportRange()) {
+            requestInfo.headers()
+                .set(HttpHeaderNames.RANGE,
+                    "bytes=" + chunkInfo.getNowStartPosition() + "-" + chunkInfo.getEndPosition());
+          } else {
+            requestInfo.headers().remove(HttpHeaderNames.RANGE);
+          }
+          future.channel().writeAndFlush(httpDownInfo.getRequest());
         }
-        future.channel().writeAndFlush(httpDownInfo.getRequest());
         if (requestInfo.content() != null) {
           //请求体写入
           HttpContent content = new DefaultLastHttpContent();
@@ -282,9 +292,33 @@ public class HttpDownUtil {
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+    if (taskInfo.getChunkInfoList().size() > 0) {
+      chunkInfo
+          .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
+    } else {
+      chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+    }
+    //已经下载完成
+    if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
+      chunkInfo.setStatus(2);
+      taskInfo.getCallback().chunkDone(taskInfo, chunkInfo);
+      return;
+    }
     if (taskInfo.isSupportRange()) {
       chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
     }
+    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
+    chunkDown(httpDownInfo, chunkInfo);
+  }
+
+  /**
+   * 继续下载
+   */
+  public static void countinueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
+      throws Exception {
+    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+    //计算后续下载字节
+    chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
     HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
     chunkDown(httpDownInfo, chunkInfo);
   }
@@ -301,6 +335,29 @@ public class HttpDownUtil {
       }
     } catch (IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  public static void startMerge(TaskInfo taskInfo) throws IOException {
+    taskInfo.getCallback().merge(taskInfo);
+    File file = FileUtil.createFile(taskInfo.buildTaskFilePath());
+    try (
+        FileChannel finalFile = new RandomAccessFile(file, "rw").getChannel()
+    ) {
+      ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
+      for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
+        try (
+            FileChannel tempChannel = new RandomAccessFile(
+                taskInfo.buildChunkFilePath(i),
+                "rw").getChannel()
+        ) {
+          while (tempChannel.read(buffer) != -1) {
+            buffer.flip();
+            finalFile.write(buffer);
+            buffer.clear();
+          }
+        }
+      }
     }
   }
 }

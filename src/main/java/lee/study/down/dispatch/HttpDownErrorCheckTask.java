@@ -23,28 +23,35 @@ public class HttpDownErrorCheckTask extends Thread {
         if (HttpDownServer.DOWN_CONTENT != null && HttpDownServer.DOWN_CONTENT.size() > 0) {
           for (Entry<String, HttpDownInfo> entry : HttpDownServer.DOWN_CONTENT.entrySet()) {
             TaskInfo taskInfo = entry.getValue().getTaskInfo();
-            if (taskInfo.getStatus() == 1) {
-              for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
-                //待下载
-                if (chunkInfo.getStatus() == 3) {
-                  System.out.println(
-                      "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-                  HttpDownUtil.retryDown(taskInfo, chunkInfo);
-                } else if (chunkInfo.getStatus() == 1) {
-                  String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
-                  Long downSize = flagMap.get(key);
-                  //下载失败
-                  if ((downSize != null && downSize == chunkInfo.getDownSize())) {
+            if (taskInfo.getStatus() == 5) {  //合并
+              HttpDownUtil.startMerge(taskInfo);
+              //文件下载完成回调
+              taskInfo.setStatus(2);
+              taskInfo.getCallback().done(taskInfo);
+            } else {
+              if (taskInfo.getChunkInfoList() != null) {
+                for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+                  if (taskInfo.getStatus() == 1 && chunkInfo.getStatus() == 1) {
+                    String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
+                    Long downSize = flagMap.get(key);
+                    //下载失败
+                    if ((downSize != null && downSize == chunkInfo.getDownSize())) {
+                      System.out.println(
+                          "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                      chunkInfo.setStatus(3);
+                      HttpDownUtil.retryDown(taskInfo, chunkInfo);
+                    } else {
+                      flagMap.put(key, chunkInfo.getDownSize());
+                    }
+                  } else if (chunkInfo.getStatus() == 4) {
                     System.out.println(
-                        "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-                    chunkInfo.setStatus(3);
+                        "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                     HttpDownUtil.retryDown(taskInfo, chunkInfo);
-                  } else {
-                    flagMap.put(key, chunkInfo.getDownSize());
                   }
                 }
               }
             }
+
           }
         }
         TimeUnit.MILLISECONDS.sleep(30000);

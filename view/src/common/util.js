@@ -1,7 +1,11 @@
 export default {
-  sizeFmt(size) {
-    if (size < 0) {
-      return "未知";
+  sizeFmt(size,def) {
+    if (size <= 0) {
+      if(def){
+        return def;
+      }else{
+        size = 0;
+      }
     }
     let unit = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
     let pow = 0;
@@ -14,6 +18,9 @@ export default {
     return parseFloat((size / Math.pow(1024, pow)).toFixed(2)) + fmt;
   },
   timeFmt(sec) {
+    if(sec<0){
+      sec = 1;
+    }
     let ret = '';
     sec = Math.ceil(sec);
     if (sec / 3600 >= 1) {

@@ -7,18 +7,17 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
-import java.io.File;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import lee.study.down.HttpDownServer;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.util.FileUtil;
+import lee.study.down.util.HttpDownUtil;
 
 public class HttpDownInitializer extends ChannelInitializer {
 
@@ -28,6 +27,7 @@ public class HttpDownInitializer extends ChannelInitializer {
   private HttpDownCallback callback;
 
   private FileChannel fileChannel;
+  private long realContentSize;
 
   public HttpDownInitializer(boolean isSsl, TaskInfo taskInfo, ChunkInfo chunkInfo,
       HttpDownCallback callback) throws Exception {
@@ -50,7 +50,7 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
           if (msg instanceof HttpContent) {
-            if (!fileChannel.isOpen()) {
+            if (fileChannel == null || !fileChannel.isOpen()) {
               return;
             }
             HttpContent httpContent = (HttpContent) msg;
@@ -59,38 +59,60 @@ public class HttpDownInitializer extends ChannelInitializer {
             fileChannel.write(byteBuf.nioBuffer());
             //文件已下载大小
             chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
-            taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
+            synchronized (taskInfo) {
+              taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
+            }
             callback.progress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
-            if (httpContent instanceof LastHttpContent || chunkInfo.getDownSize() == chunkInfo
-                .getTotalSize()) {
+            if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
               fileChannel.close();
+              ctx.channel().close();
               //分段下载完成回调
               chunkInfo.setStatus(2);
               chunkInfo.setLastTime(System.currentTimeMillis());
               callback.chunkDone(taskInfo, chunkInfo);
-              if (taskInfo.getChunkInfoList().stream()
-                  .allMatch((chunk) -> chunk.getStatus() == 2)) {
-                //文件下载完成回调
-                taskInfo.setStatus(2);
-                taskInfo.setLastTime(System.currentTimeMillis());
-                callback.done(taskInfo);
-                ctx.channel().close();
+              synchronized (taskInfo) {
+                if (taskInfo.getStatus() == 1 && taskInfo.getChunkInfoList().stream()
+                    .allMatch((chunk) -> chunk.getStatus() == 2)) {
+                  //记录完成时间
+                  taskInfo.setLastTime(System.currentTimeMillis());
+                  if (taskInfo.getTotalSize() <= 0) {  //chunked编码最后更新文件大小
+                    taskInfo.setTotalSize(taskInfo.getDownSize());
+                    taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
+                  }
+                  if (taskInfo.getChunkInfoList().size() > 1) {
+                    //合并文件
+                    taskInfo.setStatus(5);
+                    HttpDownUtil.startMerge(taskInfo);
+                  }
+                  //文件下载完成回调
+                  taskInfo.setStatus(2);
+                  callback.done(taskInfo);
+                }
               }
+            } else if (realContentSize == chunkInfo.getDownSize()
+                || (realContentSize - 1) == chunkInfo.getDownSize()) {  //百度响应做了手脚，会少一个字节
+              //真实响应字节小于要下载的字节，在下载完成后要继续下载
+              HttpDownUtil.countinueDown(taskInfo, chunkInfo);
             }
           } else {
-            fileChannel = new RandomAccessFile(
-                taskInfo.getFilePath() + File.separator + taskInfo.getFileName(), "rw")
-                .getChannel();
-            if (taskInfo.isSupportRange()) {
-              fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+            HttpResponse httpResponse = (HttpResponse) msg;
+            System.out.println(httpResponse);
+            realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
+            if (taskInfo.getChunkInfoList().size() > 1) {
+              //下载使用同步IO写入，合并使用异步IO减少合并等待时间
+              fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
+                  "rws").getChannel();
+              fileChannel.position(fileChannel.size());
+            } else {
+              fileChannel = FileUtil.getRafFile(taskInfo.buildTaskFilePath()).getChannel();
             }
             chunkInfo.setStatus(1);
             chunkInfo.setFileChannel(fileChannel);
             callback.chunkStart(taskInfo, chunkInfo);
           }
         } catch (Exception e) {
-          e.printStackTrace();
+          throw e;
         } finally {
           ReferenceCountUtil.release(msg);
         }
@@ -102,7 +124,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         chunkInfo.setStatus(3);
         callback.error(taskInfo, chunkInfo, cause);
-        //super.exceptionCaught(ctx, cause);
+        super.exceptionCaught(ctx, cause);
       }
 
       @Override
@@ -116,19 +138,6 @@ public class HttpDownInitializer extends ChannelInitializer {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     super.exceptionCaught(ctx, cause);
-  }
-
-  public static void main(String[] args) throws IOException {
-    byte[] bts1 = new byte[26];
-    for (byte i = 0, j = 'a'; i < bts1.length; i++, j++) {
-      bts1[i] = j;
-    }
-    byte[] bts2 = new byte[26];
-    for (byte i = 0, j = 'A'; i < bts2.length; i++, j++) {
-      bts2[i] = j;
-    }
-    Files.write(Paths.get("f:/down/test1.txt"), bts1);
-    Files.write(Paths.get("f:/down/test2.txt"), bts2);
   }
 
 }

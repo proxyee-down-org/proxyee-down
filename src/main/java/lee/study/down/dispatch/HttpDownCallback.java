@@ -15,5 +15,7 @@ public interface HttpDownCallback {
 
   void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo);
 
+  void merge(TaskInfo taskInfo);
+
   void done(TaskInfo taskInfo);
 }

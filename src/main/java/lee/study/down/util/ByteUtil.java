@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
 
 public class ByteUtil {
 
@@ -47,20 +48,15 @@ public class ByteUtil {
   }
 
   /**
-   * 对象序列化至文件中
-   * head 4byte
-   * body
-   * @param object
-   * @param path
-   * @throws IOException
+   * 对象序列化至文件中 head 4byte body
    */
-  public static void appendObject(Serializable object,String path) throws IOException {
+  public static void appendObject(Serializable object, String path) throws IOException {
     File file = new File(path);
-    if(!file.exists()){
+    if (!file.exists()) {
       file.createNewFile();
     }
     try (
-        FileOutputStream outputStream = new FileOutputStream(file,true)
+        FileOutputStream outputStream = new FileOutputStream(file, true)
     ) {
       byte[] body = objToBts(object);
       //body长度

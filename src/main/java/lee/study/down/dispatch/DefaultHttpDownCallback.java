@@ -7,10 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import lee.study.down.HttpDownServer;
 import lee.study.down.model.ChunkInfo;
-import lee.study.down.model.TaskBaseInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
+import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
+import lee.study.down.util.WsUtil;
 
 public class DefaultHttpDownCallback implements HttpDownCallback {
 
@@ -27,7 +28,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       e.printStackTrace();
     }
     //标记为下载中并记录开始时间
-    HttpDownServer.sendMsg("start", taskInfo);
+    WsUtil.sendMsg();
   }
 
   @Override
@@ -51,35 +52,36 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
 
   @Override
   public void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo) {
-    HttpDownServer.sendMsg("chunkDone", taskInfo);
+    WsUtil.sendMsg();
+  }
+
+  @Override
+  public void merge(TaskInfo taskInfo) {
+    try {
+      //更改任务下载状态为合并中
+      ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
+          taskInfo.buildTaskFilePath() + ".inf");
+      ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
+      WsUtil.sendMsg();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
   public void done(TaskInfo taskInfo) {
     try {
       //更改任务下载状态为已完成
-      if (taskInfo.getTotalSize() == -1) {  //chunked编码最后更新文件大小
-        taskInfo.setTotalSize(taskInfo.getDownSize());
-        taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
-      }
-      TaskBaseInfo taskBaseInfo = HttpDownServer.RECORD_CONTENT.get(taskInfo.getId());
-      taskBaseInfo.setStatus(2);
-      if (taskBaseInfo.getTotalSize() == -1) {  //chunked编码最后更新文件大小
-        taskBaseInfo.setTotalSize(taskInfo.getDownSize());
-      }
       ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
+      //删除临时文件
+      FileUtil.deleteIfExists(taskInfo.buildChunksPath());
       //删除任务进度记录文件
       synchronized (taskInfo) {
-        Files.deleteIfExists(
-            Paths.get(taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf"));
+        Files.deleteIfExists(Paths.get(taskInfo.buildTaskFilePath() + ".inf"));
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
-    HttpDownServer.sendMsg("done", taskInfo);
-  }
-
-  private static void updateTotalSize(TaskBaseInfo taskInfo) {
-
+    WsUtil.sendMsg();
   }
 }
