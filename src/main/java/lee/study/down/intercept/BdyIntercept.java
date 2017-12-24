@@ -34,7 +34,7 @@ import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
  */
 public class BdyIntercept extends ResponseTextIntercept {
 
-  private static final String hookJs = "<script>"
+  private static final String hookJs = "<script type=\"text/javascript\">"
       + "var hook=function(){return 'GYun';};"
       + "if(Object.defineProperty){"
       + "Object.defineProperty(navigator,'platform',{get:hook,configurable:true});"

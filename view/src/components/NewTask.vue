@@ -4,7 +4,14 @@
     <el-form-item label="文件大小">{{totalSizeText}}</el-form-item>
     <el-form-item label="支持分段">{{supportRangeText}}</el-form-item>
     <el-form-item label="分段数">
-      <el-input v-model="form.connections" :disabled="!form.supportRange"/>
+      <el-slider
+        v-model="form.connections"
+        :min="2"
+        :max="128"
+        :step="2"
+        show-input>
+      </el-slider>
+      <!--<el-input v-model="form.connections" :disabled="!form.supportRange"/>-->
     </el-form-item>
     <el-form-item label="路径">
       <file-choose v-model="form.path"></file-choose>
@@ -83,5 +90,9 @@
 <style scoped>
   .el-input {
     width: 50%;
+  }
+  .el-slider {
+    padding-left: 5px;
+    width: 70%;
   }
 </style>

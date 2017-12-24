@@ -1,5 +1,8 @@
 package lee.study.down.util;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -9,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 
 public class ByteUtil {
@@ -87,6 +91,55 @@ public class ByteUtil {
     ) {
       return ois.readObject();
     }
+  }
+
+  public static byte[] stringToBytes(String str) {
+    byte[] bts = new byte[str.length()];
+    for (int i = 0; i < str.length(); i++) {
+      bts[i] = (byte) str.charAt(i);
+    }
+    return bts;
+  }
+
+  public static int findText(ByteBuf byteBuf, String str) {
+    byte[] text = stringToBytes(str);
+    int matchIndex = 0;
+    for (int i = byteBuf.readerIndex(); i < byteBuf.readableBytes(); i++) {
+      for (int j = matchIndex; j < text.length; j++) {
+        if (byteBuf.getByte(i) == text[j]) {
+          matchIndex = j + 1;
+          if (matchIndex == text.length) {
+            return i;
+          }
+        } else {
+          matchIndex = 0;
+        }
+        break;
+      }
+    }
+    return -1;
+  }
+
+  public static ByteBuf insertText(ByteBuf byteBuf, int index, String str) {
+    byte[] begin = new byte[index + 1];
+    byte[] end = new byte[byteBuf.readableBytes() - begin.length];
+    byteBuf.readBytes(begin);
+    byteBuf.readBytes(end);
+    byteBuf.writeBytes(begin);
+    byteBuf.writeBytes(stringToBytes(str));
+    byteBuf.writeBytes(end);
+    return byteBuf;
+  }
+
+  public static void main(String[] args) {
+    ByteBuf byteBuf = Unpooled.buffer();
+    byteBuf.writeByte('a');
+    byteBuf.writeByte('b');
+    byteBuf.writeByte('c');
+    byteBuf.writeByte('d');
+    System.out.println(findText(byteBuf, "c"));
+    System.out.println(
+        insertText(byteBuf, -1, "test").toString(Charset.defaultCharset()));
   }
 
 }

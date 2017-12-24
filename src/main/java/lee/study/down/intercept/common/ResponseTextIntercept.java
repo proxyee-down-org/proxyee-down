@@ -14,6 +14,7 @@ import io.netty.util.ReferenceCountUtil;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.zip.GZIPOutputStream;
+import lee.study.down.util.ByteUtil;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 
@@ -65,13 +66,7 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
       try {
         contentBuf.writeBytes(httpContent.content());
         if (httpContent instanceof LastHttpContent) {
-          String contentStr = contentBuf.toString(Charset.defaultCharset());
-          if (contentStr.indexOf("<head>") >= 0) {
-            contentStr = contentStr.replace("<head>", "<head>" + hookResponse());
-          } else {
-            contentStr = hookResponse() + contentStr;
-          }
-          contentBuf.clear().writeBytes(contentStr.getBytes());
+          ByteUtil.insertText(contentBuf,ByteUtil.findText(contentBuf,"<head>"),hookResponse());
           HttpContent hookHttpContent = new DefaultLastHttpContent();
           if (isGzip) { //转化成gzip编码
             byte[] temp = new byte[contentBuf.readableBytes()];

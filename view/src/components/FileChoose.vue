@@ -67,6 +67,6 @@
 
   .file-choose-tree {
     overflow-y: auto;
-    height: 500px;
+    height: 400px;
   }
 </style>

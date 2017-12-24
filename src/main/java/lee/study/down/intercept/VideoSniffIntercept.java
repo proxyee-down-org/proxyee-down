@@ -43,7 +43,7 @@ public class VideoSniffIntercept extends ResponseTextIntercept {
       while ((line = br.readLine()) != null) {
         sb.append(line);
       }
-      sb.insert(0, "<script>");
+      sb.insert(0, "<script type=\"text/javascript\">");
       sb.append("</script>");
       hookJs = sb.toString();
     } catch (Exception e) {
