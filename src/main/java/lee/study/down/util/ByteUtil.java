@@ -70,6 +70,7 @@ public class ByteUtil {
   }
 
   public static void serialize(Serializable object, String path) throws IOException {
+    FileUtil.createFile(path);
     try (
         ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(path))
     ) {

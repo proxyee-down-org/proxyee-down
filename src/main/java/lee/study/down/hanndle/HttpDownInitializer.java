@@ -65,8 +65,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             callback.progress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
-              fileChannel.close();
-              ctx.channel().close();
+              HttpDownUtil.safeClose(ctx.channel(),fileChannel);
               //分段下载完成回调
               chunkInfo.setStatus(2);
               chunkInfo.setLastTime(System.currentTimeMillis());
@@ -92,17 +91,17 @@ public class HttpDownInitializer extends ChannelInitializer {
               }
             } else if (realContentSize == chunkInfo.getDownSize()
                 || (realContentSize - 1) == chunkInfo.getDownSize()) {  //百度响应做了手脚，会少一个字节
+              HttpDownUtil.safeClose(ctx.channel(),fileChannel);
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
               HttpDownUtil.countinueDown(taskInfo, chunkInfo);
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
-            System.out.println(httpResponse);
             realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
             if (taskInfo.getChunkInfoList().size() > 1) {
               //下载使用同步IO写入，合并使用异步IO减少合并等待时间
               fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
-                  "rws").getChannel();
+                  "rw").getChannel();
               fileChannel.position(fileChannel.size());
             } else {
               fileChannel = FileUtil.getRafFile(taskInfo.buildTaskFilePath()).getChannel();
@@ -120,10 +119,16 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        System.out.println(
-            "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-        chunkInfo.setStatus(3);
-        callback.error(taskInfo, chunkInfo, cause);
+        synchronized (chunkInfo){
+          if(chunkInfo.getStatus()==1){
+            System.out.println(
+                "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+            chunkInfo.setStatus(3);
+            callback.error(taskInfo, chunkInfo, cause);
+          }else{
+            HttpDownUtil.safeClose(ctx.channel(),fileChannel);
+          }
+        }
         super.exceptionCaught(ctx, cause);
       }
 

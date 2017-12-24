@@ -79,9 +79,10 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   public static void start() {
     new SpringApplicationBuilder(HttpDownServer.class)
         .headless(false).run();
-    new DownTray();
+
     loadConfig();
     loadRecord();
+    new DownTray();
 
     PROXY_SERVER = new HttpProxyServer();
     CLIENT_SSL_CONTEXT = PROXY_SERVER.getClientSslContext();
@@ -132,7 +133,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
       try {
         RECORD_CONTENT = ((Map) ByteUtil.deserialize(RECORD_PATH));
         for (Entry<String, TaskInfo> entry : RECORD_CONTENT.entrySet()) {
-          HttpDownInfo httpDownInfo = null;
+          HttpDownInfo httpDownInfo;
           TaskInfo taskBaseInfo = entry.getValue();
           if (taskBaseInfo.getStatus() == 0) {
             RECORD_CONTENT.remove(entry.getKey());
@@ -168,6 +169,9 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
               RECORD_CONTENT.remove(entry.getKey());
               continue;
             }
+          }else{
+            RECORD_CONTENT.remove(entry.getKey());
+            continue;
           }
           if (isDowned) {
             //下载完成的

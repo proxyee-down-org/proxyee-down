@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -93,8 +94,9 @@ public class HttpDownUtil {
     httpHeaders.clear();
     httpResponse.setStatus(HttpResponseStatus.OK);
     httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
+    String host = ((InetSocketAddress)clientChannel.localAddress()).getHostString();
     String js =
-        "<script>window.top.location.href='http://localhost:" + HttpDownServer.VIEW_SERVER_PORT
+        "<script>window.top.location.href='http://"+host+":" + HttpDownServer.VIEW_SERVER_PORT
             + "/#/newTask/" + httpDownInfo
             .getTaskInfo().getId()
             + "';</script>";
@@ -279,8 +281,11 @@ public class HttpDownUtil {
           requestInfo.setContent(null); //help GC
         }
       } else {
+        future.channel().close();
         //失败等30s重试
         TimeUnit.SECONDS.sleep(30);
+        System.out.println(
+            "连接失败重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         retryDown(taskInfo, chunkInfo);
       }
     });
