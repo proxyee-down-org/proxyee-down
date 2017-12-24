@@ -46,7 +46,7 @@ public class BdyIntercept extends ResponseTextIntercept {
 
   @Override
   public boolean match(HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {
-    return HttpDownUtil.checkUrl(pipeline.getHttpRequest(), "^pan.baidu.com/disk/home.*$")
+    return HttpDownUtil.checkUrl(pipeline.getHttpRequest(), "^pan.baidu.com.*$")
         && isHtml(httpResponse, pipeline);
   }
 
