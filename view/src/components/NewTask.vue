@@ -9,9 +9,9 @@
         :min="2"
         :max="128"
         :step="2"
+        :disabled="!form.supportRange"
         show-input>
       </el-slider>
-      <!--<el-input v-model="form.connections" :disabled="!form.supportRange"/>-->
     </el-form-item>
     <el-form-item label="路径">
       <file-choose v-model="form.path"></file-choose>
