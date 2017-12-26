@@ -55,16 +55,22 @@ public class HttpDownInitializer extends ChannelInitializer {
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
-            fileChannel.write(byteBuf.nioBuffer());
-            //文件已下载大小
-            chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
+            synchronized (chunkInfo) {
+              if (chunkInfo.getStatus() == 1) {
+                fileChannel.write(byteBuf.nioBuffer());
+                //文件已下载大小
+                chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
+              } else {
+                return;
+              }
+            }
             synchronized (taskInfo) {
               taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
             }
             callback.progress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
-              HttpDownUtil.safeClose(ctx.channel(),fileChannel);
+              HttpDownUtil.safeClose(ctx.channel(), fileChannel);
               //分段下载完成回调
               chunkInfo.setStatus(2);
               chunkInfo.setLastTime(System.currentTimeMillis());
@@ -121,8 +127,8 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         HttpDownServer.LOGGER.debug(
             "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-          callback.error(taskInfo, chunkInfo, cause);
-        super.exceptionCaught(ctx, cause);
+        callback.error(taskInfo, chunkInfo, cause);
+        HttpDownServer.LOGGER.error("down error:", cause);
       }
 
       @Override

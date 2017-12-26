@@ -303,26 +303,27 @@ public class HttpDownUtil {
    */
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
-    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    //避免同时两个重新下载
-    if(setStatusIfNotDone(chunkInfo,3)){
-      if (taskInfo.getChunkInfoList().size() > 0) {
-        chunkInfo
-            .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
-      } else {
-        chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+    synchronized (chunkInfo){
+      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+      if(setStatusIfNotDone(chunkInfo,3)){
+        if (taskInfo.getChunkInfoList().size() > 0) {
+          chunkInfo
+              .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
+        } else {
+          chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+        }
+        //已经下载完成
+        if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
+          chunkInfo.setStatus(2);
+          taskInfo.getCallback().chunkDone(taskInfo, chunkInfo);
+          return;
+        }
+        if (taskInfo.isSupportRange()) {
+          chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+        }
+        HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
+        chunkDown(httpDownInfo, chunkInfo);
       }
-      //已经下载完成
-      if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
-        chunkInfo.setStatus(2);
-        taskInfo.getCallback().chunkDone(taskInfo, chunkInfo);
-        return;
-      }
-      if (taskInfo.isSupportRange()) {
-        chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
-      }
-      HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
-      chunkDown(httpDownInfo, chunkInfo);
     }
   }
 
@@ -331,13 +332,15 @@ public class HttpDownUtil {
    */
   public static void continueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
-    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    //避免同时两个重新下载
-    if(setStatusIfNotDone(chunkInfo,5)){
-      //计算后续下载字节
-      chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
-      HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
-      chunkDown(httpDownInfo, chunkInfo);
+    synchronized (chunkInfo){
+      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+      //避免同时两个重新下载
+      if(setStatusIfNotDone(chunkInfo,5)){
+        //计算后续下载字节
+        chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+        HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
+        chunkDown(httpDownInfo, chunkInfo);
+      }
     }
   }
 
@@ -384,11 +387,9 @@ public class HttpDownUtil {
   }
 
   public static boolean setStatusIfNotDone(ChunkInfo chunkInfo,int update){
-    synchronized (chunkInfo){
-      if(chunkInfo.getStatus()!=2){
-        chunkInfo.setStatus(update);
-        return true;
-      }
+    if(chunkInfo.getStatus()!=2){
+      chunkInfo.setStatus(update);
+      return true;
     }
     return false;
   }

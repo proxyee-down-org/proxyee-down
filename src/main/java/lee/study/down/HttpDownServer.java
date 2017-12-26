@@ -137,48 +137,45 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
             RECORD_CONTENT.remove(entry.getKey());
             continue;
           }
-          File taskInfoFile = new File(taskBaseInfo.buildTaskFilePath() + ".inf");
-          boolean downFlag;
-          if (taskInfoFile.exists()) {
-            //下载中的还原之前的状态
-            httpDownInfo = (HttpDownInfo) ByteUtil.deserialize(taskInfoFile.getPath());
-            //是同一个任务
-            if (httpDownInfo.getTaskInfo().getId().equals(taskBaseInfo.getId())) {
-              //标记为待下载
-              downFlag = true;
-              //全部标记为暂停,等待重新下载
-              TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-              taskInfo.setCallback(new DefaultHttpDownCallback());
-              if (taskInfo.getStatus() == 5) {  //合并状态检查临时文件夹是否还存在
-                if (FileUtil.getFileSize(taskInfo.buildChunksPath()) != taskInfo.getTotalSize()) {
-                  taskInfo.setStatus(1);
-                  taskInfo.getChunkInfoList().forEach(chunk -> {//重新下载
-                    chunk.setStatus(4);
-                  });
-                }
-              } else {
-                taskInfo.getChunkInfoList().forEach(chunk -> {//非合并状态需要下载
-                  if (chunk.getStatus() != 2) {
-                    chunk.setStatus(4);
-                  }
-                });
-              }
-            } else {
-              RECORD_CONTENT.remove(entry.getKey());
-              continue;
-            }
-          } else {
-            RECORD_CONTENT.remove(entry.getKey());
-            FileUtil.deleteIfExists(taskBaseInfo.buildChunksPath());
-            FileUtil.deleteIfExists(taskBaseInfo.buildTaskFilePath());
-            continue;
-          }
-          if (!downFlag) {
-            //下载完成的
-//            taskBaseInfo.setStatus(2);
+          //下载完成的
+          if (taskBaseInfo.getStatus() == 2) {
             TaskInfo temp = new TaskInfo();
             BeanUtils.copyProperties(taskBaseInfo, temp);
             httpDownInfo = new HttpDownInfo(temp, null);
+          }else{
+            File taskInfoFile = new File(taskBaseInfo.buildTaskFilePath() + ".inf");
+            if (taskInfoFile.exists()) {
+              //下载中的还原之前的状态
+              httpDownInfo = (HttpDownInfo) ByteUtil.deserialize(taskInfoFile.getPath());
+              //是同一个任务
+              if (httpDownInfo.getTaskInfo().getId().equals(taskBaseInfo.getId())) {
+                //全部标记为暂停,等待重新下载
+                TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+                taskInfo.setCallback(new DefaultHttpDownCallback());
+                if (taskInfo.getStatus() == 5) {  //合并状态检查临时文件夹是否还存在
+                  if (FileUtil.getFileSize(taskInfo.buildChunksPath()) != taskInfo.getTotalSize()) {
+                    taskInfo.setStatus(1);
+                    taskInfo.getChunkInfoList().forEach(chunk -> {//重新下载
+                      chunk.setStatus(4);
+                    });
+                  }
+                } else {
+                  taskInfo.getChunkInfoList().forEach(chunk -> {//非合并状态需要下载
+                    if (chunk.getStatus() != 2) {
+                      chunk.setStatus(4);
+                    }
+                  });
+                }
+              } else {
+                RECORD_CONTENT.remove(entry.getKey());
+                continue;
+              }
+            } else {
+              RECORD_CONTENT.remove(entry.getKey());
+              FileUtil.deleteIfExists(taskBaseInfo.buildChunksPath());
+              FileUtil.deleteIfExists(taskBaseInfo.buildTaskFilePath());
+              continue;
+            }
           }
           DOWN_CONTENT.put(taskBaseInfo.getId(), httpDownInfo);
         }
