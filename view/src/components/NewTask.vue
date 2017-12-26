@@ -44,7 +44,6 @@
       }
     },
     components: {
-      ElInput,
       FileChoose
     },
     computed: {
