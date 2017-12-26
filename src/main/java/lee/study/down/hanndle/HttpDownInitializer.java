@@ -7,6 +7,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
 import java.io.RandomAccessFile;
@@ -94,8 +95,8 @@ public class HttpDownInitializer extends ChannelInitializer {
                   callback.done(taskInfo);
                 }
               }
-            } else if (realContentSize == chunkInfo.getDownSize()
-                || (realContentSize - 1) == chunkInfo.getDownSize()) {  //百度响应做了手脚，会少一个字节
+            } else if (realContentSize == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()
+                || (realContentSize - 1) == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
               HttpDownServer.LOGGER.debug(
                   "继续下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
@@ -104,6 +105,9 @@ public class HttpDownInitializer extends ChannelInitializer {
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
             realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
+            HttpDownServer.LOGGER.debug(
+                "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize()+"\t"+httpResponse.headers().get(
+                    HttpHeaderNames.CONTENT_RANGE)+"\t"+realContentSize);
             if (taskInfo.getChunkInfoList().size() > 1) {
               //下载使用同步IO写入，合并使用异步IO减少合并等待时间
               fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
@@ -142,6 +146,17 @@ public class HttpDownInitializer extends ChannelInitializer {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     super.exceptionCaught(ctx, cause);
+  }
+
+  public static void main(String[] args) throws Exception {
+    RandomAccessFile r1 = new RandomAccessFile("f:/down/test1.txt","rw");
+    RandomAccessFile r2 = new RandomAccessFile("f:/down/test2.txt","rw");
+    r1.setLength(1024*1024*16);
+    r1.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
+//    r1.write(new byte[]{2,6,3,3,9,7,4,7,8});
+    r2.setLength(1024*1024*16);
+//    r2.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
+    r2.write(new byte[]{2,6,3,3,9,7,4,7,8});
   }
 
 }
