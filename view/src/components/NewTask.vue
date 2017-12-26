@@ -1,6 +1,8 @@
 <template>
   <el-form ref="form" :model="form" label-width="80px" size="medium">
-    <el-form-item label="文件名">{{form.fileName}}</el-form-item>
+    <el-form-item label="文件名">
+      <el-input class="file-choose-input" v-model="form.fileName"></el-input>
+    </el-form-item>
     <el-form-item label="文件大小">{{totalSizeText}}</el-form-item>
     <el-form-item label="支持分段">{{supportRangeText}}</el-form-item>
     <el-form-item label="分段数">
@@ -26,6 +28,7 @@
 <script>
   import Util from '../common/util'
   import FileChoose from './FileChoose'
+  import ElInput from "../../node_modules/element-ui/packages/input/src/input.vue";
 
   export default {
     data() {
@@ -42,6 +45,7 @@
       }
     },
     components: {
+      ElInput,
       FileChoose
     },
     computed: {
@@ -49,20 +53,22 @@
         return this.form.supportRange ? '支持' : '不支持';
       },
       totalSizeText() {
-        return Util.sizeFmt(this.form.totalSize,'未知');
+        return Util.sizeFmt(this.form.totalSize, '未知');
       }
     },
     methods: {
       onSubmit() {
+        this.load = true;
         this.$http.post('api/startTask', this.form)
         .then((response) => {
           let result = response.data;
           if (result.status == 200) {
             this.$router.push('/')
           } else {
+            this.load = false;
             this.$message(result.msg);
           }
-        })
+        });
       },
       onCancle() {
         window.history.go(-1);
@@ -91,6 +97,7 @@
   .el-input {
     width: 50%;
   }
+
   .el-slider {
     padding-left: 5px;
     width: 70%;

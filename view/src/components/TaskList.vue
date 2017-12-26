@@ -13,13 +13,13 @@
               <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=20}">
                 <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                   <el-progress :text-inside="true" :stroke-width="18"
-                               :percentage="totalProgress||progress(chunk)"
+                               :percentage="task.totalProgress||progress(chunk)"
                                :status="status(chunk)"></el-progress>
                   <span>{{sizeFmt(speed(chunk),'0B')}}/s</span>
                 </li>
               </ul>
               <el-progress type="circle"
-                           :percentage="totalProgress||progress(task)"
+                           :percentage="task.totalProgress||progress(task)"
                            :status="status(task)"
                            :width="200"
                            slot="reference"></el-progress>
@@ -49,7 +49,6 @@
       return {
         tasks: [],
         cellSize: 3,
-        totalProgress: 0,
         ws: new WebSocket('ws://' + window.location.host + '/ws/progress'),
       }
     },
@@ -87,7 +86,7 @@
           return '已完成';
         }
         if (task.status == 5) {
-          this.totalProgress = 100;
+          task.totalProgress = 100;
           return '合并文件中';
         }
         let speed = this.speed(task);
