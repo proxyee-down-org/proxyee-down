@@ -36,7 +36,7 @@ public class WsUtil {
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      HttpDownServer.LOGGER.warn("sendMsg",e);
     }
   }
 }

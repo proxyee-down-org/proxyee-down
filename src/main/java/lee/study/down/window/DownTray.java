@@ -50,7 +50,6 @@ public class DownTray extends JFrame{
       popupMenu.add(closeItem);
       openItem.addActionListener((event)-> openBrowse());
       closeItem.addActionListener((event)-> {
-        HttpDownServer.PROXY_SERVER.close();
         System.exit(0);
       });
       // 为托盘图标加弹出菜弹
@@ -61,7 +60,7 @@ public class DownTray extends JFrame{
         // 为系统托盘加托盘图标
         systemTray.add(trayIcon);
       } catch (Exception e) {
-        e.printStackTrace();
+        HttpDownServer.LOGGER.warn("init",e);
       }
     }
     openBrowse();

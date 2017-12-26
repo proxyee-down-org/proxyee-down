@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lee.study.down.HttpDownServer;
@@ -165,7 +166,7 @@ public class HttpDownUtil {
         }
         cdl.await(30, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        HttpDownServer.LOGGER.error("await:",e);
       }
     }
     return taskInfo;
@@ -257,6 +258,8 @@ public class HttpDownUtil {
     HttpDownCallback callback = taskInfo.getCallback();
     HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
     RequestProto requestProto = requestInfo.requestProto();
+    HttpDownServer.LOGGER.debug(
+        "开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
     ChannelFuture cf = HttpDownServer.DOWN_BOOT
         .handler(
             new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
@@ -264,6 +267,8 @@ public class HttpDownUtil {
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
         synchronized (requestInfo) {
+          HttpDownServer.LOGGER.debug(
+              "下载连接成功：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
           if (httpDownInfo.getTaskInfo().isSupportRange()) {
             requestInfo.headers()
                 .set(HttpHeaderNames.RANGE,
@@ -281,10 +286,12 @@ public class HttpDownUtil {
           requestInfo.setContent(null); //help GC
         }
       } else {
+        HttpDownServer.LOGGER.debug(
+            "下载连接失败：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         future.channel().close();
         //失败等30s重试
         TimeUnit.SECONDS.sleep(30);
-        System.out.println(
+        HttpDownServer.LOGGER.debug(
             "连接失败重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         retryDown(taskInfo, chunkInfo);
       }
@@ -297,35 +304,41 @@ public class HttpDownUtil {
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    if (taskInfo.getChunkInfoList().size() > 0) {
-      chunkInfo
-          .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
-    } else {
-      chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+    //避免同时两个重新下载
+    if(setStatusIfNotDone(chunkInfo,3)){
+      if (taskInfo.getChunkInfoList().size() > 0) {
+        chunkInfo
+            .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
+      } else {
+        chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+      }
+      //已经下载完成
+      if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
+        chunkInfo.setStatus(2);
+        taskInfo.getCallback().chunkDone(taskInfo, chunkInfo);
+        return;
+      }
+      if (taskInfo.isSupportRange()) {
+        chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+      }
+      HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
+      chunkDown(httpDownInfo, chunkInfo);
     }
-    //已经下载完成
-    if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
-      chunkInfo.setStatus(2);
-      taskInfo.getCallback().chunkDone(taskInfo, chunkInfo);
-      return;
-    }
-    if (taskInfo.isSupportRange()) {
-      chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
-    }
-    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
-    chunkDown(httpDownInfo, chunkInfo);
   }
 
   /**
    * 继续下载
    */
-  public static void countinueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
+  public static void continueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    //计算后续下载字节
-    chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
-    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
-    chunkDown(httpDownInfo, chunkInfo);
+    //避免同时两个重新下载
+    if(setStatusIfNotDone(chunkInfo,5)){
+      //计算后续下载字节
+      chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+      HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
+      chunkDown(httpDownInfo, chunkInfo);
+    }
   }
 
   public static void safeClose(Channel channel, FileChannel fileChannel) {
@@ -334,12 +347,16 @@ public class HttpDownUtil {
         //关闭旧的下载连接
         channel.close();
       }
+    } catch (Exception e) {
+      HttpDownServer.LOGGER.error("safeClose netty channel",e);
+    }
+    try {
       if (fileChannel != null && fileChannel.isOpen()) {
         //关闭旧的下载文件连接
         fileChannel.close();
       }
     } catch (IOException e) {
-      e.printStackTrace();
+      HttpDownServer.LOGGER.error("safeClose file channel",e);
     }
   }
 
@@ -364,5 +381,15 @@ public class HttpDownUtil {
         }
       }
     }
+  }
+
+  public static boolean setStatusIfNotDone(ChunkInfo chunkInfo,int update){
+    synchronized (chunkInfo){
+      if(chunkInfo.getStatus()!=2){
+        chunkInfo.setStatus(update);
+        return true;
+      }
+    }
+    return false;
   }
 }

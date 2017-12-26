@@ -44,7 +44,7 @@ public class HttpDownProgressEventTask extends Thread {
         }
         TimeUnit.MILLISECONDS.sleep(500);
       } catch (Exception e) {
-        e.printStackTrace();
+        HttpDownServer.LOGGER.error("eventTask:",e);
       }
     }
   }

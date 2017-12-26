@@ -99,7 +99,7 @@ public class FileUtil {
         return size;
       }
     }
-    return -1;
+    return 0;
   }
 
   public static void main(String[] args) {

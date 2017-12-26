@@ -11,12 +11,10 @@ import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.swing.JFrame;
 import lee.study.down.config.ConfigInfo;
 import lee.study.down.dispatch.DefaultHttpDownCallback;
 import lee.study.down.dispatch.HttpDownErrorCheckTask;
 import lee.study.down.dispatch.HttpDownProgressEventTask;
-import lee.study.down.intercept.BdyBatchDownIntercept;
 import lee.study.down.intercept.BdyIntercept;
 import lee.study.down.intercept.HttpDownIntercept;
 import lee.study.down.intercept.HttpDownSniffIntercept;
@@ -31,22 +29,24 @@ import lee.study.proxyee.intercept.CertDownIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 import lee.study.proxyee.server.HttpProxyServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationHome;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerCustomizer;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.web.socket.WebSocketSession;
 
 @SpringBootApplication
 public class HttpDownServer implements InitializingBean, EmbeddedServletContainerCustomizer {
 
-  public static final NioEventLoopGroup LOOP_GROUP = new NioEventLoopGroup();
+  public static final Logger LOGGER = LoggerFactory.getLogger(HttpDownServer.class);
+
+  public static final NioEventLoopGroup LOOP_GROUP = new NioEventLoopGroup(1);
   public static final Bootstrap DOWN_BOOT = new Bootstrap().group(LOOP_GROUP)
       .channel(NioSocketChannel.class);
   public static final String HOME_PATH =
@@ -63,7 +63,6 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
 
   public static int VIEW_SERVER_PORT;
   public static SslContext CLIENT_SSL_CONTEXT;
-  public static HttpProxyServer PROXY_SERVER;
 
   @Value("${view.server.port}")
   private int viewServerPort;
@@ -79,19 +78,18 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   public static void start() {
     new SpringApplicationBuilder(HttpDownServer.class)
         .headless(false).run();
-
     loadConfig();
     loadRecord();
     new DownTray();
 
-    PROXY_SERVER = new HttpProxyServer();
-    CLIENT_SSL_CONTEXT = PROXY_SERVER.getClientSslContext();
+    HttpProxyServer proxyServer = new HttpProxyServer();
+    CLIENT_SSL_CONTEXT = proxyServer.getClientSslContext();
 
     new HttpDownProgressEventTask().start();
     new HttpDownErrorCheckTask().start();
 
     //监听http下载请求
-    PROXY_SERVER.proxyInterceptInitializer(new HttpProxyInterceptInitializer() {
+    proxyServer.proxyInterceptInitializer(new HttpProxyInterceptInitializer() {
       @Override
       public void init(HttpProxyInterceptPipeline pipeline) {
         pipeline.addLast(new CertDownIntercept());
@@ -106,11 +104,11 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
           @Override
           public void beforeCatch(Channel clientChannel, Throwable cause) {
             if (cause instanceof ConnectException) {
-              System.out.println("连接超时:" + cause.toString());
+              LOGGER.warn("连接超时:" + cause.toString());
             } else if (cause instanceof IOException) {
-              System.out.println("IO异常:" + cause.toString());
+              LOGGER.warn("IO异常:" + cause.toString());
             } else {
-              cause.printStackTrace();
+              LOGGER.error("服务器异常:",cause);
             }
           }
 
@@ -140,14 +138,14 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
             continue;
           }
           File taskInfoFile = new File(taskBaseInfo.buildTaskFilePath() + ".inf");
-          boolean isDowned = true;
+          boolean downFlag;
           if (taskInfoFile.exists()) {
             //下载中的还原之前的状态
             httpDownInfo = (HttpDownInfo) ByteUtil.deserialize(taskInfoFile.getPath());
             //是同一个任务
             if (httpDownInfo.getTaskInfo().getId().equals(taskBaseInfo.getId())) {
               //标记为待下载
-              isDowned = false;
+              downFlag = true;
               //全部标记为暂停,等待重新下载
               TaskInfo taskInfo = httpDownInfo.getTaskInfo();
               taskInfo.setCallback(new DefaultHttpDownCallback());
@@ -169,11 +167,13 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
               RECORD_CONTENT.remove(entry.getKey());
               continue;
             }
-          }else{
+          } else {
             RECORD_CONTENT.remove(entry.getKey());
+            FileUtil.deleteIfExists(taskBaseInfo.buildChunksPath());
+            FileUtil.deleteIfExists(taskBaseInfo.buildTaskFilePath());
             continue;
           }
-          if (isDowned) {
+          if (!downFlag) {
             //下载完成的
 //            taskBaseInfo.setStatus(2);
             TaskInfo temp = new TaskInfo();
@@ -183,38 +183,34 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
           DOWN_CONTENT.put(taskBaseInfo.getId(), httpDownInfo);
         }
       } catch (Exception e) {
-        System.out.println("加载配置文件失败：" + e.getMessage());
+        LOGGER.warn("加载配置文件失败：" + e.getMessage());
       }
     }
-    if(RECORD_CONTENT==null){
+    if (RECORD_CONTENT == null) {
       RECORD_CONTENT = new ConcurrentHashMap<>();
     }
   }
 
   private static void loadConfig() {
     File file = new File(CONFIG_PATH);
-    if (file.exists()) {
-      try {
+    try {
+      if (file.exists()) {
         CONFIG_INFO = (ConfigInfo) ByteUtil.deserialize(CONFIG_PATH);
-      } catch (Exception e) {
-        e.printStackTrace();
       }
-    }
-    if(CONFIG_INFO ==null){
-      CONFIG_INFO = new ConfigInfo();
-      CONFIG_INFO.setFirst(true);
-      CONFIG_INFO.setLocalPort(9999);
-      CONFIG_INFO.setLocalProxyType(1);
-      try {
-        ByteUtil.serialize(CONFIG_INFO,CONFIG_PATH);
-      } catch (IOException e) {
-        e.printStackTrace();
+      if (CONFIG_INFO == null) {
+        CONFIG_INFO = new ConfigInfo();
+        CONFIG_INFO.setFirst(true);
+        CONFIG_INFO.setLocalPort(9999);
+        CONFIG_INFO.setLocalProxyType(1);
       }
+    } catch (Exception e) {
+      LOGGER.error("loadConfig",e);
     }
   }
 
   @Override
   public void customize(ConfigurableEmbeddedServletContainer configurableEmbeddedServletContainer) {
-    configurableEmbeddedServletContainer.setPort(tomcatServerPort==-1?VIEW_SERVER_PORT:tomcatServerPort);
+    configurableEmbeddedServletContainer
+        .setPort(tomcatServerPort == -1 ? VIEW_SERVER_PORT : tomcatServerPort);
   }
 }

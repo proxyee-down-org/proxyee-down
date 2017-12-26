@@ -31,27 +31,21 @@ public class HttpDownErrorCheckTask extends Thread {
             } else {
               if (taskInfo.getChunkInfoList() != null) {
                 for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
-                  if (taskInfo.getStatus() == 1 && chunkInfo.getStatus() == 1) {
+                  //下载中或者下载失败的情况下30秒没有反应则重新建立连接下载
+                  if (taskInfo.getStatus() == 1 && (chunkInfo.getStatus() == 1
+                      || chunkInfo.getStatus() == 3)) {
                     String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
                     Long downSize = flagMap.get(key);
                     //下载失败
                     if (downSize != null && downSize == chunkInfo.getDownSize()) {
-                      synchronized (chunkInfo){
-                        if(chunkInfo.getStatus()==1){
-                          System.out.println(
-                              "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-                          chunkInfo.setStatus(3);
-                          HttpDownUtil.retryDown(taskInfo, chunkInfo);
-                        }else{
-                          HttpDownUtil.safeClose(chunkInfo.getChannel(),chunkInfo.getFileChannel());
-                        }
-                      }
-
+                      HttpDownServer.LOGGER.debug(
+                          "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                      HttpDownUtil.retryDown(taskInfo, chunkInfo);
                     } else {
                       flagMap.put(key, chunkInfo.getDownSize());
                     }
                   } else if (chunkInfo.getStatus() == 4) {
-                    System.out.println(
+                    HttpDownServer.LOGGER.debug(
                         "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                     HttpDownUtil.retryDown(taskInfo, chunkInfo);
                   }
@@ -63,7 +57,7 @@ public class HttpDownErrorCheckTask extends Thread {
         }
         TimeUnit.MILLISECONDS.sleep(30000);
       } catch (Exception e) {
-        e.printStackTrace();
+        HttpDownServer.LOGGER.error("checkTask:"+e);
       }
     }
   }

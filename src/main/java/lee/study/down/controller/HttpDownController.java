@@ -61,11 +61,31 @@ public class HttpDownController {
   @RequestMapping("/startTask")
   public ResultInfo startTask(@RequestBody DownForm downForm) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    if (downForm.getPath() != null && !"".equals(downForm.getPath().trim())) {
-      File file = new File(downForm.getPath());
-      if (file.exists()) {
-        HttpDownInfo httpDownModel = HttpDownServer.DOWN_CONTENT.get(downForm.getId());
-        TaskInfo taskInfo = httpDownModel.getTaskInfo();
+    if (StringUtils.isEmpty(downForm.getFileName())) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名不能为空");
+      return resultInfo;
+    }
+    if (StringUtils.isEmpty(downForm.getPath())) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
+      return resultInfo;
+    }
+    if (!new File(downForm.getPath()).exists()) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不存在");
+      return resultInfo;
+    }
+    HttpDownInfo httpDownModel = HttpDownServer.DOWN_CONTENT.get(downForm.getId());
+    TaskInfo taskInfo = httpDownModel.getTaskInfo();
+    synchronized (taskInfo) {
+      if (taskInfo.getChunkInfoList() == null) {
+        //有下载中的文件同名
+        if (HttpDownServer.DOWN_CONTENT.values().stream().anyMatch(
+            (httpDownInfo -> !httpDownInfo.getTaskInfo().getId().equals(downForm.getId())
+                && httpDownInfo.getTaskInfo().getStatus() !=0 && downForm.getFileName()
+                .equals(httpDownInfo.getTaskInfo().getFileName())))) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
+          return resultInfo;
+        }
+        taskInfo.setFileName(downForm.getFileName());
         taskInfo.setFilePath(downForm.getPath());
         List<ChunkInfo> chunkInfoList = new ArrayList<>();
         if (taskInfo.getTotalSize() > 0) {  //非chunked编码
@@ -96,10 +116,8 @@ public class HttpDownController {
         taskInfo.setChunkInfoList(chunkInfoList);
         HttpDownUtil.taskDown(httpDownModel, new DefaultHttpDownCallback());
       } else {
-        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不存在");
+        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务正在下载中");
       }
-    } else {
-      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
     }
     return resultInfo;
   }

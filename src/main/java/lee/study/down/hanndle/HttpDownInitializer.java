@@ -8,7 +8,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
@@ -91,9 +90,10 @@ public class HttpDownInitializer extends ChannelInitializer {
               }
             } else if (realContentSize == chunkInfo.getDownSize()
                 || (realContentSize - 1) == chunkInfo.getDownSize()) {  //百度响应做了手脚，会少一个字节
-              HttpDownUtil.safeClose(ctx.channel(),fileChannel);
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
-              HttpDownUtil.countinueDown(taskInfo, chunkInfo);
+              HttpDownServer.LOGGER.debug(
+                  "继续下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+              HttpDownUtil.continueDown(taskInfo, chunkInfo);
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
@@ -119,16 +119,9 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        synchronized (chunkInfo){
-          if(chunkInfo.getStatus()==1){
-            System.out.println(
-                "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-            chunkInfo.setStatus(3);
-            callback.error(taskInfo, chunkInfo, cause);
-          }else{
-            HttpDownUtil.safeClose(ctx.channel(),fileChannel);
-          }
-        }
+        HttpDownServer.LOGGER.debug(
+            "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+          callback.error(taskInfo, chunkInfo, cause);
         super.exceptionCaught(ctx, cause);
       }
 

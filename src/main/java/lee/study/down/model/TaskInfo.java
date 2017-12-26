@@ -41,6 +41,7 @@ public class TaskInfo implements Serializable {
   }
 
   public String buildChunkFilePath(int index) {
-    return buildChunksPath() + File.separator + "ck_" + index+".tmp";
+    int size = chunkInfoList==null?0:(chunkInfoList.size()+"").length();
+    return buildChunksPath() + File.separator + "ck_" + String.format("%0"+size+"d", index)+".tmp";
   }
 }

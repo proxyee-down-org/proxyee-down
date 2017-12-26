@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -26,22 +27,28 @@ public class OsUtil {
   /**
    * 获取空闲端口号
    */
-  public static int getFreePort() {
+  public static int getFreePort() throws Exception{
+    int port;
+    ServerSocket serverSocket1 = null;
     try {
-      InetAddress address = InetAddress.getByName("0.0.0.0");
-      for (int i = 9000; i <= 65536; i++) {
-        try {
-          DatagramSocket ds = new DatagramSocket(i);
-          ds.close();
-          return i;
-        } catch (SocketException e) {
-
-        }
-      }
+      serverSocket1= new ServerSocket(9000);
+      port = serverSocket1.getLocalPort();
     } catch (Exception e) {
-      e.printStackTrace();
+      ServerSocket serverSocket2 = null;
+      try {
+        serverSocket2 = new ServerSocket(0);
+        port = serverSocket2.getLocalPort();
+      } catch (IOException e1) {
+        throw e1;
+      }finally {
+        serverSocket2.close();
+      }
+    }finally {
+      if(serverSocket1!=null){
+        serverSocket1.close();
+      }
     }
-    return -1;
+    return port;
   }
 
   public static void enabledIEProxy(String host, int port) throws IOException {

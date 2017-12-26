@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
+import lee.study.down.HttpDownServer;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
@@ -72,11 +73,10 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
       HttpRequestInfo httpRequestInfo = (HttpRequestInfo) pipeline.getHttpRequest();
       if (downFlag) {   //如果是下载
         proxyChannel.close();//关闭嗅探下载连接
-        System.out.println("=====================下载===========================");
-        System.out.println(pipeline.getHttpRequest().toString());
-        System.out.println("------------------------------------------------");
-        System.out.println(httpResponse.toString());
-        System.out.println("================================================");
+        HttpDownServer.LOGGER.debug("=====================下载===========================\n" +
+            pipeline.getHttpRequest().toString() + "\n" +
+            httpResponse.toString() + "\n" +
+            "================================================");
         //原始的请求协议
         httpRequestInfo.setRequestProto(pipeline.getRequestProto());
         pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);

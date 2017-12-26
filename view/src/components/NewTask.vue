@@ -1,7 +1,7 @@
 <template>
   <el-form ref="form" :model="form" label-width="80px" size="medium">
     <el-form-item label="文件名">
-      <el-input class="file-choose-input" v-model="form.fileName"></el-input>
+      <el-input v-model="form.fileName"></el-input>
     </el-form-item>
     <el-form-item label="文件大小">{{totalSizeText}}</el-form-item>
     <el-form-item label="支持分段">{{supportRangeText}}</el-form-item>
@@ -28,7 +28,6 @@
 <script>
   import Util from '../common/util'
   import FileChoose from './FileChoose'
-  import ElInput from "../../node_modules/element-ui/packages/input/src/input.vue";
 
   export default {
     data() {

@@ -25,7 +25,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
           taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
     } catch (IOException e) {
-      e.printStackTrace();
+      HttpDownServer.LOGGER.error("call start:"+e);
     }
     //标记为下载中并记录开始时间
     WsUtil.sendMsg();
@@ -46,7 +46,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
     try {
       HttpDownUtil.retryDown(taskInfo, chunkInfo);
     } catch (Exception e) {
-      e.printStackTrace();
+      HttpDownServer.LOGGER.error("call error:"+e);
     }
   }
 
@@ -64,7 +64,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
       WsUtil.sendMsg();
     } catch (IOException e) {
-      e.printStackTrace();
+      HttpDownServer.LOGGER.error("call merge:"+e);
     }
   }
 
@@ -80,7 +80,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
         Files.deleteIfExists(Paths.get(taskInfo.buildTaskFilePath() + ".inf"));
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      HttpDownServer.LOGGER.error("call done:"+e);
     }
     WsUtil.sendMsg();
   }
