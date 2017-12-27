@@ -10,26 +10,49 @@
               title="下载详情"
               width="400"
               trigger="click">
+              <div class="file-detail">
+                <p>
+                  <span>名称：</span>
+                  <b>{{task.fileName}}</b>
+                </p>
+                <p>
+                  <span>路径：</span>
+                  <b>{{task.filePath}}</b>
+                </p>
+                <p>
+                  <span>大小：</span>
+                  <b>{{sizeFmt(task.totalSize, '未知大小')}}</b>
+                </p>
+                <p>
+                  <span>速度：</span>
+                  <b>{{sizeFmt(speed(task), '0B')}}/s</b>
+                </p>
+                <p>
+                  <span>状态：</span>
+                  <b>{{leftTime(task)}}</b>
+                </p>
+              </div>
               <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=20}">
                 <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                   <el-progress :text-inside="true" :stroke-width="18"
                                :percentage="task.totalProgress||progress(chunk)"
                                :status="status(chunk)"></el-progress>
-                  <span>{{sizeFmt(speed(chunk),'0B')}}/s</span>
+                  <span>{{sizeFmt(speed(chunk), '0B')}}/s</span>
                 </li>
               </ul>
-              <el-progress type="circle"
-                           :percentage="task.totalProgress||progress(task)"
-                           :status="status(task)"
-                           :width="200"
-                           slot="reference"></el-progress>
+              <task-progress type="circle"
+                             :percentage="task.totalProgress||progress(task)"
+                             :status="status(task)"
+                             :width="200"
+                             slot="reference"></task-progress>
             </el-popover>
-            <div class="file-detail">
-              <p>{{sizeFmt(speed(task),'0B')}}/s</p>
-              <p>{{leftTime(task)}}</p>
-              <p>{{task.fileName}}</p>
-              <p>{{sizeFmt(task.totalSize,'未知大小')}}</p>
+            <div class="task-progress-icon">
+              <i v-if="task.status!=2"
+                 :class="iconClass(task)"
+                 @click="controlTask(task)"></i>
+              <i v-if="task.status!=5" class="el-icon-task-delete" @click="deleteTask(task)"></i>
             </div>
+            <p style="padding-top: 5px">{{task.fileName}}</p>
           </el-col>
         </el-row>
       </el-col>
@@ -42,6 +65,7 @@
 
 <script>
   import Util from '../common/util'
+  import TaskProgress from './TaskProgress'
   import Vue from 'vue'
 
   export default {
@@ -49,8 +73,11 @@
       return {
         tasks: [],
         cellSize: 3,
-        ws: new WebSocket('ws://' + window.location.host + '/ws/progress'),
+        ws: new WebSocket('ws://' + window.location.host + '/ws/onProgress'),
       }
+    },
+    components: {
+      TaskProgress
     },
     methods: {
       rowTasks(row) {
@@ -75,7 +102,7 @@
       speed(task) {
         if (task.lastTime) {
           //下载了多少秒
-          let usedTime = (task.lastTime - task.startTime) / 1000;
+          let usedTime = (task.lastTime - task.startTime - task.pauseTime) / 1000;
           //计算下载速度
           return Math.floor(task.downSize / usedTime)
         }
@@ -84,6 +111,9 @@
       leftTime(task) {
         if (task.status == 2) {
           return '已完成';
+        }
+        if (task.status == 4) {
+          return '暂停中';
         }
         if (task.status == 5) {
           task.totalProgress = 100;
@@ -102,12 +132,63 @@
             return 'success';
           case 3:
             return 'exception';
+          case 4:
+            return 'warn';
+          case 5:
+            return 'busy';
           default:
             return null;
         }
       },
-      sizeFmt(size,def) {
-        return Util.sizeFmt(size,def);
+      sizeFmt(size, def) {
+        return Util.sizeFmt(size, def);
+      },
+      iconClass(task) {
+        if (task.status == 4) {
+          return 'el-icon-task-start';
+        } else if (task.status == 5) {
+          return 'el-icon-loading';
+        }else {
+          return 'el-icon-task-pause';
+        }
+      },
+      controlTask(task) {
+        if(task.status==5){
+          this.$message("合并中，请耐心等待");
+          return;
+        }
+        if (task.status == 4) {
+          this.$http.get('api/continueTask?id=' + task.id)
+          .then((response) => {
+            let result = response.data;
+            if (result.status != 200) {
+              this.$message(result.msg);
+            }
+          });
+        } else {
+          this.$http.get('api/pauseTask?id=' + task.id)
+          .then((response) => {
+            let result = response.data;
+            if (result.status != 200) {
+              this.$message(result.msg);
+            }
+          });
+        }
+      },
+      deleteTask(task) {
+        this.$confirm('确定删除该任务吗?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.$http.get('api/deleteTask?id=' + task.id)
+          .then((response) => {
+            let result = response.data;
+            if (result.status != 200) {
+              this.$message(result.msg);
+            }
+          });
+        });
       },
     },
     created() {
@@ -160,6 +241,7 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   .task-list-container {
+    padding-bottom: 20px;
     text-align: center;
   }
 
@@ -191,5 +273,16 @@
 
   .file-detail {
     font-size: 15px;
+  }
+
+  @import "../assets/icon/iconfont.css";
+  .task-progress-icon {
+    height: 60px;
+  }
+
+  .task-progress-icon i {
+    padding: 15px 30px;
+    font-size: 30px;
+    cursor: pointer;
   }
 </style>

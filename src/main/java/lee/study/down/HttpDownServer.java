@@ -11,8 +11,10 @@ import java.net.ConnectException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.swing.JOptionPane;
 import lee.study.down.config.ConfigInfo;
 import lee.study.down.dispatch.DefaultHttpDownCallback;
+import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.dispatch.HttpDownErrorCheckTask;
 import lee.study.down.dispatch.HttpDownProgressEventTask;
 import lee.study.down.intercept.BdyIntercept;
@@ -57,6 +59,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   public static final String CONFIG_PATH = HOME_PATH + File.separator + "proxyee-down.cfg";
   public static final Map<String, WebSocketSession> WS_CONTENT = new ConcurrentHashMap<>();
   public static final Map<String, HttpDownInfo> DOWN_CONTENT = new ConcurrentHashMap<>();
+  public static final HttpDownCallback CALLBACK = new DefaultHttpDownCallback();
 
   public static ConfigInfo CONFIG_INFO;
   public static Map<String, TaskInfo> RECORD_CONTENT;
@@ -79,6 +82,10 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
     new SpringApplicationBuilder(HttpDownServer.class)
         .headless(false).run();
     loadConfig();
+    if(OsUtil.isBusyPort(CONFIG_INFO.getLocalPort())){
+      JOptionPane.showMessageDialog(null, "软件已启动或端口("+CONFIG_INFO.getLocalPort()+")被占用", "运行错误",JOptionPane.ERROR_MESSAGE);
+      System.exit(0);
+    }
     loadRecord();
     new DownTray();
 
@@ -151,7 +158,6 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
               if (httpDownInfo.getTaskInfo().getId().equals(taskBaseInfo.getId())) {
                 //全部标记为暂停,等待重新下载
                 TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-                taskInfo.setCallback(new DefaultHttpDownCallback());
                 if (taskInfo.getStatus() == 5) {  //合并状态检查临时文件夹是否还存在
                   if (FileUtil.getFileSize(taskInfo.buildChunksPath()) != taskInfo.getTotalSize()) {
                     taskInfo.setStatus(1);
@@ -160,7 +166,9 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
                     });
                   }
                 } else {
-                  taskInfo.getChunkInfoList().forEach(chunk -> {//非合并状态需要下载
+                  //重启设置状态为暂停中
+                  taskInfo.setStatus(4);
+                  taskInfo.getChunkInfoList().forEach(chunk -> {
                     if (chunk.getStatus() != 2) {
                       chunk.setStatus(4);
                     }

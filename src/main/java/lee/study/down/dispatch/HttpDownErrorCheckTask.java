@@ -27,7 +27,7 @@ public class HttpDownErrorCheckTask extends Thread {
               HttpDownUtil.startMerge(taskInfo);
               //文件下载完成回调
               taskInfo.setStatus(2);
-              taskInfo.getCallback().done(taskInfo);
+              HttpDownServer.CALLBACK.onDone(taskInfo);
             } else {
               if (taskInfo.getChunkInfoList() != null) {
                 for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
@@ -45,11 +45,14 @@ public class HttpDownErrorCheckTask extends Thread {
                     } else {
                       flagMap.put(key, chunkInfo.getDownSize());
                     }
-                  } else if (chunkInfo.getStatus() == 4) {
+                  }
+                  /*
+                  4为暂停，需手动开始下载
+                  else if (chunkInfo.getStatus() == 4) {
                     HttpDownServer.LOGGER.debug(
                         "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                     HttpDownUtil.retryDown(taskInfo, chunkInfo);
-                  }
+                  }*/
                 }
               }
             }

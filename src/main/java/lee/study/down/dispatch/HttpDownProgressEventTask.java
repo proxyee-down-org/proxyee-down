@@ -21,7 +21,7 @@ public class HttpDownProgressEventTask extends Thread {
         if (HttpDownServer.DOWN_CONTENT != null && HttpDownServer.DOWN_CONTENT.size() > 0) {
           for (Entry<String, HttpDownInfo> entry : HttpDownServer.DOWN_CONTENT.entrySet()) {
             TaskInfo taskInfo = entry.getValue().getTaskInfo();
-            if (taskInfo.getStatus() == 1) {
+            if (taskInfo.getStatus() == 1 || taskInfo.getStatus() == 3) {
               taskInfo.setLastTime(System.currentTimeMillis());
               for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
                 if (chunkInfo.getStatus() == 1) {
@@ -38,13 +38,13 @@ public class HttpDownProgressEventTask extends Thread {
                   }
                 }
               }
-              WsUtil.sendMsg();
             }
           }
         }
+        WsUtil.sendMsg();
         TimeUnit.MILLISECONDS.sleep(500);
       } catch (Exception e) {
-        HttpDownServer.LOGGER.error("eventTask:",e);
+        HttpDownServer.LOGGER.error("eventTask:", e);
       }
     }
   }

@@ -51,6 +51,28 @@ public class OsUtil {
     return port;
   }
 
+  /**
+   * 检查端口号是否被占用
+   */
+  public static boolean isBusyPort(int port){
+    boolean ret = true;
+    ServerSocket serverSocket = null;
+    try {
+      serverSocket= new ServerSocket(port);
+      ret = false;
+    } catch (Exception e) {
+    }finally {
+      if(serverSocket!=null){
+        try {
+          serverSocket.close();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    return ret;
+  }
+
   public static void enabledIEProxy(String host, int port) throws IOException {
     Runtime.getRuntime().exec(REG_HEAD + PROXY_ENABLE_KEY + "/d 1" + REG_TYPE_DWORD + REG_TAIL);
     Runtime.getRuntime().exec(REG_HEAD + PROXY_SERVER_KEY + "/d " + host + ":" + port + REG_TAIL);

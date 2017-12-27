@@ -1,15 +1,11 @@
 package lee.study.down.controller;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import lee.study.down.HttpDownServer;
-import lee.study.down.dispatch.DefaultHttpDownCallback;
 import lee.study.down.form.DownForm;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.DirInfo;
@@ -18,12 +14,10 @@ import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -77,16 +71,13 @@ public class HttpDownController {
     TaskInfo taskInfo = httpDownModel.getTaskInfo();
     synchronized (taskInfo) {
       if (taskInfo.getChunkInfoList() == null) {
-        //有下载中的文件同名
-        if (HttpDownServer.DOWN_CONTENT.values().stream().anyMatch(
-            (httpDownInfo -> !httpDownInfo.getTaskInfo().getId().equals(downForm.getId())
-                && httpDownInfo.getTaskInfo().getStatus() !=0 && downForm.getFileName()
-                .equals(httpDownInfo.getTaskInfo().getFileName())))) {
+        taskInfo.setFileName(downForm.getFileName());
+        taskInfo.setFilePath(downForm.getPath());
+        //有文件同名
+        if (new File(taskInfo.buildTaskFilePath()).exists()) {
           resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
           return resultInfo;
         }
-        taskInfo.setFileName(downForm.getFileName());
-        taskInfo.setFilePath(downForm.getPath());
         List<ChunkInfo> chunkInfoList = new ArrayList<>();
         if (taskInfo.getTotalSize() > 0) {  //非chunked编码
           if (taskInfo.isSupportRange()) {
@@ -114,9 +105,9 @@ public class HttpDownController {
           chunkInfoList.add(chunkInfo);
         }
         taskInfo.setChunkInfoList(chunkInfoList);
-        HttpDownUtil.taskDown(httpDownModel, new DefaultHttpDownCallback());
+        HttpDownUtil.taskDown(httpDownModel);
       } else {
-        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务正在下载中");
+        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务已添加至下载列表");
       }
     }
     return resultInfo;
@@ -152,6 +143,45 @@ public class HttpDownController {
           data.add(dirInfo);
         }
       }
+    }
+    return resultInfo;
+  }
+
+  @RequestMapping("/pauseTask")
+  public ResultInfo pauseTask(@RequestParam String id) {
+    ResultInfo resultInfo = new ResultInfo();
+    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(id);
+    if (httpDownInfo == null) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
+    } else {
+      TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+      HttpDownServer.CALLBACK.onPause(taskInfo);
+    }
+    return resultInfo;
+  }
+
+  @RequestMapping("/continueTask")
+  public ResultInfo continueTask(@RequestParam String id) {
+    ResultInfo resultInfo = new ResultInfo();
+    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(id);
+    if (httpDownInfo == null) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
+    } else {
+      TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+      HttpDownServer.CALLBACK.onContinue(taskInfo);
+    }
+    return resultInfo;
+  }
+
+  @RequestMapping("/deleteTask")
+  public ResultInfo deleteTask(@RequestParam String id) {
+    ResultInfo resultInfo = new ResultInfo();
+    HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(id);
+    if (httpDownInfo == null) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
+    } else {
+      TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+      HttpDownServer.CALLBACK.onDelete(taskInfo);
     }
     return resultInfo;
   }

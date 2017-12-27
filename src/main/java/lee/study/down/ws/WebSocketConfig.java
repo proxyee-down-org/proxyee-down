@@ -13,7 +13,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
   @Override
   public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-    registry.addHandler(progressHandle(), "/ws/progress");
+    registry.addHandler(progressHandle(), "/ws/onProgress");
   }
 
   @Bean

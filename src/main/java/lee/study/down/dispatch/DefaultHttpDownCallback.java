@@ -16,7 +16,7 @@ import lee.study.down.util.WsUtil;
 public class DefaultHttpDownCallback implements HttpDownCallback {
 
   @Override
-  public void start(TaskInfo taskInfo) {
+  public void onStart(TaskInfo taskInfo) {
     try {
       //保存下载记录
       HttpDownServer.RECORD_CONTENT.put(taskInfo.getId(), taskInfo);
@@ -25,38 +25,76 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
           taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
     } catch (IOException e) {
-      HttpDownServer.LOGGER.error("call start:"+e);
+      HttpDownServer.LOGGER.error("call onStart:" + e);
     }
     //标记为下载中并记录开始时间
     WsUtil.sendMsg();
   }
 
   @Override
-  public void chunkStart(TaskInfo taskInfo, ChunkInfo chunkInfo) {
+  public void onChunkStart(TaskInfo taskInfo, ChunkInfo chunkInfo) {
 
   }
 
   @Override
-  public void progress(TaskInfo taskInfo, ChunkInfo chunkInfo) {
+  public void onProgress(TaskInfo taskInfo, ChunkInfo chunkInfo) {
 
   }
 
   @Override
-  public void error(TaskInfo taskInfo, ChunkInfo chunkInfo, Throwable cause) {
-    try {
-      HttpDownUtil.retryDown(taskInfo, chunkInfo);
-    } catch (Exception e) {
-      HttpDownServer.LOGGER.error("call error:"+e);
+  public void onPause(TaskInfo taskInfo) {
+    synchronized (taskInfo) {
+      taskInfo.setStatus(4);
+      for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+        synchronized (chunkInfo) {
+          HttpDownUtil.safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+          if (chunkInfo.getStatus() != 2) {
+            chunkInfo.setStatus(4);
+          }
+        }
+      }
     }
-  }
-
-  @Override
-  public void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo) {
     WsUtil.sendMsg();
   }
 
   @Override
-  public void merge(TaskInfo taskInfo) {
+  public void onContinue(TaskInfo taskInfo) {
+    try {
+      synchronized (taskInfo) {
+        taskInfo.setStatus(1);
+        taskInfo.setPauseTime(
+            taskInfo.getPauseTime() + (System.currentTimeMillis() - taskInfo.getLastTime()));
+        for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+          synchronized (chunkInfo) {
+            if(chunkInfo.getStatus()==4){
+              chunkInfo.setPauseTime(taskInfo.getPauseTime());
+              HttpDownUtil.retryDown(taskInfo, chunkInfo);
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      HttpDownServer.LOGGER.error("call onContinue:" + e);
+    }
+    WsUtil.sendMsg();
+  }
+
+  @Override
+  public void onError(TaskInfo taskInfo, ChunkInfo chunkInfo, Throwable cause) {
+    try {
+      HttpDownUtil.retryDown(taskInfo, chunkInfo);
+    } catch (Exception e) {
+      HttpDownServer.LOGGER.error("call onError:" + e);
+    }
+  }
+
+  @Override
+  public void onChunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo) {
+    WsUtil.sendMsg();
+  }
+
+  @Override
+  public void onMerge(TaskInfo taskInfo) {
     try {
       //更改任务下载状态为合并中
       ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
@@ -64,12 +102,12 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
       WsUtil.sendMsg();
     } catch (IOException e) {
-      HttpDownServer.LOGGER.error("call merge:"+e);
+      HttpDownServer.LOGGER.error("call onMerge:" + e);
     }
   }
 
   @Override
-  public void done(TaskInfo taskInfo) {
+  public void onDone(TaskInfo taskInfo) {
     try {
       //更改任务下载状态为已完成
       ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
@@ -80,8 +118,30 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
         Files.deleteIfExists(Paths.get(taskInfo.buildTaskFilePath() + ".inf"));
       }
     } catch (Exception e) {
-      HttpDownServer.LOGGER.error("call done:"+e);
+      HttpDownServer.LOGGER.error("call onDone:" + e);
     }
     WsUtil.sendMsg();
+  }
+
+  @Override
+  public void onDelete(TaskInfo taskInfo) {
+    for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+      synchronized (chunkInfo) {
+        HttpDownUtil.safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+      }
+    }
+    synchronized (taskInfo) {
+      HttpDownServer.RECORD_CONTENT.remove(taskInfo.getId());
+      HttpDownServer.DOWN_CONTENT.remove(taskInfo.getId());
+      try {
+        ByteUtil
+            .serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
+        FileUtil.deleteIfExists(taskInfo.buildChunksPath());
+        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
+        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath() + ".inf");
+      } catch (IOException e) {
+        HttpDownServer.LOGGER.error("call onDelete:" + e);
+      }
+    }
   }
 }

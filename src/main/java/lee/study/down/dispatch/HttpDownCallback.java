@@ -5,17 +5,23 @@ import lee.study.down.model.TaskInfo;
 
 public interface HttpDownCallback {
 
-  void start(TaskInfo taskInfo);
+  void onStart(TaskInfo taskInfo);
 
-  void chunkStart(TaskInfo taskInfo,ChunkInfo chunkInfo);
+  void onChunkStart(TaskInfo taskInfo,ChunkInfo chunkInfo);
 
-  void progress(TaskInfo taskInfo, ChunkInfo chunkInfo);
+  void onProgress(TaskInfo taskInfo, ChunkInfo chunkInfo);
 
-  void error(TaskInfo taskInfo, ChunkInfo chunkInfo,Throwable cause);
+  void onPause(TaskInfo taskInfo);
 
-  void chunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo);
+  void onContinue(TaskInfo taskInfo);
 
-  void merge(TaskInfo taskInfo);
+  void onError(TaskInfo taskInfo, ChunkInfo chunkInfo,Throwable cause);
 
-  void done(TaskInfo taskInfo);
+  void onChunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo);
+
+  void onMerge(TaskInfo taskInfo);
+
+  void onDone(TaskInfo taskInfo);
+
+  void onDelete(TaskInfo taskInfo);
 }

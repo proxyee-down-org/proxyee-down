@@ -68,14 +68,14 @@ public class HttpDownInitializer extends ChannelInitializer {
             synchronized (taskInfo) {
               taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
             }
-            callback.progress(taskInfo, chunkInfo);
+            callback.onProgress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
               HttpDownUtil.safeClose(ctx.channel(), fileChannel);
               //分段下载完成回调
               chunkInfo.setStatus(2);
               chunkInfo.setLastTime(System.currentTimeMillis());
-              callback.chunkDone(taskInfo, chunkInfo);
+              callback.onChunkDone(taskInfo, chunkInfo);
               synchronized (taskInfo) {
                 if (taskInfo.getStatus() == 1 && taskInfo.getChunkInfoList().stream()
                     .allMatch((chunk) -> chunk.getStatus() == 2)) {
@@ -92,7 +92,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                   }
                   //文件下载完成回调
                   taskInfo.setStatus(2);
-                  callback.done(taskInfo);
+                  callback.onDone(taskInfo);
                 }
               }
             } else if (realContentSize == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()
@@ -101,6 +101,10 @@ public class HttpDownInitializer extends ChannelInitializer {
               HttpDownServer.LOGGER.debug(
                   "继续下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
               HttpDownUtil.continueDown(taskInfo, chunkInfo);
+            } else if(chunkInfo.getDownSize() > chunkInfo.getTotalSize()){
+              //错误下载从0开始重新下过
+              HttpDownServer.LOGGER.error("Out of chunk size："+chunkInfo+"\t"+taskInfo);
+              HttpDownUtil.retryDown(taskInfo,chunkInfo,0);
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
@@ -109,7 +113,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                 "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize()+"\t"+httpResponse.headers().get(
                     HttpHeaderNames.CONTENT_RANGE)+"\t"+realContentSize);
             if (taskInfo.getChunkInfoList().size() > 1) {
-              //下载使用同步IO写入，合并使用异步IO减少合并等待时间
               fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
                   "rw").getChannel();
               fileChannel.position(fileChannel.size());
@@ -118,7 +121,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             }
             chunkInfo.setStatus(1);
             chunkInfo.setFileChannel(fileChannel);
-            callback.chunkStart(taskInfo, chunkInfo);
+            callback.onChunkStart(taskInfo, chunkInfo);
           }
         } catch (Exception e) {
           throw e;
@@ -131,8 +134,8 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         HttpDownServer.LOGGER.debug(
             "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-        callback.error(taskInfo, chunkInfo, cause);
-        HttpDownServer.LOGGER.error("down error:", cause);
+        callback.onError(taskInfo, chunkInfo, cause);
+        HttpDownServer.LOGGER.error("down onError:", cause);
       }
 
       @Override

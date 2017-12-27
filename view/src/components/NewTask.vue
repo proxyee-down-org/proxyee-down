@@ -64,7 +64,7 @@
             this.$router.push('/')
           } else {
             this.load = false;
-            this.$message(result.msg);
+            this.$message({showClose: true,message:result.msg});
           }
         });
       },
@@ -83,7 +83,7 @@
           this.form.connections = result.data.connections;
           this.load = false;
         } else {
-          this.$message(result.msg);
+          this.$message({showClose: true,message:result.msg});
         }
       })
     }

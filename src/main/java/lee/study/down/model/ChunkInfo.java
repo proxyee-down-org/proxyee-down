@@ -20,7 +20,8 @@ public class ChunkInfo implements Serializable {
   private long totalSize;
   private long startTime = 0;
   private long lastTime = 0;
-  private volatile int status = 0; //0.待下载 //1.下载中 2.下载完成 3.下载失败 4.下载暂停 5.继续下载
+  private long pauseTime = 0;
+  private int status = 0; //0.待下载 //1.下载中 2.下载完成 3.下载失败 4.下载暂停 5.继续下载
 
   @JsonIgnore
   private transient Channel channel;

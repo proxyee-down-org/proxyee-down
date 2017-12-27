@@ -30,11 +30,9 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lee.study.down.HttpDownServer;
-import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.hanndle.HttpDownInitializer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
@@ -95,9 +93,9 @@ public class HttpDownUtil {
     httpHeaders.clear();
     httpResponse.setStatus(HttpResponseStatus.OK);
     httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-    String host = ((InetSocketAddress)clientChannel.localAddress()).getHostString();
+    String host = ((InetSocketAddress) clientChannel.localAddress()).getHostString();
     String js =
-        "<script>window.top.location.href='http://"+host+":" + HttpDownServer.VIEW_SERVER_PORT
+        "<script>window.top.location.href='http://" + host + ":" + HttpDownServer.VIEW_SERVER_PORT
             + "/#/newTask/" + httpDownInfo
             .getTaskInfo().getId()
             + "';</script>";
@@ -166,7 +164,7 @@ public class HttpDownUtil {
         }
         cdl.await(30, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
-        HttpDownServer.LOGGER.error("await:",e);
+        HttpDownServer.LOGGER.error("await:", e);
       }
     }
     return taskInfo;
@@ -226,10 +224,9 @@ public class HttpDownUtil {
     return 0;
   }
 
-  public static void taskDown(HttpDownInfo httpDownInfo, HttpDownCallback callback)
+  public static void taskDown(HttpDownInfo httpDownInfo)
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-    taskInfo.setCallback(callback);
     try {
       if (taskInfo.getChunkInfoList().size() > 1) {
         FileUtil.createDir(taskInfo.buildChunksPath(), true);
@@ -239,7 +236,7 @@ public class HttpDownUtil {
       //文件下载开始回调
       taskInfo.setStatus(1);
       taskInfo.setStartTime(System.currentTimeMillis());
-      callback.start(taskInfo);
+      HttpDownServer.CALLBACK.onStart(taskInfo);
       for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
         ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
         //避免分段下载速度比总的下载速度大太多的问题
@@ -255,14 +252,13 @@ public class HttpDownUtil {
   public static void chunkDown(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo)
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-    HttpDownCallback callback = taskInfo.getCallback();
     HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
     RequestProto requestProto = requestInfo.requestProto();
     HttpDownServer.LOGGER.debug(
         "开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
     ChannelFuture cf = HttpDownServer.DOWN_BOOT
         .handler(
-            new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, callback))
+            new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, HttpDownServer.CALLBACK))
         .connect(requestProto.getHost(), requestProto.getPort());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
@@ -303,19 +299,31 @@ public class HttpDownUtil {
    */
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
+    retryDown(taskInfo, chunkInfo, -1);
+  }
+
+  /**
+   * 下载重试
+   */
+  public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo, long downSize)
+      throws Exception {
     safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    synchronized (chunkInfo){
-      if(setStatusIfNotDone(chunkInfo,3)){
-        if (taskInfo.getChunkInfoList().size() > 0) {
-          chunkInfo
-              .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
-        } else {
-          chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+    synchronized (chunkInfo) {
+      if (setStatusIfNotDone(chunkInfo, 3)) {
+        if (downSize != -1) {
+          chunkInfo.setDownSize(downSize);
+        }else{
+          if (taskInfo.getChunkInfoList().size() > 0) {
+            chunkInfo
+                .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
+          } else {
+            chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
+          }
         }
         //已经下载完成
         if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
           chunkInfo.setStatus(2);
-          taskInfo.getCallback().chunkDone(taskInfo, chunkInfo);
+          HttpDownServer.CALLBACK.onChunkDone(taskInfo, chunkInfo);
           return;
         }
         if (taskInfo.isSupportRange()) {
@@ -333,9 +341,9 @@ public class HttpDownUtil {
   public static void continueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
-    synchronized (chunkInfo){
+    synchronized (chunkInfo) {
       //避免同时两个重新下载
-      if(setStatusIfNotDone(chunkInfo,5)){
+      if (setStatusIfNotDone(chunkInfo, 5)) {
         //计算后续下载字节
         chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
         HttpDownInfo httpDownInfo = HttpDownServer.DOWN_CONTENT.get(taskInfo.getId());
@@ -351,7 +359,7 @@ public class HttpDownUtil {
         channel.close();
       }
     } catch (Exception e) {
-      HttpDownServer.LOGGER.error("safeClose netty channel",e);
+      HttpDownServer.LOGGER.error("safeClose netty channel", e);
     }
     try {
       if (fileChannel != null && fileChannel.isOpen()) {
@@ -359,12 +367,12 @@ public class HttpDownUtil {
         fileChannel.close();
       }
     } catch (IOException e) {
-      HttpDownServer.LOGGER.error("safeClose file channel",e);
+      HttpDownServer.LOGGER.error("safeClose file channel", e);
     }
   }
 
   public static void startMerge(TaskInfo taskInfo) throws IOException {
-    taskInfo.getCallback().merge(taskInfo);
+    HttpDownServer.CALLBACK.onMerge(taskInfo);
     File file = FileUtil.createFile(taskInfo.buildTaskFilePath());
     try (
         FileChannel finalFile = new RandomAccessFile(file, "rw").getChannel()
@@ -386,8 +394,8 @@ public class HttpDownUtil {
     }
   }
 
-  public static boolean setStatusIfNotDone(ChunkInfo chunkInfo,int update){
-    if(chunkInfo.getStatus()!=2){
+  public static boolean setStatusIfNotDone(ChunkInfo chunkInfo, int update) {
+    if (chunkInfo.getStatus() != 2) {
       chunkInfo.setStatus(update);
       return true;
     }

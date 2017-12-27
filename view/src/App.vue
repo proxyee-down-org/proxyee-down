@@ -5,7 +5,8 @@
         <el-container style="height: 100%">
           <el-aside width="150px">
             <el-menu
-              default-active="2"
+              :default-active="$route.path"
+              :router="true"
               class="el-menu-vertical-demo"
               @open="handleOpen"
               @close="handleClose"
@@ -13,9 +14,13 @@
               text-color="#fff"
               active-text-color="#ffd04b"
               style="height: 100%">
-              <el-menu-item index="2">
+              <el-menu-item index="/">
                 <i class="el-icon-menu"></i>
                 <span slot="title">任务</span>
+              </el-menu-item>
+              <el-menu-item index="/about">
+                <i class="el-icon-info"></i>
+                <span slot="title">关于</span>
               </el-menu-item>
               <!--<el-menu-item index="3">
                 <i class="el-icon-setting"></i>
@@ -42,11 +47,11 @@
 <script>
   export default {
     name: 'app',
-    methods:{
-      handleOpen(){
+    methods: {
+      handleOpen() {
         console.log("---handleOpen--");
       },
-      handleClose(){
+      handleClose() {
         console.log("---handleClose--");
       },
     }

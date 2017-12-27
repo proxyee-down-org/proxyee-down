@@ -24,14 +24,12 @@ public class WsUtil {
           taskInfos.add(httpDownInfo.getTaskInfo());
         }
       }
-      if (taskInfos.size() > 0) {
-        TextMessage message = new TextMessage(JSON.toJSONString(taskInfos));
-        for (Entry<String, WebSocketSession> entry : HttpDownServer.WS_CONTENT.entrySet()) {
-          WebSocketSession session = entry.getValue();
-          if (session.isOpen()) {
-            synchronized (session) {
-              session.sendMessage(message);
-            }
+      TextMessage message = new TextMessage(JSON.toJSONString(taskInfos));
+      for (Entry<String, WebSocketSession> entry : HttpDownServer.WS_CONTENT.entrySet()) {
+        WebSocketSession session = entry.getValue();
+        if (session.isOpen()) {
+          synchronized (session) {
+            session.sendMessage(message);
           }
         }
       }
