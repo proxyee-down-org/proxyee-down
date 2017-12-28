@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -16,9 +17,9 @@ public class ByteUtil {
    * @param num
    * @return
    */
-  public static byte[] intToBtsForBig(int num){
+  public static byte[] longToBtsForBig(long num){
     //int 4字节
-    byte[] bts = new byte[4];
+    byte[] bts = new byte[8];
     for (int i = 0; i < bts.length; i++) {
       bts[bts.length-i-1] = (byte)((num >> 8*i)&0xFF);
     }
@@ -30,11 +31,11 @@ public class ByteUtil {
    * @param bts
    * @return
    */
-  public static int btsToIntForBig(byte[] bts){
+  public static long btsToLongForBig(byte[] bts){
     //int 4字节
-    int num = 0;
+    long num = 0;
     for (int i = 0; i < bts.length; i++) {
-      num += (bts[i]&0xFF) << 8*(bts.length-i-1);
+      num += ((long)(bts[i]&0xFF)) << 8*(bts.length-i-1);
     }
     return num;
   }
@@ -44,9 +45,9 @@ public class ByteUtil {
    * @param num
    * @return
    */
-  public static byte[] intToBtsForSmall(int num){
+  public static byte[] longToBtsForSmall(long num){
     //int 4字节
-    byte[] bts = new byte[4];
+    byte[] bts = new byte[8];
     for (int i = 0; i < bts.length; i++) {
       bts[i] = (byte)((num >> 8*i)&0xFF);
     }
@@ -58,11 +59,11 @@ public class ByteUtil {
    * @param bts
    * @return
    */
-  public static int btsToIntForSmall(byte[] bts){
+  public static long btsToLongForSmall(byte[] bts){
     //int 4字节
-    int num = 0;
+    long num = 0;
     for (int i = 0; i < bts.length; i++) {
-      num += (bts[i]&0xFF) << 8*i;
+      num += ((long)(bts[i]&0xFF)) << 8*i;
     }
     return num;
   }
@@ -148,6 +149,37 @@ public class ByteUtil {
     return str.toString();
   }
 
+  private static void readEntry(InputStream inputStream) throws IOException {
+    inputStream.read(new byte[18]);
+    byte[] bts4 = new byte[4];
+    byte[] bts2 = new byte[2];
+    byte[] bts8 = new byte[8];
+    inputStream.read(bts4);
+    System.out.println("压缩前："+btsToLongForSmall(bts4));
+    inputStream.read(bts4);
+    long fileSize = btsToLongForSmall(bts4);
+    System.out.println("压缩后："+fileSize);
+    inputStream.read(bts2);
+    long nameLength = btsToLongForSmall(bts2);
+    System.out.println("文件名长度："+nameLength);
+    inputStream.read(bts2);
+    long extLength =  btsToLongForSmall(bts2);
+    System.out.println("扩展长度："+ extLength);
+    byte[] nameBts = new byte[(int) nameLength];
+    inputStream.read(nameBts);
+    System.out.println("文件名:"+new String(nameBts));
+    inputStream.skip(4);
+    inputStream.read(bts8);
+    System.out.println("扩展压缩前："+btsToLongForSmall(bts8));
+    inputStream.read(bts8);
+    System.out.println("扩展压缩后："+btsToLongForSmall(bts8));
+    inputStream.skip(fileSize);
+    System.out.println("跳过文件长度："+fileSize);
+    /*byte[] fileBts = new byte[(int) fileSize];
+    inputStream.read(fileBts);
+    System.out.println("文件内容："+ByteUtil.btsToHex(fileBts));*/
+  }
+
   public static void main(String[] args) throws Exception {
     /*CRC32 crc32 = new CRC32();
     FileInputStream fileInputStream = new FileInputStream("F:\\down\\test1.txt");
@@ -155,81 +187,16 @@ public class ByteUtil {
     int len = fileInputStream.read(bts);
     crc32.update(bts,0,len);
     System.out.println(Long.toHexString(crc32.getValue()));*/
-
-    FileInputStream inputStream = new FileInputStream("F:\\百度云合并下载研究\\百度云合并下载2.zip");
-    inputStream.read(new byte[18]);
-    byte[] bts4 = new byte[4];
-    byte[] bts2 = new byte[2];
-    inputStream.read(bts4);
-    int fileSize = ByteUtil.btsToIntForSmall(bts4);
-    System.out.println(fileSize);
-    inputStream.read(bts4);
-    System.out.println(ByteUtil.btsToIntForSmall(bts4));
-    inputStream.read(bts2);
-    int nameLength = ByteUtil.btsToIntForSmall(bts2);
-    System.out.println(nameLength);
-    inputStream.read(bts2);
-    System.out.println(ByteUtil.btsToIntForSmall(bts2));
-    byte[] nameBts = new byte[nameLength];
-    inputStream.read(nameBts);
-    System.out.println(new String(nameBts));
-    byte[] fileBts = new byte[fileSize];
-    inputStream.read(fileBts);
-    System.out.println(ByteUtil.btsToHex(fileBts));
-
-    inputStream.read(new byte[18]);
-    inputStream.read(bts4);
-    fileSize = ByteUtil.btsToIntForSmall(bts4);
-    System.out.println(fileSize);
-    inputStream.read(bts4);
-    System.out.println(ByteUtil.btsToIntForSmall(bts4));
-    inputStream.read(bts2);
-    nameLength = ByteUtil.btsToIntForSmall(bts2);
-    System.out.println(nameLength);
-    inputStream.read(bts2);
-    System.out.println(ByteUtil.btsToIntForSmall(bts2));
-    nameBts = new byte[nameLength];
-    inputStream.read(nameBts);
-    System.out.println(new String(nameBts));
-    fileBts = new byte[fileSize];
-    inputStream.read(fileBts);
-    System.out.println(ByteUtil.btsToHex(fileBts));
-
-    inputStream.read(new byte[18]);
-    inputStream.read(bts4);
-    fileSize = ByteUtil.btsToIntForSmall(bts4);
-    System.out.println(fileSize);
-    inputStream.read(bts4);
-    System.out.println(ByteUtil.btsToIntForSmall(bts4));
-    inputStream.read(bts2);
-    nameLength = ByteUtil.btsToIntForSmall(bts2);
-    System.out.println(nameLength);
-    inputStream.read(bts2);
-    System.out.println(ByteUtil.btsToIntForSmall(bts2));
-    nameBts = new byte[nameLength];
-    inputStream.read(nameBts);
-    System.out.println(new String(nameBts));
-    fileBts = new byte[fileSize];
-    inputStream.read(fileBts);
-    System.out.println(ByteUtil.btsToHex(fileBts));
-
-    inputStream.read(new byte[18]);
-    inputStream.read(bts4);
-    fileSize = ByteUtil.btsToIntForSmall(bts4);
-    System.out.println(fileSize);
-    inputStream.read(bts4);
-    System.out.println(ByteUtil.btsToIntForSmall(bts4));
-    inputStream.read(bts2);
-    nameLength = ByteUtil.btsToIntForSmall(bts2);
-    System.out.println(nameLength);
-    inputStream.read(bts2);
-    System.out.println(ByteUtil.btsToIntForSmall(bts2));
-    nameBts = new byte[nameLength];
-    inputStream.read(nameBts);
-    System.out.println(new String(nameBts));
-    fileBts = new byte[fileSize];
-    inputStream.read(fileBts);
-    System.out.println(ByteUtil.btsToHex(fileBts));
+    /*long num = btsToLongForSmall(new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF});
+    System.out.println(Long.valueOf("FF",16));
+    System.out.println(Integer.toHexString(255));
+    System.out.println(btsToLongForSmall(new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF}));
+    System.out.println(btsToHex(longToBtsForSmall(4294967295L)));*/
+    //System.out.println(btsToHex(longToBtsForBig(4294967296L)));
+    FileInputStream inputStream = new FileInputStream("G:\\测试\\测试3.zip");
+    while(true){
+      readEntry(inputStream);
+    }
   }
 
 }

@@ -101,11 +101,11 @@ public class FileUtil {
   }
 
   public static void main(String[] args) throws Exception {
-    RandomAccessFile raf1 = new RandomAccessFile("f:/down/test1.txt","rw");
-    RandomAccessFile raf2 = new RandomAccessFile("f:/down/test2.txt","rw");
+    RandomAccessFile raf1 = new RandomAccessFile("G:\\测试/test1.txt","rw");
+    RandomAccessFile raf2 = new RandomAccessFile("G:\\测试/test2.txt","rw");
     raf1.setLength(97);
     raf1.write(new byte[]{1,1,1,1,1,1});
-    raf2.setLength(98);
+    raf2.setLength(1024*1024*1024*4L);
     raf2.write(new byte[]{2,2,2,2,2,2});
   }
 }
