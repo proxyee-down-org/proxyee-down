@@ -152,16 +152,22 @@ public class HttpDownUtil {
               }
 
             });
-        ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort()).sync();
-        //请求下载一个字节测试是否支持断点下载
-        httpRequest.headers().set(HttpHeaderNames.RANGE, "bytes=0-0");
-        cf.channel().writeAndFlush(httpRequest);
-        if (requestInfo.content() != null) {
-          //请求体写入
-          HttpContent content = new DefaultLastHttpContent();
-          content.content().writeBytes(requestInfo.content());
-          cf.channel().writeAndFlush(content);
-        }
+        ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort());
+        cf.addListener((ChannelFutureListener) future -> {
+          if (future.isSuccess()) {
+            //请求下载一个字节测试是否支持断点下载
+            httpRequest.headers().set(HttpHeaderNames.RANGE, "bytes=0-0");
+            cf.channel().writeAndFlush(httpRequest);
+            if (requestInfo.content() != null) {
+              //请求体写入
+              HttpContent content = new DefaultLastHttpContent();
+              content.content().writeBytes(requestInfo.content());
+              cf.channel().writeAndFlush(content);
+            }
+          }else{
+            cdl.countDown();
+          }
+        });
         cdl.await(30, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
         HttpDownServer.LOGGER.error("await:", e);
@@ -258,7 +264,8 @@ public class HttpDownUtil {
         "开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
     ChannelFuture cf = HttpDownServer.DOWN_BOOT
         .handler(
-            new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo, HttpDownServer.CALLBACK))
+            new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo,
+                HttpDownServer.CALLBACK))
         .connect(requestProto.getHost(), requestProto.getPort());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
@@ -285,11 +292,6 @@ public class HttpDownUtil {
         HttpDownServer.LOGGER.debug(
             "下载连接失败：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         future.channel().close();
-        //失败等30s重试
-        TimeUnit.SECONDS.sleep(30);
-        HttpDownServer.LOGGER.debug(
-            "连接失败重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-        retryDown(taskInfo, chunkInfo);
       }
     });
   }
@@ -312,10 +314,11 @@ public class HttpDownUtil {
       if (setStatusIfNotDone(chunkInfo, 3)) {
         if (downSize != -1) {
           chunkInfo.setDownSize(downSize);
-        }else{
+        } else {
           if (taskInfo.getChunkInfoList().size() > 0) {
             chunkInfo
-                .setDownSize(FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
+                .setDownSize(
+                    FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
           } else {
             chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
           }
