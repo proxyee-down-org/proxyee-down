@@ -7,7 +7,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
+import java.net.URLDecoder;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +27,7 @@ import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.OsUtil;
+import lee.study.down.util.PathUtil;
 import lee.study.down.window.DownTray;
 import lee.study.proxyee.exception.HttpProxyExceptionHandle;
 import lee.study.proxyee.intercept.CertDownIntercept;
@@ -36,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.ApplicationHome;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
@@ -51,12 +53,6 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   public static final NioEventLoopGroup LOOP_GROUP = new NioEventLoopGroup(1);
   public static final Bootstrap DOWN_BOOT = new Bootstrap().group(LOOP_GROUP)
       .channel(NioSocketChannel.class);
-  public static final String HOME_PATH =
-      System.getProperty("appdir") != null ? System.getProperty("appdir") //exe4j打包
-          : new ApplicationHome(HttpDownServer.class).getDir()
-              .getPath();
-  public static final String RECORD_PATH = HOME_PATH + File.separator + "records.inf";
-  public static final String CONFIG_PATH = HOME_PATH + File.separator + "proxyee-down.cfg";
   public static final Map<String, WebSocketSession> WS_CONTENT = new ConcurrentHashMap<>();
   public static final Map<String, HttpDownInfo> DOWN_CONTENT = new ConcurrentHashMap<>();
   public static final HttpDownCallback CALLBACK = new DefaultHttpDownCallback();
@@ -67,23 +63,57 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   public static int VIEW_SERVER_PORT;
   public static SslContext CLIENT_SSL_CONTEXT;
 
+  public static String HOME_PATH;
+  public static String RECORD_PATH;
+  public static String CONFIG_PATH;
+
+  @Value("${spring.profiles.active}")
+  private String active;
+
   @Value("${view.server.port}")
   private int viewServerPort;
 
   @Value("${tomcat.server.port}")
   private int tomcatServerPort;
 
-  @Override
-  public void afterPropertiesSet() throws Exception {
-    VIEW_SERVER_PORT = viewServerPort == -1 ? OsUtil.getFreePort() : viewServerPort;
+  static {
+    HOME_PATH = PathUtil.ROOT_PATH;
+    if ("1".equals(System.getProperty("exe4j"))) {  //exe4j中文路径特殊处理
+      try {
+        HOME_PATH = URLDecoder.decode(HOME_PATH, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+      }
+    }
+    System.setProperty("LOG_PATH", HOME_PATH);
+    RECORD_PATH = HOME_PATH + File.separator + "records.inf";
+    CONFIG_PATH = HOME_PATH + File.separator + "proxyee-down.cfg";
   }
 
-  public static void start() {
+  @Override
+  public void afterPropertiesSet() throws Exception {
+    if ("dev".equals(active)) {
+      VIEW_SERVER_PORT = viewServerPort;
+    } else {
+      VIEW_SERVER_PORT = OsUtil.getFreePort();
+    }
+  }
+
+  @Override
+  public void customize(ConfigurableEmbeddedServletContainer configurableEmbeddedServletContainer) {
+    if ("dev".equals(active)) {
+      configurableEmbeddedServletContainer.setPort(tomcatServerPort);
+    } else {
+      configurableEmbeddedServletContainer.setPort(VIEW_SERVER_PORT);
+    }
+  }
+
+  public static void start(String[] args) {
     new SpringApplicationBuilder(HttpDownServer.class)
-        .headless(false).run();
-    loadConfig();
-    if(OsUtil.isBusyPort(CONFIG_INFO.getLocalPort())){
-      JOptionPane.showMessageDialog(null, "软件已启动或端口("+CONFIG_INFO.getLocalPort()+")被占用", "运行错误",JOptionPane.ERROR_MESSAGE);
+        .headless(false).run(args);
+    loadConfig(args);
+    if (OsUtil.isBusyPort(CONFIG_INFO.getLocalPort())) {
+      JOptionPane.showMessageDialog(null, "软件已启动或端口(" + CONFIG_INFO.getLocalPort() + ")被占用", "运行错误",
+          JOptionPane.ERROR_MESSAGE);
       System.exit(0);
     }
     loadRecord();
@@ -115,7 +145,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
             } else if (cause instanceof IOException) {
               LOGGER.warn("IO异常:" + cause.toString());
             } else {
-              LOGGER.error("服务器异常:",cause);
+              LOGGER.error("服务器异常:", cause);
             }
           }
 
@@ -128,7 +158,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   }
 
   public static void main(String[] args) throws Exception {
-    start();
+    start(args);
   }
 
   private static void loadRecord() {
@@ -149,7 +179,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
             TaskInfo temp = new TaskInfo();
             BeanUtils.copyProperties(taskBaseInfo, temp);
             httpDownInfo = new HttpDownInfo(temp, null);
-          }else{
+          } else {
             File taskInfoFile = new File(taskBaseInfo.buildTaskFilePath() + ".inf");
             if (taskInfoFile.exists()) {
               //下载中的还原之前的状态
@@ -196,7 +226,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
     }
   }
 
-  private static void loadConfig() {
+  private static void loadConfig(String[] args) {
     File file = new File(CONFIG_PATH);
     try {
       if (file.exists()) {
@@ -205,17 +235,13 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
       if (CONFIG_INFO == null) {
         CONFIG_INFO = new ConfigInfo();
         CONFIG_INFO.setFirst(true);
-        CONFIG_INFO.setLocalPort(9999);
+        CONFIG_INFO
+            .setLocalPort(args != null && args.length > 0 ? Integer.parseInt(args[0]) : 9999);
         CONFIG_INFO.setLocalProxyType(1);
       }
     } catch (Exception e) {
-      LOGGER.error("loadConfig",e);
+      LOGGER.error("loadConfig", e);
     }
   }
 
-  @Override
-  public void customize(ConfigurableEmbeddedServletContainer configurableEmbeddedServletContainer) {
-    configurableEmbeddedServletContainer
-        .setPort(tomcatServerPort == -1 ? VIEW_SERVER_PORT : tomcatServerPort);
-  }
 }

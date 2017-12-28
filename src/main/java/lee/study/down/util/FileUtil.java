@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
 
 public class FileUtil {
 
@@ -102,7 +100,12 @@ public class FileUtil {
     return 0;
   }
 
-  public static void main(String[] args) {
-    System.out.println(getFileSize("F:\\down"));
+  public static void main(String[] args) throws Exception {
+    RandomAccessFile raf1 = new RandomAccessFile("f:/down/test1.txt","rw");
+    RandomAccessFile raf2 = new RandomAccessFile("f:/down/test2.txt","rw");
+    raf1.setLength(97);
+    raf1.write(new byte[]{1,1,1,1,1,1});
+    raf2.setLength(98);
+    raf2.write(new byte[]{2,2,2,2,2,2});
   }
 }

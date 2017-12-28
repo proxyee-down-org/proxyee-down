@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import lee.study.down.HttpDownServer;
@@ -132,10 +133,13 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        HttpDownServer.LOGGER.debug(
-            "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         callback.onError(taskInfo, chunkInfo, cause);
-        HttpDownServer.LOGGER.error("down onError:", cause);
+        if(cause instanceof IOException){
+          HttpDownServer.LOGGER.debug(
+              "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+        }else{
+          HttpDownServer.LOGGER.error("down onError:", cause);
+        }
       }
 
       @Override

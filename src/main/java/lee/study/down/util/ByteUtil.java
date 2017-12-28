@@ -1,42 +1,68 @@
 package lee.study.down.util;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 
 public class ByteUtil {
 
   /**
    * 大端序
+   * @param num
+   * @return
    */
-  public static byte[] intToBts(int num) {
+  public static byte[] intToBtsForBig(int num){
     //int 4字节
     byte[] bts = new byte[4];
     for (int i = 0; i < bts.length; i++) {
-      bts[bts.length - i - 1] = (byte) ((num >> 8 * i) & 0xFF);
+      bts[bts.length-i-1] = (byte)((num >> 8*i)&0xFF);
     }
     return bts;
   }
 
   /**
    * 大端序
+   * @param bts
+   * @return
    */
-  public static int btsToInt(byte[] bts) {
+  public static int btsToIntForBig(byte[] bts){
     //int 4字节
     int num = 0;
     for (int i = 0; i < bts.length; i++) {
-      num += (bts[i] & 0xFF) << 8 * (bts.length - i - 1);
+      num += (bts[i]&0xFF) << 8*(bts.length-i-1);
+    }
+    return num;
+  }
+
+  /**
+   * 小端序
+   * @param num
+   * @return
+   */
+  public static byte[] intToBtsForSmall(int num){
+    //int 4字节
+    byte[] bts = new byte[4];
+    for (int i = 0; i < bts.length; i++) {
+      bts[i] = (byte)((num >> 8*i)&0xFF);
+    }
+    return bts;
+  }
+
+  /**
+   * 小端序
+   * @param bts
+   * @return
+   */
+  public static int btsToIntForSmall(byte[] bts){
+    //int 4字节
+    int num = 0;
+    for (int i = 0; i < bts.length; i++) {
+      num += (bts[i]&0xFF) << 8*i;
     }
     return num;
   }
@@ -51,38 +77,12 @@ public class ByteUtil {
     }
   }
 
-  /**
-   * 对象序列化至文件中 head 4byte body
-   */
-  public static void appendObject(Serializable object, String path) throws IOException {
-    File file = new File(path);
-    if (!file.exists()) {
-      file.createNewFile();
-    }
-    try (
-        FileOutputStream outputStream = new FileOutputStream(file, true)
-    ) {
-      byte[] body = objToBts(object);
-      //body长度
-      outputStream.write(intToBts(body.length));
-      outputStream.write(body);
-    }
-  }
-
   public static void serialize(Serializable object, String path) throws IOException {
     FileUtil.createFile(path);
     try (
         ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(path))
     ) {
       outputStream.writeObject(object);
-    }
-  }
-
-  public static Object deserialize(byte[] bts) throws IOException, ClassNotFoundException {
-    try (
-        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bts))
-    ) {
-      return ois.readObject();
     }
   }
 
@@ -132,15 +132,104 @@ public class ByteUtil {
     return byteBuf;
   }
 
-  public static void main(String[] args) {
-    ByteBuf byteBuf = Unpooled.buffer();
-    byteBuf.writeByte('a');
-    byteBuf.writeByte('b');
-    byteBuf.writeByte('c');
-    byteBuf.writeByte('d');
-    System.out.println(findText(byteBuf, "c"));
-    System.out.println(
-        insertText(byteBuf, -1, "test").toString(Charset.defaultCharset()));
+  public static byte[] hexToBts(String hex){
+    byte[] bts = new byte[hex.length()/2];
+    for (int i = 0; i < bts.length; i++) {
+      bts[i] = (byte) Integer.parseInt(hex.substring(i*2,i*2+2),16);
+    }
+    return bts;
+  }
+
+  public static String btsToHex(byte[] bts){
+    StringBuilder str = new StringBuilder();
+    for (byte b : bts) {
+      str.append(String.format("%2s",Integer.toHexString(b&0xFF)).replace(" ","0"));
+    }
+    return str.toString();
+  }
+
+  public static void main(String[] args) throws Exception {
+    /*CRC32 crc32 = new CRC32();
+    FileInputStream fileInputStream = new FileInputStream("F:\\down\\test1.txt");
+    byte[] bts = new byte[1000];
+    int len = fileInputStream.read(bts);
+    crc32.update(bts,0,len);
+    System.out.println(Long.toHexString(crc32.getValue()));*/
+
+    FileInputStream inputStream = new FileInputStream("F:\\百度云合并下载研究\\百度云合并下载2.zip");
+    inputStream.read(new byte[18]);
+    byte[] bts4 = new byte[4];
+    byte[] bts2 = new byte[2];
+    inputStream.read(bts4);
+    int fileSize = ByteUtil.btsToIntForSmall(bts4);
+    System.out.println(fileSize);
+    inputStream.read(bts4);
+    System.out.println(ByteUtil.btsToIntForSmall(bts4));
+    inputStream.read(bts2);
+    int nameLength = ByteUtil.btsToIntForSmall(bts2);
+    System.out.println(nameLength);
+    inputStream.read(bts2);
+    System.out.println(ByteUtil.btsToIntForSmall(bts2));
+    byte[] nameBts = new byte[nameLength];
+    inputStream.read(nameBts);
+    System.out.println(new String(nameBts));
+    byte[] fileBts = new byte[fileSize];
+    inputStream.read(fileBts);
+    System.out.println(ByteUtil.btsToHex(fileBts));
+
+    inputStream.read(new byte[18]);
+    inputStream.read(bts4);
+    fileSize = ByteUtil.btsToIntForSmall(bts4);
+    System.out.println(fileSize);
+    inputStream.read(bts4);
+    System.out.println(ByteUtil.btsToIntForSmall(bts4));
+    inputStream.read(bts2);
+    nameLength = ByteUtil.btsToIntForSmall(bts2);
+    System.out.println(nameLength);
+    inputStream.read(bts2);
+    System.out.println(ByteUtil.btsToIntForSmall(bts2));
+    nameBts = new byte[nameLength];
+    inputStream.read(nameBts);
+    System.out.println(new String(nameBts));
+    fileBts = new byte[fileSize];
+    inputStream.read(fileBts);
+    System.out.println(ByteUtil.btsToHex(fileBts));
+
+    inputStream.read(new byte[18]);
+    inputStream.read(bts4);
+    fileSize = ByteUtil.btsToIntForSmall(bts4);
+    System.out.println(fileSize);
+    inputStream.read(bts4);
+    System.out.println(ByteUtil.btsToIntForSmall(bts4));
+    inputStream.read(bts2);
+    nameLength = ByteUtil.btsToIntForSmall(bts2);
+    System.out.println(nameLength);
+    inputStream.read(bts2);
+    System.out.println(ByteUtil.btsToIntForSmall(bts2));
+    nameBts = new byte[nameLength];
+    inputStream.read(nameBts);
+    System.out.println(new String(nameBts));
+    fileBts = new byte[fileSize];
+    inputStream.read(fileBts);
+    System.out.println(ByteUtil.btsToHex(fileBts));
+
+    inputStream.read(new byte[18]);
+    inputStream.read(bts4);
+    fileSize = ByteUtil.btsToIntForSmall(bts4);
+    System.out.println(fileSize);
+    inputStream.read(bts4);
+    System.out.println(ByteUtil.btsToIntForSmall(bts4));
+    inputStream.read(bts2);
+    nameLength = ByteUtil.btsToIntForSmall(bts2);
+    System.out.println(nameLength);
+    inputStream.read(bts2);
+    System.out.println(ByteUtil.btsToIntForSmall(bts2));
+    nameBts = new byte[nameLength];
+    inputStream.read(nameBts);
+    System.out.println(new String(nameBts));
+    fileBts = new byte[fileSize];
+    inputStream.read(fileBts);
+    System.out.println(ByteUtil.btsToHex(fileBts));
   }
 
 }
