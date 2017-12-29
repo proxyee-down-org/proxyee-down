@@ -14,12 +14,16 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import lombok.experimental.var;
 
 public class ByteUtil {
 
@@ -152,18 +156,18 @@ public class ByteUtil {
     return str.toString();
   }
 
-  public static String readJsContent(InputStream inputStream){
+  public static String readJsContent(InputStream inputStream) {
     StringBuilder sb = new StringBuilder();
     try (
         BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-        ){
+    ) {
       sb.append("<script type=\"text/javascript\">");
       String line;
       while ((line = br.readLine()) != null) {
         sb.append(line);
       }
       sb.append("</script>");
-    }catch (IOException e){
+    } catch (IOException e) {
       e.printStackTrace();
     }
     return sb.toString();
@@ -215,24 +219,28 @@ public class ByteUtil {
     System.out.println(btsToLongForSmall(new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF}));
     System.out.println(btsToHex(longToBtsForSmall(4294967295L)));*/
     //System.out.println(btsToHex(longToBtsForBig(4294967296L)));
-    /*FileInputStream inputStream = new FileInputStream("f:/down/鬼子来了.zip");
+    FileChannel fileChannel = new FileInputStream("f:/down/鬼子来了.zip").getChannel();
     while(true){
-      BdyZipEntry zipEntry = getNextBdyZipEntry(inputStream);
+      BdyZipEntry zipEntry = getNextBdyZipEntry(fileChannel);
       System.out.println(btsToHex(zipEntry.getHeader()));
       System.out.println(zipEntry.getFileName());
       System.out.println(btsToHex(zipEntry.getCrc32()));
       System.out.println(zipEntry.getCompressedSize());
-      zipEntry.getInputStream().skip(zipEntry.getCompressedSize());
-    }*/
-//    FileChannel fileChannel = new FileInputStream("f:/down/鬼子来了.zip").getChannel();
-//    fileChannel.position(5);
-//    fileChannel.read(ByteBuffer.allocate(5));
-//    System.out.println(fileChannel.position());
+      System.out.println(getNextTokenSize(fileChannel,ZIP_ENTRY_FILE_HEARD,ZIP_ENTRY_DIR_HEARD));
+    }
+    /*FileChannel fileChannel = new FileInputStream("f:/down/鬼子来了.zip").getChannel();
+    fileChannel.position();
+    fileChannel.read(ByteBuffer.allocate(5));
+    System.out.println(fileChannel.position());*/
 //    scannerBdyZipEntry(fileChannel);
     /*ByteBuffer buffer = ByteBuffer.allocate(20);
     buffer.put(new byte[]{0, 0, 0, 0});
-    buffer.put(ZIP_ENTRY_HEARD);
-    System.out.println(findBytes(buffer, ZIP_ENTRY_HEARD));*/
+    buffer.put(ZIP_ENTRY_DIR_HEARD);
+    buffer.flip();
+    byte[] bts = new byte[4];
+    buffer.get(bts);
+    System.out.println(btsToHex(bts));*/
+//    System.out.println(findBytes(buffer, ZIP_ENTRY_FILE_HEARD));
   }
 
   @Data
@@ -254,42 +262,41 @@ public class ByteUtil {
     private long extraFieldLength;
     private String fileName;
     private byte[] extraField;
-    private InputStream inputStream;
-
-    public long getTotalSize() {
-      return 30 + fileNameLength + extraFieldLength + compressedSize;
-    }
   }
 
-  public static BdyZipEntry getNextBdyZipEntry(FileInputStream inputStream) throws IOException {
+  public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel) throws IOException {
     BdyZipEntry zipEntry = new BdyZipEntry();
-    inputStream.read(zipEntry.getHeader());
-    inputStream.read(zipEntry.getVersion());
-    inputStream.read(zipEntry.getGeneral());
-    inputStream.read(zipEntry.getMethod());
-    inputStream.read(zipEntry.getTime());
-    inputStream.read(zipEntry.getDate());
-    inputStream.read(zipEntry.getCrc32());
+    ByteBuffer buffer = ByteBuffer.allocate(30);
+    fileChannel.read(buffer);
+    buffer.flip();
+    buffer.get(zipEntry.getHeader());
+    buffer.get(zipEntry.getVersion());
+    buffer.get(zipEntry.getGeneral());
+    buffer.get(zipEntry.getMethod());
+    buffer.get(zipEntry.getTime());
+    buffer.get(zipEntry.getDate());
+    buffer.get(zipEntry.getCrc32());
+
     byte[] bts4 = new byte[4];
-    inputStream.read(bts4);
+    buffer.get(bts4);
     zipEntry.setCompressedSize(btsToLongForSmall(bts4));
-    inputStream.read(bts4);
+    buffer.get(bts4);
     zipEntry.setUnCompressedSize(btsToLongForSmall(bts4));
     byte[] bts2 = new byte[2];
-    inputStream.read(bts2);
+    buffer.get(bts2);
     zipEntry.setFileNameLength(btsToLongForSmall(bts2));
-    inputStream.read(bts2);
+    buffer.get(bts2);
     zipEntry.setExtraFieldLength(btsToLongForSmall(bts2));
-    byte[] fileName = new byte[(int) zipEntry.getFileNameLength()];
-    inputStream.read(fileName);
-    zipEntry.setFileName(new String(fileName, "gbk"));
-    if (zipEntry.getExtraFieldLength() > 0) {
-      byte[] extraField = new byte[(int) zipEntry.getExtraFieldLength()];
-      inputStream.read(extraField);
-      zipEntry.setExtraField(extraField);
-    }
-    zipEntry.setInputStream(inputStream);
 
+    ByteBuffer fileNameBuffer = ByteBuffer.allocate((int) zipEntry.getFileNameLength());
+    fileChannel.read(fileNameBuffer);
+    fileNameBuffer.flip();
+    zipEntry.setFileName(Charset.forName("GBK").decode(fileNameBuffer).toString());
+    if (zipEntry.getExtraFieldLength() > 0) {
+      ByteBuffer extraFieldBuffer = ByteBuffer.allocate((int) zipEntry.getExtraFieldLength());
+      fileChannel.read(fileNameBuffer);
+      zipEntry.setExtraField(extraFieldBuffer.array());
+    }
     return zipEntry;
   }
 
@@ -308,33 +315,53 @@ public class ByteUtil {
   private static final byte[] ZIP_ENTRY_FILE_HEARD = new byte[]{0x50, 0x4B, 0x03, 0x04};
   private static final byte[] ZIP_ENTRY_DIR_HEARD = new byte[]{0x50, 0x4B, 0x01, 0x02};
 
- /* public static int findBytes(ByteBuffer buffer, byte[]... bts) {
-    int ret = -1;
-    int index = 0;
+  /**
+   * 查找buffer中一段字节数的位置
+   *
+   * @param buffer 待查找的buffer
+   * @param btsArr 多个为或的关系
+   */
+  public static int findBytes(ByteBuffer buffer, byte[]... btsArr) {
+    int[] indexArray = new int[btsArr.length];
     while (buffer.hasRemaining()) {
-      if (buffer.get() == bts[index]) {
-        index++;
-        if (index == bts.length) {
-          return buffer.position() - bts.length;
+      byte b = buffer.get();
+      for (int i = 0; i < btsArr.length; i++) {
+        if (indexArray[i] == -1) {
+          indexArray[i] = 0;
         }
-      } else {
-        index = 0;
+        byte[] bts = btsArr[i];
+        if (b == bts[indexArray[i]]) {
+          indexArray[i]++;
+          if (indexArray[i] == bts.length) {
+            return buffer.position() - bts.length;
+          }
+        } else {
+          indexArray[i] = 0;
+        }
       }
     }
-    return ret;
-  }*/
+    return -1;
+  }
 
-  /*public static long getNextTokenSize(FileChannel fileChannel, long postion, byte[]... bts)
+  public static long getNextTokenSize(FileChannel fileChannel, byte[]... btsArr)
+      throws IOException {
+    return getNextTokenSize(fileChannel, -1, btsArr);
+  }
+
+  public static long getNextTokenSize(FileChannel fileChannel, long position, byte[]... btsArr)
       throws IOException {
     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
+    if (position >= 0) {
+      fileChannel.position(position);
+    }
     while (fileChannel.read(buffer) != -1) {
       buffer.flip();
       int index;
-      while ((index = findBytes(buffer,bts)) != -1) {
-        int postion =
+      while ((index = findBytes(buffer, btsArr)) != -1) {
+        return fileChannel.position() - (position > 0 ? position : 0) - index;
       }
     }
-    return ret;
-  }*/
+    return -1;
+  }
 
 }
