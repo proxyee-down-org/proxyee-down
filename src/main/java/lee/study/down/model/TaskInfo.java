@@ -33,7 +33,7 @@ public class TaskInfo implements Serializable {
   }
 
   public String buildChunksPath() {
-    return buildTaskFilePath() + "_cks";
+    return getFilePath() + File.separator + "." + getFileName() + "_cks";
   }
 
   public String buildChunkFilePath(int index) {

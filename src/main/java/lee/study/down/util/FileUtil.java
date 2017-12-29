@@ -60,7 +60,9 @@ public class FileUtil {
     file.createNewFile();
     File newFile = new File(path);
     newFile.createNewFile();
-    Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
+    if(OsUtil.isWindows()){
+      Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
+    }
     return file;
   }
 
@@ -72,7 +74,9 @@ public class FileUtil {
     deleteIfExists(file);
     File newFile = new File(path);
     newFile.mkdir();
-    Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
+    if(OsUtil.isWindows()){
+      Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
+    }
     return file;
   }
 
