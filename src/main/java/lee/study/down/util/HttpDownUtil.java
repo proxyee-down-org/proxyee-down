@@ -309,19 +309,11 @@ public class HttpDownUtil {
    */
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo, long downSize)
       throws Exception {
-    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
     synchronized (chunkInfo) {
+      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
       if (setStatusIfNotDone(chunkInfo, 3)) {
         if (downSize != -1) {
           chunkInfo.setDownSize(downSize);
-        } else {
-          if (taskInfo.getChunkInfoList().size() > 0) {
-            chunkInfo
-                .setDownSize(
-                    FileUtil.getFileSize(taskInfo.buildChunkFilePath(chunkInfo.getIndex())));
-          } else {
-            chunkInfo.setDownSize(FileUtil.getFileSize(taskInfo.buildTaskFilePath()));
-          }
         }
         //已经下载完成
         if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
@@ -343,8 +335,8 @@ public class HttpDownUtil {
    */
   public static void continueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
-    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
     synchronized (chunkInfo) {
+      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
       //避免同时两个重新下载
       if (setStatusIfNotDone(chunkInfo, 5)) {
         //计算后续下载字节

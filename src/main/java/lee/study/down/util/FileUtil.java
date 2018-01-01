@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
+import java.util.Stack;
 
 public class FileUtil {
 
@@ -60,7 +61,7 @@ public class FileUtil {
     file.createNewFile();
     File newFile = new File(path);
     newFile.createNewFile();
-    if(OsUtil.isWindows()){
+    if (OsUtil.isWindows()) {
       Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
     }
     return file;
@@ -74,7 +75,7 @@ public class FileUtil {
     deleteIfExists(file);
     File newFile = new File(path);
     newFile.mkdir();
-    if(OsUtil.isWindows()){
+    if (OsUtil.isWindows()) {
       Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
     }
     return file;
@@ -104,12 +105,44 @@ public class FileUtil {
     return 0;
   }
 
+  public static File createFileSmart(String path) throws IOException {
+    File file = new File(path);
+    if (file.exists()) {
+      file.delete();
+      file.createNewFile();
+    }else{
+      createDirSmart(file.getParent());
+      file.createNewFile();
+    }
+    return file;
+  }
+
+  public static File createDirSmart(String path) throws IOException {
+    File file = new File(path);
+    if (file.exists()) {
+      file.delete();
+      file.mkdir();
+    } else {
+      Stack<File> stack = new Stack<>();
+      while (file != null) {
+        stack.push(file);
+        file = file.getParentFile();
+      }
+      while (stack.size() > 0) {
+        File dir = stack.pop();
+        if (!dir.exists()) {
+          dir.mkdir();
+        }
+      }
+    }
+    return file;
+  }
+
   public static void main(String[] args) throws Exception {
-    RandomAccessFile raf1 = new RandomAccessFile("G:\\测试/test1.txt","rw");
-    RandomAccessFile raf2 = new RandomAccessFile("G:\\测试/test2.txt","rw");
-    raf1.setLength(97);
-    raf1.write(new byte[]{1,1,1,1,1,1});
-    raf2.setLength(1024*1024*1024*4L);
-    raf2.write(new byte[]{2,2,2,2,2,2});
+    RandomAccessFile raf2 = new RandomAccessFile("G:\\测试/testaaa.txt","rw");
+    for (long i=0;i<477218589;i++){
+      raf2.write(new byte[]{2,6,3,3,9,7,4,7,8});
+    }
+
   }
 }

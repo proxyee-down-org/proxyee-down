@@ -105,6 +105,11 @@ public class HttpDownInitializer extends ChannelInitializer {
             } else if(chunkInfo.getDownSize() > chunkInfo.getTotalSize()){
               //错误下载从0开始重新下过
               HttpDownServer.LOGGER.error("Out of chunk size："+chunkInfo+"\t"+taskInfo);
+              synchronized (taskInfo){
+                synchronized (chunkInfo){
+                  taskInfo.setTotalSize(taskInfo.getTotalSize()-chunkInfo.getDownSize());
+                }
+              }
               HttpDownUtil.retryDown(taskInfo,chunkInfo,0);
             }
           } else {
@@ -116,7 +121,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             if (taskInfo.getChunkInfoList().size() > 1) {
               fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
                   "rw").getChannel();
-              fileChannel.position(fileChannel.size());
+              fileChannel.position(chunkInfo.getDownSize());
             } else {
               fileChannel = FileUtil.getRafFile(taskInfo.buildTaskFilePath()).getChannel();
             }
