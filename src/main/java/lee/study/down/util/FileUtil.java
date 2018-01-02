@@ -3,6 +3,7 @@ package lee.study.down.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Stack;
 
@@ -139,10 +140,9 @@ public class FileUtil {
   }
 
   public static void main(String[] args) throws Exception {
-    RandomAccessFile raf2 = new RandomAccessFile("G:\\测试/testaaa.txt","rw");
-    for (long i=0;i<477218589;i++){
-      raf2.write(new byte[]{2,6,3,3,9,7,4,7,8});
-    }
-
+    RandomAccessFile raf2 = new RandomAccessFile("F:\\百度云合并下载研究\\testbbb.txt","rw");
+    raf2.setLength(10);
+    raf2.getChannel().position(10).read(ByteBuffer.allocate(5));
+    System.out.println(raf2.getChannel().position());
   }
 }

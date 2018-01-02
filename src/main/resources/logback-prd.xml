@@ -11,6 +11,4 @@
   <root level="ERROR">
     <appender-ref ref="FILE"/>
   </root>
-
-  <logger name="lee.study.down.HttpDownServer" level="WARN"/>
 </configuration>

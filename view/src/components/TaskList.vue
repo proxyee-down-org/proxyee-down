@@ -34,9 +34,9 @@
               </div>
               <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=20}">
                 <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
-                  <el-progress :text-inside="true" :stroke-width="18"
+                  <task-progress :text-inside="true" :stroke-width="18"
                                :percentage="task.totalProgress||progress(chunk)"
-                               :status="status(chunk)"></el-progress>
+                               :status="status(chunk)"></task-progress>
                   <span>{{sizeFmt(speed(chunk), '0B')}}/s</span>
                 </li>
               </ul>
@@ -47,6 +47,9 @@
                              slot="reference"></task-progress>
             </el-popover>
             <div class="task-progress-icon">
+              <i v-if="task.status!=2"
+                 :class="iconClass(task)"
+                 @click="controlTask(task)"></i>
               <i v-if="task.status!=2"
                  :class="iconClass(task)"
                  @click="controlTask(task)"></i>
@@ -65,7 +68,7 @@
 
 <script>
   import Util from '../common/util'
-  import TaskProgress from './TaskProgress'
+  import TaskProgress from './base/TaskProgress'
   import Vue from 'vue'
 
   export default {

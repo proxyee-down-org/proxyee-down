@@ -34,10 +34,10 @@
         },
       }
     },
-    props: ['value'],
+    props: ['value','model'],
     methods: {
       loadChild(node, resolve) {
-        this.$http.post('api/getChildDirList', {path: node.data.path || ''})
+        this.$http.post('api/getChildDirList?model='+this.model||'dir', {path: node.data.path || ''})
         .then((response) => {
           let result = response.data;
           if (result.status == 200) {

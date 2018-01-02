@@ -5,7 +5,7 @@
         <el-container style="height: 100%">
           <el-aside width="150px">
             <el-menu
-              :default-active="$route.path"
+              :default-active="/^(\/[^/]*).*$/.exec($route.path)[1]"
               :router="true"
               class="el-menu-vertical-demo"
               @open="handleOpen"
@@ -14,9 +14,13 @@
               text-color="#fff"
               active-text-color="#ffd04b"
               style="height: 100%">
-              <el-menu-item index="/">
+              <el-menu-item index="/tasks">
                 <i class="el-icon-menu"></i>
                 <span slot="title">任务</span>
+              </el-menu-item>
+              <el-menu-item index="/tools">
+                <i class="el-icon-task-tool"></i>
+                <span slot="title">工具</span>
               </el-menu-item>
               <el-menu-item index="/about">
                 <i class="el-icon-info"></i>
@@ -74,4 +78,6 @@
     color: #2c3e50;
     height: 100%;
   }
+
+  @import "./assets/icon/iconfont.css";
 </style>

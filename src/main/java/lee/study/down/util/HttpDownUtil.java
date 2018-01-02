@@ -96,7 +96,7 @@ public class HttpDownUtil {
     String host = ((InetSocketAddress) clientChannel.localAddress()).getHostString();
     String js =
         "<script>window.top.location.href='http://" + host + ":" + HttpDownServer.VIEW_SERVER_PORT
-            + "/#/newTask/" + httpDownInfo
+            + "/#/tasks/new/" + httpDownInfo
             .getTaskInfo().getId()
             + "';</script>";
     HttpContent content = new DefaultLastHttpContent();

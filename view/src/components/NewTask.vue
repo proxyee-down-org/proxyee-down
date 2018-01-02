@@ -19,7 +19,7 @@
       <file-choose v-model="form.path"></file-choose>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="onSubmit" :disabled="load">创建</el-button>
+      <el-button type="primary" @click="onSubmit" :loading="load">创建</el-button>
       <el-button @click="onCancle">取消</el-button>
     </el-form-item>
   </el-form>
@@ -27,7 +27,7 @@
 
 <script>
   import Util from '../common/util'
-  import FileChoose from './FileChoose'
+  import FileChoose from './base/FileChoose'
 
   export default {
     data() {

@@ -7,12 +7,14 @@ import java.util.LinkedList;
 import java.util.List;
 import lee.study.down.HttpDownServer;
 import lee.study.down.form.DownForm;
+import lee.study.down.form.UnzipForm;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.DirInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.util.ByteUtil;
 import lee.study.down.util.HttpDownUtil;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -114,7 +116,8 @@ public class HttpDownController {
   }
 
   @RequestMapping("/getChildDirList")
-  public ResultInfo getChildDirList(@RequestBody(required = false) DirInfo body) {
+  public ResultInfo getChildDirList(@RequestParam String model,
+      @RequestBody(required = false) DirInfo body) {
     ResultInfo resultInfo = new ResultInfo();
     List<DirInfo> data = new LinkedList<>();
     resultInfo.setData(data);
@@ -131,14 +134,22 @@ public class HttpDownController {
       }
     }
     if (files != null && files.length > 0) {
+      boolean isFileList = "file".equals(model);
       for (File tempFile : files) {
-        if (tempFile.isDirectory() && (tempFile.getParent() == null || !tempFile.isHidden())) {
+        if (tempFile.isFile()) {
+          if (isFileList) {
+            data.add(new DirInfo(
+                StringUtils.isEmpty(tempFile.getName()) ? tempFile.getAbsolutePath()
+                    : tempFile.getName(), tempFile.getAbsolutePath(), true));
+          }
+        } else if (tempFile.isDirectory() && (tempFile.getParent() == null || !tempFile
+            .isHidden())) {
           DirInfo dirInfo = new DirInfo(
               StringUtils.isEmpty(tempFile.getName()) ? tempFile.getAbsolutePath()
                   : tempFile.getName(), tempFile.getAbsolutePath(),
               tempFile.listFiles() == null ? true : Arrays.stream(tempFile.listFiles())
                   .noneMatch(file ->
-                      file != null && file.isDirectory() && !file.isHidden()
+                      file != null && (file.isDirectory() || isFileList) && !file.isHidden()
                   ));
           data.add(dirInfo);
         }
@@ -186,4 +197,10 @@ public class HttpDownController {
     return resultInfo;
   }
 
+  @RequestMapping("/bdyUnzip")
+  public ResultInfo bdyUnzip(@RequestBody UnzipForm unzipForm) throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    ByteUtil.unzipBdy(unzipForm.getFilePath(), unzipForm.getToPath());
+    return resultInfo;
+  }
 }
