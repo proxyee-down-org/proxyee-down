@@ -235,6 +235,11 @@ public class HttpDownUtil {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     try {
       FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
+      try (
+          RandomAccessFile randomAccessFile = new RandomAccessFile(taskInfo.buildTaskFilePath(),"rw")
+      ){
+        randomAccessFile.setLength(taskInfo.getTotalSize());
+      }
       //文件下载开始回调
       taskInfo.setStatus(1);
       taskInfo.setStartTime(System.currentTimeMillis());

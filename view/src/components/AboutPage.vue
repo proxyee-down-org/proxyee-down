@@ -19,7 +19,7 @@
       <el-col :span="16">
         <span>
           <a target="_blank"
-             href="https://www.zhanghuanglong.com/detail/another-download-of-magic-proxyee-down">@°只为大大</a>
+             href="https://www.zhanghuanglong.com/detail/another-download-of-magic-proxyee-down">文章@°只为大大</a>
         </span>
       </el-col>
     </el-row>

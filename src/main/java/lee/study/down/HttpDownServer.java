@@ -5,6 +5,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
+import io.netty.util.ResourceLeakDetector;
+import io.netty.util.ResourceLeakDetector.Level;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -93,6 +95,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
   public void afterPropertiesSet() throws Exception {
     if ("dev".equals(active)) {
       VIEW_SERVER_PORT = viewServerPort;
+      ResourceLeakDetector.setLevel(Level.ADVANCED);
     } else {
       VIEW_SERVER_PORT = OsUtil.getFreePort();
     }

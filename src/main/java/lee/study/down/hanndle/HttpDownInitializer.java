@@ -93,8 +93,7 @@ public class HttpDownInitializer extends ChannelInitializer {
               }
             } else if (realContentSize
                 == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
-                .getNowStartPosition()
-                || (realContentSize - 1)
+                .getNowStartPosition() || (realContentSize - 1)
                 == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
                 .getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
               //真实响应字节小于要下载的字节，在下载完成后要继续下载

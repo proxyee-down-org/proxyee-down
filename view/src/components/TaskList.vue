@@ -1,5 +1,8 @@
 <template>
-  <div v-if="tasks.length>0">
+  <div v-if="initFlag" v-loading="initFlag" style="height: 500px"
+       element-loading-background="rgba(0, 0, 0, 0)">
+  </div>
+  <div v-else-if="tasks.length>0">
     <el-row type="flex" justify="center">
       <el-col :span="20">
         <el-row v-for="row in Math.ceil(tasks.length/cellSize)" :key="row">
@@ -32,11 +35,11 @@
                   <b>{{leftTime(task)}}</b>
                 </p>
               </div>
-              <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=20}">
+              <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=16}">
                 <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                   <task-progress :text-inside="true" :stroke-width="18"
-                               :percentage="task.totalProgress||progress(chunk)"
-                               :status="status(chunk)"></task-progress>
+                                 :percentage="task.totalProgress||progress(chunk)"
+                                 :status="status(chunk)"></task-progress>
                   <span>{{sizeFmt(speed(chunk), '0B')}}/s</span>
                 </li>
               </ul>
@@ -50,12 +53,9 @@
               <i v-if="task.status!=2"
                  :class="iconClass(task)"
                  @click="controlTask(task)"></i>
-              <i v-if="task.status!=2"
-                 :class="iconClass(task)"
-                 @click="controlTask(task)"></i>
               <i v-if="task.status!=5" class="el-icon-task-delete" @click="deleteTask(task)"></i>
             </div>
-            <p style="padding-top: 5px">{{task.fileName}}</p>
+            <p>{{task.fileName}}</p>
           </el-col>
         </el-row>
       </el-col>
@@ -77,6 +77,7 @@
         tasks: [],
         cellSize: 3,
         ws: new WebSocket('ws://' + window.location.host + '/ws/onProgress'),
+        initFlag: true,
       }
     },
     components: {
@@ -183,22 +184,10 @@
       },
     },
     created() {
-      this.$http.get('api/getTaskList')
-      .then((response) => {
-        let result = response.data;
-        if (result.status == 200) {
-          if (result.data) {
-            result.data.sort((task1, task2) => {
-              return task1.startTime - task2.startTime;
-            }).forEach((task) => {
-              this.tasks.push(task);
-            });
-          }
-        } else {
-          this.$message(result.msg);
-        }
-      });
       this.ws.onmessage = (e) => {
+        if (this.initFlag) {
+          this.initFlag = false;
+        }
         let msg = eval('(' + e.data + ')');
         if (msg) {
           this.tasks = msg.sort((task1, task2) => {
@@ -232,7 +221,7 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   .task-list-container {
-    padding-bottom: 20px;
+    padding-bottom: 30px;
     text-align: center;
   }
 
@@ -243,7 +232,7 @@
 
   .task-list-scroll {
     overflow-y: auto;
-    height: 560px;
+    height: 448px;
   }
 
   .task-list li {
@@ -272,7 +261,7 @@
   }
 
   .task-progress-icon i {
-    padding: 15px 30px;
+    padding: 10px 30px;
     font-size: 30px;
     cursor: pointer;
   }

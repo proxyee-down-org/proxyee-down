@@ -22,7 +22,7 @@ public class HttpDownProgressEventTask extends Thread {
             if (taskInfo.getStatus() == 1 || taskInfo.getStatus() == 3) {
               taskInfo.setLastTime(System.currentTimeMillis());
               for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
-                if (chunkInfo.getStatus() == 1) {
+                if (chunkInfo.getStatus() == 1 || chunkInfo.getStatus() == 3) {
                   chunkInfo.setLastTime(System.currentTimeMillis());
                 }
               }

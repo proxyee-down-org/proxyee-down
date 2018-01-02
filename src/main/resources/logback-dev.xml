@@ -10,5 +10,5 @@
     <appender-ref ref="stdout"/>
   </root>
 
-  <logger name="lee.study.down.HttpDownServer" level="DEBUG"/>
+  <logger name="lee.study.down" level="DEBUG"/>
 </configuration>
