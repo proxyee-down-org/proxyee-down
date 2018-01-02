@@ -16,13 +16,16 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import lee.study.down.HttpDownServer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ByteUtil {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ByteUtil.class);
 
   /**
    * 大端序
@@ -352,7 +355,7 @@ public class ByteUtil {
           isEnd = true;
         }
       }
-      HttpDownServer.LOGGER.debug("bdyUnzip:"+bdyZipEntry.getFileName()+"\t"+fileSize);
+      LOGGER.debug("bdyUnzip:"+bdyZipEntry.getFileName()+"\t"+fileSize+"\t"+isEnd);
       if (fileSize == 0
           && bdyZipEntry.getFileName().lastIndexOf("/") == bdyZipEntry.getFileName().length() - 1) {
         FileUtil.createDirSmart(toDir.getPath() + File.separator + bdyZipEntry.getFileName());
