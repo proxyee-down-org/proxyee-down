@@ -188,29 +188,19 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
               if (httpDownInfo.getTaskInfo().getId().equals(taskBaseInfo.getId())) {
                 //全部标记为暂停,等待重新下载
                 TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-                if (taskInfo.getStatus() == 5) {  //合并状态检查临时文件夹是否还存在
-                  if (FileUtil.getFileSize(taskInfo.buildChunksPath()) != taskInfo.getTotalSize()) {
-                    taskInfo.setStatus(1);
-                    taskInfo.getChunkInfoList().forEach(chunk -> {//重新下载
-                      chunk.setStatus(4);
-                    });
+                //重启设置状态为暂停中
+                taskInfo.setStatus(4);
+                taskInfo.getChunkInfoList().forEach(chunk -> {
+                  if (chunk.getStatus() != 2) {
+                    chunk.setStatus(4);
                   }
-                } else {
-                  //重启设置状态为暂停中
-                  taskInfo.setStatus(4);
-                  taskInfo.getChunkInfoList().forEach(chunk -> {
-                    if (chunk.getStatus() != 2) {
-                      chunk.setStatus(4);
-                    }
-                  });
-                }
+                });
               } else {
                 RECORD_CONTENT.remove(entry.getKey());
                 continue;
               }
             } else {
               RECORD_CONTENT.remove(entry.getKey());
-              FileUtil.deleteIfExists(taskBaseInfo.buildChunksPath());
               FileUtil.deleteIfExists(taskBaseInfo.buildTaskFilePath());
               continue;
             }

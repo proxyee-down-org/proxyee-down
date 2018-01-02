@@ -94,25 +94,10 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
   }
 
   @Override
-  public void onMerge(TaskInfo taskInfo) {
-    try {
-      //更改任务下载状态为合并中
-      ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
-          taskInfo.buildTaskFilePath() + ".inf");
-      ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
-      WsUtil.sendMsg();
-    } catch (IOException e) {
-      HttpDownServer.LOGGER.error("call onMerge:" + e);
-    }
-  }
-
-  @Override
   public void onDone(TaskInfo taskInfo) {
     try {
       //更改任务下载状态为已完成
       ByteUtil.serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
-      //删除临时文件
-      FileUtil.deleteIfExists(taskInfo.buildChunksPath());
       //删除任务进度记录文件
       synchronized (taskInfo) {
         Files.deleteIfExists(Paths.get(taskInfo.buildTaskFilePath() + ".inf"));
@@ -136,12 +121,12 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       try {
         ByteUtil
             .serialize((Serializable) HttpDownServer.RECORD_CONTENT, HttpDownServer.RECORD_PATH);
-        FileUtil.deleteIfExists(taskInfo.buildChunksPath());
         FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
         FileUtil.deleteIfExists(taskInfo.buildTaskFilePath() + ".inf");
       } catch (IOException e) {
         HttpDownServer.LOGGER.error("call onDelete:" + e);
       }
     }
+    WsUtil.sendMsg();
   }
 }

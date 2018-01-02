@@ -234,11 +234,7 @@ public class HttpDownUtil {
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     try {
-      if (taskInfo.getChunkInfoList().size() > 1) {
-        FileUtil.createDir(taskInfo.buildChunksPath(), true);
-      } else {
-        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
-      }
+      FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
       //文件下载开始回调
       taskInfo.setStatus(1);
       taskInfo.setStartTime(System.currentTimeMillis());
@@ -363,29 +359,6 @@ public class HttpDownUtil {
       }
     } catch (IOException e) {
       HttpDownServer.LOGGER.error("safeClose file channel", e);
-    }
-  }
-
-  public static void startMerge(TaskInfo taskInfo) throws IOException {
-    HttpDownServer.CALLBACK.onMerge(taskInfo);
-    File file = FileUtil.createFile(taskInfo.buildTaskFilePath());
-    try (
-        FileChannel finalFile = new RandomAccessFile(file, "rw").getChannel()
-    ) {
-      ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
-      for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
-        try (
-            FileChannel tempChannel = new RandomAccessFile(
-                taskInfo.buildChunkFilePath(i),
-                "rw").getChannel()
-        ) {
-          while (tempChannel.read(buffer) != -1) {
-            buffer.flip();
-            finalFile.write(buffer);
-            buffer.clear();
-          }
-        }
-      }
     }
   }
 

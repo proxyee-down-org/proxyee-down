@@ -23,29 +23,23 @@ public class HttpDownErrorCheckTask extends Thread {
         if (HttpDownServer.DOWN_CONTENT != null && HttpDownServer.DOWN_CONTENT.size() > 0) {
           for (Entry<String, HttpDownInfo> entry : HttpDownServer.DOWN_CONTENT.entrySet()) {
             TaskInfo taskInfo = entry.getValue().getTaskInfo();
-            if (taskInfo.getStatus() == 5) {  //合并
-              HttpDownUtil.startMerge(taskInfo);
-              //文件下载完成回调
-              taskInfo.setStatus(2);
-              HttpDownServer.CALLBACK.onDone(taskInfo);
-            } else {
-              if (taskInfo.getChunkInfoList() != null) {
-                for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
-                  //下载中或者下载失败的情况下30秒没有反应则重新建立连接下载
-                  if (taskInfo.getStatus() == 1 && (chunkInfo.getStatus() == 1
-                      || chunkInfo.getStatus() == 3)) {
-                    String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
-                    Long downSize = flagMap.get(key);
-                    //下载失败
-                    if (downSize != null && downSize == chunkInfo.getDownSize()) {
-                      HttpDownServer.LOGGER.debug(
-                          "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-                      //避免同时下载
-                      HttpDownUtil.retryDown(taskInfo, chunkInfo);
-                    } else {
-                      flagMap.put(key, chunkInfo.getDownSize());
-                    }
+            if (taskInfo.getChunkInfoList() != null) {
+              for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+                //下载中或者下载失败的情况下30秒没有反应则重新建立连接下载
+                if (taskInfo.getStatus() == 1 && (chunkInfo.getStatus() == 1
+                    || chunkInfo.getStatus() == 3)) {
+                  String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
+                  Long downSize = flagMap.get(key);
+                  //下载失败
+                  if (downSize != null && downSize == chunkInfo.getDownSize()) {
+                    HttpDownServer.LOGGER.debug(
+                        "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                    //避免同时下载
+                    HttpDownUtil.retryDown(taskInfo, chunkInfo);
+                  } else {
+                    flagMap.put(key, chunkInfo.getDownSize());
                   }
+                }
                   /*
                   4为暂停，需手动开始下载
                   else if (chunkInfo.getStatus() == 4) {
@@ -53,7 +47,6 @@ public class HttpDownErrorCheckTask extends Thread {
                         "启动下载重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                     HttpDownUtil.retryDown(taskInfo, chunkInfo);
                   }*/
-                }
               }
             }
 
@@ -61,7 +54,7 @@ public class HttpDownErrorCheckTask extends Thread {
         }
         TimeUnit.MILLISECONDS.sleep(30000);
       } catch (Exception e) {
-        HttpDownServer.LOGGER.error("checkTask:"+e);
+        HttpDownServer.LOGGER.error("checkTask:" + e);
       }
     }
   }

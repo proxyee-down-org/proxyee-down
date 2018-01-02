@@ -25,20 +25,10 @@ public class TaskInfo implements Serializable {
   private long startTime;
   private long lastTime;
   private long pauseTime = 0;
-  private int status; //0.待下载 1.下载中 2.下载完成 3.下载失败 4.下载暂停 5.合并文件
+  private int status; //0.待下载 1.下载中 2.下载完成 3.下载失败 4.下载暂停
   private List<ChunkInfo> chunkInfoList;
 
   public String buildTaskFilePath() {
     return getFilePath() + File.separator + getFileName();
-  }
-
-  public String buildChunksPath() {
-    return getFilePath() + File.separator + "." + getFileName() + "_cks";
-  }
-
-  public String buildChunkFilePath(int index) {
-    int size = chunkInfoList == null ? 0 : (chunkInfoList.size() + "").length();
-    return buildChunksPath() + File.separator + "ck_" + String.format("%0" + size + "d", index)
-        + ".tmp";
   }
 }

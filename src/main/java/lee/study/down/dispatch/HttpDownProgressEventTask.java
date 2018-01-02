@@ -11,8 +11,6 @@ import lee.study.down.util.WsUtil;
 
 public class HttpDownProgressEventTask extends Thread {
 
-  private int secCount = 0;
-
   @Override
   public void run() {
 
@@ -28,21 +26,18 @@ public class HttpDownProgressEventTask extends Thread {
                   chunkInfo.setLastTime(System.currentTimeMillis());
                 }
               }
-              if (++secCount == 2) {  //一秒保存一次进度
-                secCount = 0;
-                //保存任务进度记录
-                synchronized (taskInfo) {
-                  if (taskInfo.getStatus() == 1) {
-                    ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
-                        taskInfo.buildTaskFilePath() + ".inf");
-                  }
+              //保存任务进度记录
+              synchronized (taskInfo) {
+                if (taskInfo.getStatus() == 1) {
+                  ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
+                      taskInfo.buildTaskFilePath() + ".inf");
                 }
               }
             }
           }
         }
         WsUtil.sendMsg();
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(1000);
       } catch (Exception e) {
         HttpDownServer.LOGGER.error("eventTask:", e);
       }

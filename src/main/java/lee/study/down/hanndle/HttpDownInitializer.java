@@ -86,45 +86,40 @@ public class HttpDownInitializer extends ChannelInitializer {
                     taskInfo.setTotalSize(taskInfo.getDownSize());
                     taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
                   }
-                  if (taskInfo.getChunkInfoList().size() > 1) {
-                    //合并文件
-                    taskInfo.setStatus(5);
-                    HttpDownUtil.startMerge(taskInfo);
-                  }
                   //文件下载完成回调
                   taskInfo.setStatus(2);
                   callback.onDone(taskInfo);
                 }
               }
-            } else if (realContentSize == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()
-                || (realContentSize - 1) == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
+            } else if (realContentSize
+                == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
+                .getNowStartPosition()
+                || (realContentSize - 1)
+                == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
+                .getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
               HttpDownServer.LOGGER.debug(
                   "继续下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
               HttpDownUtil.continueDown(taskInfo, chunkInfo);
-            } else if(chunkInfo.getDownSize() > chunkInfo.getTotalSize()){
+            } else if (chunkInfo.getDownSize() > chunkInfo.getTotalSize()) {
               //错误下载从0开始重新下过
-              HttpDownServer.LOGGER.error("Out of chunk size："+chunkInfo+"\t"+taskInfo);
-              synchronized (taskInfo){
-                synchronized (chunkInfo){
-                  taskInfo.setTotalSize(taskInfo.getTotalSize()-chunkInfo.getDownSize());
+              HttpDownServer.LOGGER.error("Out of chunk size：" + chunkInfo + "\t" + taskInfo);
+              synchronized (taskInfo) {
+                synchronized (chunkInfo) {
+                  taskInfo.setTotalSize(taskInfo.getTotalSize() - chunkInfo.getDownSize());
                 }
               }
-              HttpDownUtil.retryDown(taskInfo,chunkInfo,0);
+              HttpDownUtil.retryDown(taskInfo, chunkInfo, 0);
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
             realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
             HttpDownServer.LOGGER.debug(
-                "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize()+"\t"+httpResponse.headers().get(
-                    HttpHeaderNames.CONTENT_RANGE)+"\t"+realContentSize);
-            if (taskInfo.getChunkInfoList().size() > 1) {
-              fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
-                  "rw").getChannel();
-              fileChannel.position(chunkInfo.getDownSize());
-            } else {
-              fileChannel = FileUtil.getRafFile(taskInfo.buildTaskFilePath()).getChannel();
-            }
+                "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
+                    + httpResponse.headers().get(
+                    HttpHeaderNames.CONTENT_RANGE) + "\t" + realContentSize);
+            fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw").getChannel();
+            fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
             chunkInfo.setStatus(1);
             chunkInfo.setFileChannel(fileChannel);
             callback.onChunkStart(taskInfo, chunkInfo);
@@ -139,10 +134,10 @@ public class HttpDownInitializer extends ChannelInitializer {
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         callback.onError(taskInfo, chunkInfo, cause);
-        if(cause instanceof IOException){
+        if (cause instanceof IOException) {
           HttpDownServer.LOGGER.debug(
               "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-        }else{
+        } else {
           HttpDownServer.LOGGER.error("down onError:", cause);
         }
       }
@@ -161,14 +156,14 @@ public class HttpDownInitializer extends ChannelInitializer {
   }
 
   public static void main(String[] args) throws Exception {
-    RandomAccessFile r1 = new RandomAccessFile("f:/down/test1.txt","rw");
-    RandomAccessFile r2 = new RandomAccessFile("f:/down/test2.txt","rw");
-    r1.setLength(1024*1024*16);
-    r1.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
+    RandomAccessFile r1 = new RandomAccessFile("f:/down/test1.txt", "rw");
+    RandomAccessFile r2 = new RandomAccessFile("f:/down/test2.txt", "rw");
+    r1.setLength(1024 * 1024 * 16);
+    r1.write(new byte[]{1, 3, 6, 3, 1, 6, 5, 9, 6, 5, 7});
 //    r1.write(new byte[]{2,6,3,3,9,7,4,7,8});
-    r2.setLength(1024*1024*16);
+    r2.setLength(1024 * 1024 * 16);
 //    r2.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
-    r2.write(new byte[]{2,6,3,3,9,7,4,7,8});
+    r2.write(new byte[]{2, 6, 3, 3, 9, 7, 4, 7, 8});
   }
 
 }

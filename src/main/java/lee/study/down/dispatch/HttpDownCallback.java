@@ -19,8 +19,6 @@ public interface HttpDownCallback {
 
   void onChunkDone(TaskInfo taskInfo, ChunkInfo chunkInfo);
 
-  void onMerge(TaskInfo taskInfo);
-
   void onDone(TaskInfo taskInfo);
 
   void onDelete(TaskInfo taskInfo);

@@ -115,10 +115,6 @@
         if (task.status == 4) {
           return '暂停中';
         }
-        if (task.status == 5) {
-          task.totalProgress = 100;
-          return '合并文件中';
-        }
         let speed = this.speed(task);
         if (speed) {
           return Util.timeFmt((task.totalSize - task.downSize) / speed);
@@ -134,8 +130,6 @@
             return 'exception';
           case 4:
             return 'warn';
-          case 5:
-            return 'busy';
           default:
             return null;
         }
@@ -146,17 +140,11 @@
       iconClass(task) {
         if (task.status == 4) {
           return 'el-icon-task-start';
-        } else if (task.status == 5) {
-          return 'el-icon-loading';
-        }else {
+        } else {
           return 'el-icon-task-pause';
         }
       },
       controlTask(task) {
-        if(task.status==5){
-          this.$message("合并中，请耐心等待");
-          return;
-        }
         if (task.status == 4) {
           this.$http.get('api/continueTask?id=' + task.id)
           .then((response) => {
