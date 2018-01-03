@@ -106,7 +106,6 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       HttpDownServer.LOGGER.error("call onDone:" + e);
     }
     WsUtil.sendMsg();
-    //检查是否为损坏文件
   }
 
   @Override

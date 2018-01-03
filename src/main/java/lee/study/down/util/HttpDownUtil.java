@@ -18,13 +18,12 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslContext;
-import java.io.File;
+import io.netty.util.AttributeKey;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -41,6 +40,9 @@ import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpDownUtil {
+
+  //private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(64,8192,65536);
+  public static final AttributeKey<Boolean> CLOSE_ATTR = AttributeKey.newInstance("close");
 
   /**
    * 检测请求头是否存在
@@ -164,7 +166,7 @@ public class HttpDownUtil {
               content.content().writeBytes(requestInfo.content());
               cf.channel().writeAndFlush(content);
             }
-          }else{
+          } else {
             cdl.countDown();
           }
         });
@@ -236,8 +238,9 @@ public class HttpDownUtil {
     try {
       FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
       try (
-          RandomAccessFile randomAccessFile = new RandomAccessFile(taskInfo.buildTaskFilePath(),"rw")
-      ){
+          RandomAccessFile randomAccessFile = new RandomAccessFile(taskInfo.buildTaskFilePath(),
+              "rw")
+      ) {
         randomAccessFile.setLength(taskInfo.getTotalSize());
       }
       //文件下载开始回调
@@ -351,6 +354,7 @@ public class HttpDownUtil {
   public static void safeClose(Channel channel, FileChannel fileChannel) {
     try {
       if (channel != null && channel.isOpen()) {
+        channel.attr(CLOSE_ATTR).set(true);
         //关闭旧的下载连接
         channel.close();
       }
@@ -368,7 +372,7 @@ public class HttpDownUtil {
   }
 
   public static boolean setStatusIfNotDone(ChunkInfo chunkInfo, int update) {
-    if (chunkInfo.getStatus() != 2) {
+    if (chunkInfo.getStatus() != 2 && chunkInfo.getStatus() != update) {
       chunkInfo.setStatus(update);
       return true;
     }

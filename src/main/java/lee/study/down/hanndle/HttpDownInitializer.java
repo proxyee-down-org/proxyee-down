@@ -12,12 +12,12 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import lee.study.down.HttpDownServer;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
 
 public class HttpDownInitializer extends ChannelInitializer {
@@ -50,6 +50,12 @@ public class HttpDownInitializer extends ChannelInitializer {
       @Override
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
+          synchronized (chunkInfo) {
+            Boolean close = ctx.channel().attr(HttpDownUtil.CLOSE_ATTR).get();
+            if (close!=null&&close==true) {
+              return;
+            }
+          }
           if (msg instanceof HttpContent) {
             if (fileChannel == null || !fileChannel.isOpen()) {
               return;
@@ -155,14 +161,32 @@ public class HttpDownInitializer extends ChannelInitializer {
   }
 
   public static void main(String[] args) throws Exception {
-    RandomAccessFile r1 = new RandomAccessFile("f:/down/test1.txt", "rw");
-    RandomAccessFile r2 = new RandomAccessFile("f:/down/test2.txt", "rw");
-    r1.setLength(1024 * 1024 * 16);
-    r1.write(new byte[]{1, 3, 6, 3, 1, 6, 5, 9, 6, 5, 7});
-//    r1.write(new byte[]{2,6,3,3,9,7,4,7,8});
-    r2.setLength(1024 * 1024 * 16);
-//    r2.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
-    r2.write(new byte[]{2, 6, 3, 3, 9, 7, 4, 7, 8});
+    String path = "f:/down/test1.txt";
+    RandomAccessFile r1 = new RandomAccessFile(path, "rw");
+    r1.setLength(1024 * 1024 * 1024 * 1L);
+    r1.close();
+    new Thread(() -> {
+      try {
+        FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
+        fileChannel.position(1000);
+        long time = System.currentTimeMillis();
+        fileChannel.write(ByteBuffer.wrap(new byte[1024]));
+        System.out.println("use1:" + (System.currentTimeMillis() - time));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }).start();
+    new Thread(() -> {
+      try {
+        FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
+        fileChannel.position(4000);
+        long time = System.currentTimeMillis();
+        fileChannel.write(ByteBuffer.wrap(new byte[1024]));
+        System.out.println("use2:" + (System.currentTimeMillis() - time));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }).start();
   }
 
 }
