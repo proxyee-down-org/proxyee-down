@@ -251,7 +251,7 @@ public class HttpDownUtil {
       for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
         ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
         //避免分段下载速度比总的下载速度大太多的问题
-//        chunkInfo.setStatus(1);
+        chunkInfo.setStatus(1);
         chunkInfo.setStartTime(taskInfo.getStartTime());
         chunkDown(httpDownInfo, chunkInfo);
       }
