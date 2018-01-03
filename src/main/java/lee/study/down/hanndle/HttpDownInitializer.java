@@ -126,9 +126,11 @@ public class HttpDownInitializer extends ChannelInitializer {
                 "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
                     + httpResponse.headers().get(
                     HttpHeaderNames.CONTENT_RANGE) + "\t" + realContentSize);
-            FileChannel fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw").getChannel();
+            FileChannel fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
+                .getChannel();
             MappedByteBuffer mappedBuffer = fileChannel.map(MapMode.READ_WRITE,
-                chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(), chunkInfo.getTotalSize());
+                chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(),
+                chunkInfo.getTotalSize() - chunkInfo.getDownSize());
             chunkInfo.setStatus(1);
             chunkInfo.setFileChannel(fileChannel);
             chunkInfo.setMappedBuffer(mappedBuffer);

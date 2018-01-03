@@ -384,7 +384,7 @@ public class HttpDownUtil {
   }
 
   public static boolean setStatusIfNotDone(ChunkInfo chunkInfo, int update) {
-    if (chunkInfo.getStatus() != 2 && chunkInfo.getStatus() != update) {
+    if (chunkInfo.getStatus() != 2) {
       chunkInfo.setStatus(update);
       return true;
     }

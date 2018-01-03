@@ -12,10 +12,6 @@ import sun.nio.ch.FileChannelImpl;
 
 public class FileUtil {
 
-  public static RandomAccessFile getRafFile(String path) throws IOException {
-    return new RandomAccessFile(path, "rw");
-  }
-
   /**
    * 删除文件或文件夹
    */
