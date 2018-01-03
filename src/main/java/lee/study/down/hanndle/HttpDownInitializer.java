@@ -1,6 +1,7 @@
 package lee.study.down.hanndle;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -13,11 +14,14 @@ import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import lee.study.down.HttpDownServer;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
 
 public class HttpDownInitializer extends ChannelInitializer {
@@ -27,7 +31,6 @@ public class HttpDownInitializer extends ChannelInitializer {
   private ChunkInfo chunkInfo;
   private HttpDownCallback callback;
 
-  private FileChannel fileChannel;
   private long realContentSize;
 
   public HttpDownInitializer(boolean isSsl, TaskInfo taskInfo, ChunkInfo chunkInfo,
@@ -52,12 +55,12 @@ public class HttpDownInitializer extends ChannelInitializer {
         try {
           synchronized (chunkInfo) {
             Boolean close = ctx.channel().attr(HttpDownUtil.CLOSE_ATTR).get();
-            if (close!=null&&close==true) {
+            if (close != null && close == true) {
               return;
             }
           }
           if (msg instanceof HttpContent) {
-            if (fileChannel == null || !fileChannel.isOpen()) {
+            if (chunkInfo.getFileChannel() == null || !chunkInfo.getFileChannel().isOpen()) {
               return;
             }
             HttpContent httpContent = (HttpContent) msg;
@@ -65,7 +68,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             int readableBytes = byteBuf.readableBytes();
             synchronized (chunkInfo) {
               if (chunkInfo.getStatus() == 1) {
-                fileChannel.write(byteBuf.nioBuffer());
+                chunkInfo.getMappedBuffer().put(byteBuf.nioBuffer());
                 //文件已下载大小
                 chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
               } else {
@@ -78,7 +81,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             callback.onProgress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
-              HttpDownUtil.safeClose(ctx.channel(), fileChannel);
+              HttpDownUtil.safeClose(ctx.channel(), chunkInfo);
               //分段下载完成回调
               chunkInfo.setStatus(2);
               chunkInfo.setLastTime(System.currentTimeMillis());
@@ -123,10 +126,12 @@ public class HttpDownInitializer extends ChannelInitializer {
                 "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
                     + httpResponse.headers().get(
                     HttpHeaderNames.CONTENT_RANGE) + "\t" + realContentSize);
-            fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw").getChannel();
-            fileChannel.position(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
+            FileChannel fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw").getChannel();
+            MappedByteBuffer mappedBuffer = fileChannel.map(MapMode.READ_WRITE,
+                chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(), chunkInfo.getTotalSize());
             chunkInfo.setStatus(1);
             chunkInfo.setFileChannel(fileChannel);
+            chunkInfo.setMappedBuffer(mappedBuffer);
             callback.onChunkStart(taskInfo, chunkInfo);
           }
         } catch (Exception e) {
@@ -162,31 +167,15 @@ public class HttpDownInitializer extends ChannelInitializer {
 
   public static void main(String[] args) throws Exception {
     String path = "f:/down/test1.txt";
-    RandomAccessFile r1 = new RandomAccessFile(path, "rw");
-    r1.setLength(1024 * 1024 * 1024 * 1L);
-    r1.close();
-    new Thread(() -> {
-      try {
-        FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
-        fileChannel.position(1000);
-        long time = System.currentTimeMillis();
-        fileChannel.write(ByteBuffer.wrap(new byte[1024]));
-        System.out.println("use1:" + (System.currentTimeMillis() - time));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }).start();
-    new Thread(() -> {
-      try {
-        FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
-        fileChannel.position(4000);
-        long time = System.currentTimeMillis();
-        fileChannel.write(ByteBuffer.wrap(new byte[1024]));
-        System.out.println("use2:" + (System.currentTimeMillis() - time));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }).start();
+    RandomAccessFile randomAccessFile = new RandomAccessFile(path, "rw");
+    randomAccessFile.setLength(100);
+    randomAccessFile.close();
+    FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
+    MappedByteBuffer mbb = fileChannel.map(MapMode.READ_WRITE, 0, 5);
+    mbb.put(new byte[]{1, 2, 3, 4, 5});
+    FileUtil.unmap(mbb);
+    fileChannel.close();
+    FileUtil.deleteIfExists(path);
   }
 
 }

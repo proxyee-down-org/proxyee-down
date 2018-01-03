@@ -24,6 +24,7 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -41,7 +42,7 @@ import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpDownUtil {
 
-  //private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(64,8192,65536);
+//  private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(64,8192,65536);
   public static final AttributeKey<Boolean> CLOSE_ATTR = AttributeKey.newInstance("close");
 
   /**
@@ -250,7 +251,7 @@ public class HttpDownUtil {
       for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
         ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
         //避免分段下载速度比总的下载速度大太多的问题
-        chunkInfo.setStatus(1);
+//        chunkInfo.setStatus(1);
         chunkInfo.setStartTime(taskInfo.getStartTime());
         chunkDown(httpDownInfo, chunkInfo);
       }
@@ -267,6 +268,7 @@ public class HttpDownUtil {
     HttpDownServer.LOGGER.debug(
         "开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
     ChannelFuture cf = HttpDownServer.DOWN_BOOT
+//        .option(ChannelOption.RCVBUF_ALLOCATOR,RECV_BYTE_BUF_ALLOCATOR)
         .handler(
             new HttpDownInitializer(requestProto.getSsl(), taskInfo, chunkInfo,
                 HttpDownServer.CALLBACK))
@@ -314,7 +316,7 @@ public class HttpDownUtil {
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo, long downSize)
       throws Exception {
     synchronized (chunkInfo) {
-      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+      safeClose(chunkInfo.getChannel(), chunkInfo);
       if (setStatusIfNotDone(chunkInfo, 3)) {
         if (downSize != -1) {
           chunkInfo.setDownSize(downSize);
@@ -340,7 +342,7 @@ public class HttpDownUtil {
   public static void continueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     synchronized (chunkInfo) {
-      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
+      safeClose(chunkInfo.getChannel(), chunkInfo);
       //避免同时两个重新下载
       if (setStatusIfNotDone(chunkInfo, 5)) {
         //计算后续下载字节
@@ -351,7 +353,7 @@ public class HttpDownUtil {
     }
   }
 
-  public static void safeClose(Channel channel, FileChannel fileChannel) {
+  public static void safeClose(Channel channel, ChunkInfo chunkInfo) {
     try {
       if (channel != null && channel.isOpen()) {
         channel.attr(CLOSE_ATTR).set(true);
@@ -362,12 +364,22 @@ public class HttpDownUtil {
       HttpDownServer.LOGGER.error("safeClose netty channel", e);
     }
     try {
+      FileChannel fileChannel = chunkInfo.getFileChannel();
       if (fileChannel != null && fileChannel.isOpen()) {
         //关闭旧的下载文件连接
         fileChannel.close();
       }
     } catch (IOException e) {
       HttpDownServer.LOGGER.error("safeClose file channel", e);
+    }
+    try {
+      MappedByteBuffer mappedBuffer = chunkInfo.getMappedBuffer();
+      if (mappedBuffer != null) {
+        //关闭旧的下载文件连接
+        FileUtil.unmap(mappedBuffer);
+      }
+    } catch (Exception e) {
+      HttpDownServer.LOGGER.error("safeClose file mappedBuffer", e);
     }
   }
 

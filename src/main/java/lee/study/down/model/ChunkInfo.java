@@ -3,6 +3,7 @@ package lee.study.down.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.netty.channel.Channel;
 import java.io.Serializable;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +28,8 @@ public class ChunkInfo implements Serializable {
   private transient volatile Channel channel;
   @JsonIgnore
   private transient volatile FileChannel fileChannel;
+  @JsonIgnore
+  private transient volatile MappedByteBuffer mappedBuffer;
 
   public ChunkInfo() {
   }
