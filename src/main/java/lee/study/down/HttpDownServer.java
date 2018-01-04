@@ -148,7 +148,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
             } else if (cause instanceof IOException) {
               LOGGER.warn("IO异常:" + cause.toString());
             } else {
-              LOGGER.error("服务器异常:", cause);
+              LOGGER.error("服务器异常:", cause.fillInStackTrace());
             }
           }
 

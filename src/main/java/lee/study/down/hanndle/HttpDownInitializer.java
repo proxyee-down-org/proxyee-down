@@ -1,7 +1,6 @@
 package lee.study.down.hanndle;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -13,7 +12,6 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -53,12 +51,6 @@ public class HttpDownInitializer extends ChannelInitializer {
       @Override
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
-          synchronized (chunkInfo) {
-            Boolean close = ctx.channel().attr(HttpDownUtil.CLOSE_ATTR).get();
-            if (close != null && close == true) {
-              return;
-            }
-          }
           if (msg instanceof HttpContent) {
             if (chunkInfo.getFileChannel() == null || !chunkInfo.getFileChannel().isOpen()) {
               return;
@@ -67,6 +59,10 @@ public class HttpDownInitializer extends ChannelInitializer {
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
             synchronized (chunkInfo) {
+              Boolean close = ctx.channel().attr(HttpDownUtil.CLOSE_ATTR).get();
+              if (close != null && close == true) {
+                return;
+              }
               if (chunkInfo.getStatus() == 1) {
                 chunkInfo.getMappedBuffer().put(byteBuf.nioBuffer());
                 //文件已下载大小
@@ -126,15 +122,20 @@ public class HttpDownInitializer extends ChannelInitializer {
                 "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
                     + httpResponse.headers().get(
                     HttpHeaderNames.CONTENT_RANGE) + "\t" + realContentSize);
-            FileChannel fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
-                .getChannel();
-            MappedByteBuffer mappedBuffer = fileChannel.map(MapMode.READ_WRITE,
-                chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(),
-                chunkInfo.getTotalSize() - chunkInfo.getDownSize());
-            chunkInfo.setStatus(1);
-            chunkInfo.setFileChannel(fileChannel);
-            chunkInfo.setMappedBuffer(mappedBuffer);
-            callback.onChunkStart(taskInfo, chunkInfo);
+            synchronized (chunkInfo) {
+              Boolean close = ctx.channel().attr(HttpDownUtil.CLOSE_ATTR).get();
+              if (close == null || close == false) {
+                FileChannel fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
+                    .getChannel();
+                MappedByteBuffer mappedBuffer = fileChannel.map(MapMode.READ_WRITE,
+                    chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(),
+                    chunkInfo.getTotalSize() - chunkInfo.getDownSize());
+                chunkInfo.setStatus(1);
+                chunkInfo.setFileChannel(fileChannel);
+                chunkInfo.setMappedBuffer(mappedBuffer);
+                callback.onChunkStart(taskInfo, chunkInfo);
+              }
+            }
           }
         } catch (Exception e) {
           throw e;
@@ -150,7 +151,7 @@ public class HttpDownInitializer extends ChannelInitializer {
           HttpDownServer.LOGGER.debug(
               "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         } else {
-          HttpDownServer.LOGGER.error("down onError:", cause);
+          HttpDownServer.LOGGER.error("down onError:", cause.fillInStackTrace());
         }
       }
 

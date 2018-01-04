@@ -355,10 +355,12 @@ public class HttpDownUtil {
 
   public static void safeClose(Channel channel, ChunkInfo chunkInfo) {
     try {
-      if (channel != null && channel.isOpen()) {
+      if (channel != null ) {
         channel.attr(CLOSE_ATTR).set(true);
-        //关闭旧的下载连接
-        channel.close();
+        if(channel.isOpen()){
+          //关闭旧的下载连接
+          channel.close();
+        }
       }
     } catch (Exception e) {
       HttpDownServer.LOGGER.error("safeClose netty channel", e);
