@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import lee.study.down.HttpDownServer;
+import lee.study.down.ext.BdyZip;
 import lee.study.down.form.DownForm;
 import lee.study.down.form.UnzipForm;
 import lee.study.down.model.ChunkInfo;
@@ -14,7 +15,6 @@ import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
-import lee.study.down.util.ByteUtil;
 import lee.study.down.util.HttpDownUtil;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -200,7 +200,7 @@ public class HttpDownController {
   @RequestMapping("/bdyUnzip")
   public ResultInfo bdyUnzip(@RequestBody UnzipForm unzipForm) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    ByteUtil.unzipBdy(unzipForm.getFilePath(), unzipForm.getToPath());
+    BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath());
     return resultInfo;
   }
 }

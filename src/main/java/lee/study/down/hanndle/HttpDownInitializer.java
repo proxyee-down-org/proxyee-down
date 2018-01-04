@@ -17,9 +17,9 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import lee.study.down.HttpDownServer;
 import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.ext.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
 
 public class HttpDownInitializer extends ChannelInitializer {
@@ -127,8 +127,8 @@ public class HttpDownInitializer extends ChannelInitializer {
               if (close == null || close == false) {
                 FileChannel fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
                     .getChannel();
-                MappedByteBuffer mappedBuffer = fileChannel.map(MapMode.READ_WRITE,
-                    chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(),
+                LargeMappedByteBuffer mappedBuffer = new LargeMappedByteBuffer(fileChannel,
+                    MapMode.READ_WRITE, chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(),
                     chunkInfo.getTotalSize() - chunkInfo.getDownSize());
                 chunkInfo.setStatus(1);
                 chunkInfo.setFileChannel(fileChannel);
@@ -151,7 +151,7 @@ public class HttpDownInitializer extends ChannelInitializer {
           HttpDownServer.LOGGER.debug(
               "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         } else {
-          HttpDownServer.LOGGER.error("down onError:", cause.fillInStackTrace());
+          HttpDownServer.LOGGER.error("down onError:", cause);
         }
       }
 
@@ -176,9 +176,6 @@ public class HttpDownInitializer extends ChannelInitializer {
     FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
     MappedByteBuffer mbb = fileChannel.map(MapMode.READ_WRITE, 0, 5);
     mbb.put(new byte[]{1, 2, 3, 4, 5});
-    FileUtil.unmap(mbb);
-    fileChannel.close();
-    FileUtil.deleteIfExists(path);
   }
 
 }

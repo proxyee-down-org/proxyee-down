@@ -5,6 +5,7 @@ import io.netty.channel.Channel;
 import java.io.Serializable;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import lee.study.down.ext.LargeMappedByteBuffer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -29,7 +30,7 @@ public class ChunkInfo implements Serializable {
   @JsonIgnore
   private transient volatile FileChannel fileChannel;
   @JsonIgnore
-  private transient volatile MappedByteBuffer mappedBuffer;
+  private transient volatile LargeMappedByteBuffer mappedBuffer;
 
   public ChunkInfo() {
   }

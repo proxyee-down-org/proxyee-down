@@ -9,7 +9,7 @@
   </parent>
   <groupId>lee.study</groupId>
   <artifactId>proxyee-down</artifactId>
-  <version>1.6</version>
+  <version>1.6.1</version>
 
   <build>
     <plugins>
