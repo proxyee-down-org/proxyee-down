@@ -25,7 +25,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       ByteUtil.serialize(HttpDownServer.DOWN_CONTENT.get(taskInfo.getId()),
           taskInfo.getFilePath() + File.separator + taskInfo.getFileName() + ".inf");
     } catch (IOException e) {
-      HttpDownServer.LOGGER.error("call onStart:" + e);
+      HttpDownServer.LOGGER.error("call onStart:" ,e);
     }
     //标记为下载中并记录开始时间
     WsUtil.sendMsg();
@@ -74,7 +74,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
         }
       }
     } catch (Exception e) {
-      HttpDownServer.LOGGER.error("call onContinue:" + e);
+      HttpDownServer.LOGGER.error("call onContinue:" , e);
     }
     WsUtil.sendMsg();
   }
@@ -84,7 +84,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
     try {
       HttpDownUtil.retryDown(taskInfo, chunkInfo);
     } catch (Exception e) {
-      HttpDownServer.LOGGER.error("call onError:" + e);
+      HttpDownServer.LOGGER.error("call onError:" , e);
     }
   }
 
@@ -103,7 +103,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
         Files.deleteIfExists(Paths.get(taskInfo.buildTaskFilePath() + ".inf"));
       }
     } catch (Exception e) {
-      HttpDownServer.LOGGER.error("call onDone:" + e);
+      HttpDownServer.LOGGER.error("call onDone:" , e);
     }
     WsUtil.sendMsg();
   }
@@ -124,7 +124,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
         FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
         FileUtil.deleteIfExists(taskInfo.buildTaskFilePath() + ".inf");
       } catch (IOException e) {
-        HttpDownServer.LOGGER.error("call onDelete:" + e);
+        HttpDownServer.LOGGER.error("call onDelete:" , e);
       }
     }
     WsUtil.sendMsg();

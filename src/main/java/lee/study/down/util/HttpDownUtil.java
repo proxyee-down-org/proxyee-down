@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lee.study.down.HttpDownServer;
+import lee.study.down.ext.LargeMappedByteBuffer;
 import lee.study.down.hanndle.HttpDownInitializer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
@@ -42,7 +43,7 @@ import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpDownUtil {
 
-//  private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(64,8192,65536);
+  //  private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(64,8192,65536);
   public static final AttributeKey<Boolean> CLOSE_ATTR = AttributeKey.newInstance("close");
 
   /**
@@ -96,7 +97,8 @@ public class HttpDownUtil {
     httpHeaders.clear();
     httpResponse.setStatus(HttpResponseStatus.OK);
     httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-    String host = ((InetSocketAddress) clientChannel.localAddress()).getHostString();
+    String host = HttpDownServer.isDev() ? "localhost"
+        : ((InetSocketAddress) clientChannel.localAddress()).getHostString();
     String js =
         "<script>window.top.location.href='http://" + host + ":" + HttpDownServer.VIEW_SERVER_PORT
             + "/#/tasks/new/" + httpDownInfo
@@ -355,10 +357,12 @@ public class HttpDownUtil {
 
   public static void safeClose(Channel channel, ChunkInfo chunkInfo) {
     try {
-      if (channel != null && channel.isOpen()) {
+      if (channel != null) {
         channel.attr(CLOSE_ATTR).set(true);
-        //关闭旧的下载连接
-        channel.close();
+        if (channel.isOpen()) {
+          //关闭旧的下载连接
+          channel.close();
+        }
       }
     } catch (Exception e) {
       HttpDownServer.LOGGER.error("safeClose netty channel", e);
@@ -373,10 +377,10 @@ public class HttpDownUtil {
       HttpDownServer.LOGGER.error("safeClose file channel", e);
     }
     try {
-      MappedByteBuffer mappedBuffer = chunkInfo.getMappedBuffer();
+      LargeMappedByteBuffer mappedBuffer = chunkInfo.getMappedBuffer();
       if (mappedBuffer != null) {
         //关闭旧的下载文件连接
-        FileUtil.unmap(mappedBuffer);
+        mappedBuffer.close();
       }
     } catch (Exception e) {
       HttpDownServer.LOGGER.error("safeClose file mappedBuffer", e);

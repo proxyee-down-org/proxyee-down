@@ -64,6 +64,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
 
   public static int VIEW_SERVER_PORT;
   public static SslContext CLIENT_SSL_CONTEXT;
+  public static String ACTIVE;
 
   public static String HOME_PATH;
   public static String RECORD_PATH;
@@ -91,9 +92,14 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
     CONFIG_PATH = HOME_PATH + File.separator + "proxyee-down.cfg";
   }
 
+  public static boolean isDev(){
+    return "dev".equals(ACTIVE);
+  }
+
   @Override
   public void afterPropertiesSet() throws Exception {
-    if ("dev".equals(active)) {
+    ACTIVE = active;
+    if (isDev()) {
       VIEW_SERVER_PORT = viewServerPort;
       ResourceLeakDetector.setLevel(Level.ADVANCED);
     } else {
@@ -148,7 +154,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
             } else if (cause instanceof IOException) {
               LOGGER.warn("IO异常:" + cause.toString());
             } else {
-              LOGGER.error("服务器异常:", cause);
+              LOGGER.error("服务器异常:", cause.fillInStackTrace());
             }
           }
 

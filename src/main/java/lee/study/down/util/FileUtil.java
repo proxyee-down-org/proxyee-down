@@ -3,12 +3,8 @@ package lee.study.down.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.file.Files;
 import java.util.Stack;
-import sun.nio.ch.FileChannelImpl;
 
 public class FileUtil {
 
@@ -138,16 +134,20 @@ public class FileUtil {
     return file;
   }
 
-  public static void unmap(MappedByteBuffer mappedBuffer) throws Exception {
-    Method m = FileChannelImpl.class.getDeclaredMethod("unmap", MappedByteBuffer.class);
-    m.setAccessible(true);
-    m.invoke(FileChannelImpl.class, mappedBuffer);
-  }
-
   public static void main(String[] args) throws Exception {
-    RandomAccessFile raf2 = new RandomAccessFile("F:\\百度云合并下载研究\\testbbb.txt", "rw");
-    raf2.setLength(10);
-    raf2.getChannel().position(10).read(ByteBuffer.allocate(5));
-    System.out.println(raf2.getChannel().position());
+    String path = "F:\\百度云合并下载研究\\test.txt";
+    RandomAccessFile raf2 = new RandomAccessFile(path, "rw");
+    raf2.setLength(1024);
+    raf2.close();
+    RandomAccessFile raf3 = new RandomAccessFile(path, "rw");
+    raf3.setLength(0);
+    raf3.close();
+    /*FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
+    MappedByteBuffer byteBuffer1 = fileChannel.map(MapMode.READ_WRITE,0,1000);
+    byteBuffer1.put(new byte[]{1,2,3,4,5});
+    byte[] bytes = new byte[5];
+    byteBuffer1.flip();
+    byteBuffer1.get(bytes);
+    System.out.println(Arrays.toString(bytes));*/
   }
 }

@@ -1,7 +1,6 @@
 package lee.study.down.window;
 
 import java.awt.Desktop;
-import java.awt.HeadlessException;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -13,13 +12,10 @@ import java.net.URI;
 import java.net.URL;
 import javax.swing.JFrame;
 import lee.study.down.HttpDownServer;
-import lee.study.down.util.OsUtil;
-import lee.study.proxyee.server.HttpProxyServer;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public class DownTray extends JFrame{
+public class DownTray extends JFrame {
 
-  public DownTray(){
+  public DownTray() {
     super();
     init();
   }
@@ -48,8 +44,8 @@ public class DownTray extends JFrame{
       popupMenu.add(openItem);
 //      popupMenu.addSeparator();
       popupMenu.add(closeItem);
-      openItem.addActionListener((event)-> openBrowse());
-      closeItem.addActionListener((event)-> {
+      openItem.addActionListener((event) -> openBrowse());
+      closeItem.addActionListener((event) -> {
         System.exit(0);
       });
       // 为托盘图标加弹出菜弹
@@ -60,17 +56,18 @@ public class DownTray extends JFrame{
         // 为系统托盘加托盘图标
         systemTray.add(trayIcon);
       } catch (Exception e) {
-        HttpDownServer.LOGGER.warn("init",e);
+        HttpDownServer.LOGGER.warn("init", e);
       }
     }
     openBrowse();
   }
 
-  private void openBrowse(){
+  private void openBrowse() {
     try {
       Desktop desktop = Desktop.getDesktop();
       if (Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE)) {
-        URI uri = new URI("http://127.0.0.1:" + HttpDownServer.VIEW_SERVER_PORT);
+        URI uri = new URI("http://" + (HttpDownServer.isDev() ? "localhost" : "127.0.0.1") + ":"
+            + HttpDownServer.VIEW_SERVER_PORT);
         desktop.browse(uri);
       }
     } catch (Exception ex) {

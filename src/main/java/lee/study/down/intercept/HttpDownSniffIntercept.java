@@ -59,10 +59,11 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
     if ((httpResponse.status().code() + "").indexOf("20") == 0) { //响应码为20x
       HttpHeaders httpResHeaders = httpResponse.headers();
       String accept = pipeline.getHttpRequest().headers().get(HttpHeaderNames.ACCEPT);
+      String contentType = httpResHeaders.get(HttpHeaderNames.CONTENT_TYPE);
       if (accept != null
           && accept.matches("^.*text/html.*$")  //直接url的方式访问不是以HTML标签加载的(a标签除外)
-          && !httpResHeaders.get(HttpHeaderNames.CONTENT_TYPE)
-          .matches("^.*text/.*$")) { //响应体不是text/html报文
+          && contentType != null
+          && !contentType.matches("^.*text/.*$")) { //响应体不是text/html报文
         //有两种情况进行下载 1.url后缀为.xxx  2.带有CONTENT_DISPOSITION:ATTACHMENT响应头
         String disposition = httpResHeaders.get(HttpHeaderNames.CONTENT_DISPOSITION);
         if (pipeline.getHttpRequest().uri().matches("^.*\\.[^./]{1,5}(\\?[^?]*)?$")
