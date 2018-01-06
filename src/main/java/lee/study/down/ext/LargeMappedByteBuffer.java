@@ -9,22 +9,19 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.LinkedList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.nio.ch.FileChannelImpl;
 
 public class LargeMappedByteBuffer implements Closeable {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(LargeMappedByteBuffer.class);
 
   private List<MappedByteBuffer> bufferList;
   private long rawPosition;
   private long position;
+  private long size;
 
   public LargeMappedByteBuffer(FileChannel fileChannel, MapMode mapMode, long position, long size)
       throws IOException {
     this.rawPosition = position;
     this.position = position;
+    this.size = size;
     int count = (int) Math.ceil(size / (double) Integer.MAX_VALUE);
     this.bufferList = new LinkedList<>();
     long calcPos = position;
@@ -35,18 +32,22 @@ public class LargeMappedByteBuffer implements Closeable {
     }
   }
 
-  public final void put(ByteBuffer byteBuffer) {
-    int index = getIndex();
-    long length = byteBuffer.limit() - byteBuffer.position();
-    this.position += length;
-    MappedByteBuffer mappedBuffer = bufferList.get(index);
-    if (mappedBuffer.remaining() < length) {
-      byte[] temp = new byte[mappedBuffer.remaining()];
-      byteBuffer.get(temp);
-      bufferList.get(index).put(temp);
-      bufferList.get(index + 1).put(byteBuffer);
-    } else {
-      bufferList.get(index).put(byteBuffer);
+  public final void put(ByteBuffer byteBuffer) throws IOException {
+    try {
+      int index = getIndex();
+      long length = byteBuffer.limit() - byteBuffer.position();
+      this.position += length;
+      MappedByteBuffer mappedBuffer = bufferList.get(index);
+      if (mappedBuffer.remaining() < length) {
+        byte[] temp = new byte[mappedBuffer.remaining()];
+        byteBuffer.get(temp);
+        bufferList.get(index).put(temp);
+        bufferList.get(index + 1).put(byteBuffer);
+      } else {
+        bufferList.get(index).put(byteBuffer);
+      }
+    } catch (Exception e) {
+      throw new IOException("LargeMappedByteBuffer put rawPosition-"+rawPosition+" size-"+size, e);
     }
   }
 
@@ -57,13 +58,14 @@ public class LargeMappedByteBuffer implements Closeable {
   @Override
   public void close() throws IOException {
     try {
-      Method m = FileChannelImpl.class.getDeclaredMethod("unmap", MappedByteBuffer.class);
+      Class<?> clazz = Class.forName("sun.nio.ch.FileChannelImpl");
+      Method m = clazz.getDeclaredMethod("unmap", MappedByteBuffer.class);
       m.setAccessible(true);
       for (MappedByteBuffer mappedBuffer : bufferList) {
-        m.invoke(FileChannelImpl.class, mappedBuffer);
+        m.invoke(clazz, mappedBuffer);
       }
     } catch (Exception e) {
-      LOGGER.error("LargeMappedByteBuffer close:",e);
+      throw new IOException("LargeMappedByteBuffer close", e);
     }
   }
 
