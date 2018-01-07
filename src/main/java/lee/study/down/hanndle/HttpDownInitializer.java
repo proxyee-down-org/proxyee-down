@@ -10,7 +10,6 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -77,7 +76,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             callback.onProgress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
-              HttpDownUtil.safeClose(ctx.channel(), chunkInfo);
+              HttpDownUtil.safeClose(chunkInfo);
               //分段下载完成回调
               chunkInfo.setStatus(2);
               chunkInfo.setLastTime(System.currentTimeMillis());
@@ -147,9 +146,7 @@ public class HttpDownInitializer extends ChannelInitializer {
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         callback.onError(taskInfo, chunkInfo, cause);
-        if (cause instanceof IOException) {
-          HttpDownServer.LOGGER.error("down onError:", cause);
-        }
+        HttpDownServer.LOGGER.error("down onError:", cause);
       }
 
       @Override
@@ -163,6 +160,7 @@ public class HttpDownInitializer extends ChannelInitializer {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     super.exceptionCaught(ctx, cause);
+    HttpDownServer.LOGGER.error("down onInit:", cause);
   }
 
   public static void main(String[] args) throws Exception {

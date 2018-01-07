@@ -35,11 +35,17 @@ public class LargeMappedByteBuffer implements Closeable {
   public final void put(ByteBuffer byteBuffer) throws IOException {
     try {
       int index = getIndex();
-      long length = byteBuffer.limit() - byteBuffer.position();
-      this.position += length;
+      long byteBufferRemaining = byteBuffer.remaining();
+      this.position += byteBufferRemaining;
       MappedByteBuffer mappedBuffer = bufferList.get(index);
-      if (mappedBuffer.remaining() < length) {
-        byte[] temp = new byte[mappedBuffer.remaining()];
+      long mapBufferRemaining = mappedBuffer.remaining();
+      if (mapBufferRemaining < byteBufferRemaining) {
+        if (index + 1 > bufferList.size() - 1) {
+          throw new IOException(
+              "size error byteBufferRemaining-" + byteBufferRemaining + " mapBufferRemaining-"
+                  + mapBufferRemaining);
+        }
+        byte[] temp = new byte[(int) mapBufferRemaining];
         byteBuffer.get(temp);
         bufferList.get(index).put(temp);
         bufferList.get(index + 1).put(byteBuffer);
@@ -47,7 +53,9 @@ public class LargeMappedByteBuffer implements Closeable {
         bufferList.get(index).put(byteBuffer);
       }
     } catch (Exception e) {
-      throw new IOException("LargeMappedByteBuffer put rawPosition-"+rawPosition+" size-"+size, e);
+      throw new IOException(
+          "LargeMappedByteBuffer put position-" + position + " rawPosition-" + rawPosition
+              + " size-" + size, e);
     }
   }
 
@@ -68,5 +76,4 @@ public class LargeMappedByteBuffer implements Closeable {
       throw new IOException("LargeMappedByteBuffer close", e);
     }
   }
-
 }

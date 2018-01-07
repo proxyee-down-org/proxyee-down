@@ -47,7 +47,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
       taskInfo.setStatus(4);
       for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
         synchronized (chunkInfo) {
-          HttpDownUtil.safeClose(chunkInfo.getChannel(), chunkInfo);
+          HttpDownUtil.safeClose(chunkInfo);
           if (chunkInfo.getStatus() != 2) {
             chunkInfo.setStatus(4);
           }
@@ -112,7 +112,7 @@ public class DefaultHttpDownCallback implements HttpDownCallback {
   public void onDelete(TaskInfo taskInfo) {
     for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
       synchronized (chunkInfo) {
-        HttpDownUtil.safeClose(chunkInfo.getChannel(), chunkInfo);
+        HttpDownUtil.safeClose(chunkInfo);
       }
     }
     synchronized (taskInfo) {

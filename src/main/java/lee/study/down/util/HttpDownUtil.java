@@ -24,7 +24,6 @@ import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -294,7 +293,6 @@ public class HttpDownUtil {
           HttpContent content = new DefaultLastHttpContent();
           content.content().writeBytes(requestInfo.content());
           future.channel().writeAndFlush(content);
-          requestInfo.setContent(null); //help GC
         }
       } else {
         HttpDownServer.LOGGER.debug(
@@ -318,7 +316,7 @@ public class HttpDownUtil {
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo, long downSize)
       throws Exception {
     synchronized (chunkInfo) {
-      safeClose(chunkInfo.getChannel(), chunkInfo);
+      safeClose(chunkInfo);
       if (setStatusIfNotDone(chunkInfo, 3)) {
         if (downSize != -1) {
           chunkInfo.setDownSize(downSize);
@@ -344,7 +342,7 @@ public class HttpDownUtil {
   public static void continueDown(TaskInfo taskInfo, ChunkInfo chunkInfo)
       throws Exception {
     synchronized (chunkInfo) {
-      safeClose(chunkInfo.getChannel(), chunkInfo);
+      safeClose(chunkInfo);
       //避免同时两个重新下载
       if (setStatusIfNotDone(chunkInfo, 5)) {
         //计算后续下载字节
@@ -355,21 +353,20 @@ public class HttpDownUtil {
     }
   }
 
-  public static void safeClose(Channel channel, ChunkInfo chunkInfo) {
+  public static void safeClose(ChunkInfo chunkInfo) {
     try {
+      Channel channel = chunkInfo.getChannel();
       if (channel != null) {
         channel.attr(CLOSE_ATTR).set(true);
-        if (channel.isOpen()) {
-          //关闭旧的下载连接
-          channel.close();
-        }
+        //关闭旧的下载连接
+        channel.close();
       }
     } catch (Exception e) {
       HttpDownServer.LOGGER.error("safeClose netty channel", e);
     }
     try {
       FileChannel fileChannel = chunkInfo.getFileChannel();
-      if (fileChannel != null && fileChannel.isOpen()) {
+      if (fileChannel != null) {
         //关闭旧的下载文件连接
         fileChannel.close();
       }
