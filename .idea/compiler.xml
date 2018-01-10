@@ -6,11 +6,18 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="proxyee-down" />
+        <module name="common" />
+        <module name="core" />
+        <module name="sniff" />
+        <module name="ui" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8">
+      <module name="common" target="1.8" />
+      <module name="core" target="1.8" />
       <module name="proxyee-down" target="1.8" />
+      <module name="sniff" target="1.8" />
+      <module name="ui" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
