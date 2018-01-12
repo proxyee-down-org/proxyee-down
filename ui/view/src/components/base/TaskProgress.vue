@@ -10,19 +10,26 @@
           case 'success':
             ret = '#13ce66';
             break;
-          case 'warn':
+          case 'ready':
             ret = '#e1d04b';
             break;
           case 'exception':
             ret = '#ff4949';
             break;
-          case 'busy':
-            ret = '#FF8F43';
+          case 'pause':
+            ret = '#6C6C6C';
             break;
           default:
             ret = '#20a0ff';
         }
         return ret;
+      },
+      barStyle() {
+        var style = {};
+        style.width = this.percentage + '%';
+        debugger;
+        style.backgroundColor = this.stroke;
+        return style;
       },
       iconClass() {
         if (this.type === 'line') {

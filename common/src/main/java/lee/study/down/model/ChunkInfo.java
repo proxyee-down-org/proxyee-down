@@ -22,7 +22,6 @@ public class ChunkInfo implements Serializable {
   private long totalSize;
   private long startTime = 0;
   private long lastTime = 0;
-  private long usedTime = 0;
   private long pauseTime = 0;
   private int status = 0;
 

@@ -2,8 +2,8 @@ package lee.study.down.task;
 
 import java.util.concurrent.TimeUnit;
 import lee.study.down.constant.HttpDownStatus;
-import lee.study.down.content.HttpDownContent;
-import lee.study.down.content.HttpWsContent;
+import lee.study.down.content.ContentManager;
+import lee.study.down.content.WsContent;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import org.slf4j.Logger;
@@ -18,7 +18,7 @@ public class HttpDownProgressEventTask extends Thread {
 
     while (true) {
       try {
-        for (TaskInfo taskInfo : HttpDownContent.getStartTasks()) {
+        for (TaskInfo taskInfo : ContentManager.DOWN.getStartTasks()) {
           if (taskInfo.getStatus() != HttpDownStatus.DONE
               && taskInfo.getStatus() != HttpDownStatus.PAUSE) {
             taskInfo.setLastTime(System.currentTimeMillis());
@@ -31,12 +31,12 @@ public class HttpDownProgressEventTask extends Thread {
             //保存任务进度记录
             synchronized (taskInfo) {
               if (taskInfo.getStatus() != HttpDownStatus.DONE) {
-                HttpDownContent.saveTask(taskInfo.getId());
+                ContentManager.DOWN.saveTask(taskInfo.getId());
               }
             }
           }
         }
-        HttpWsContent.sendMsg();
+        ContentManager.WS.sendMsg();
         TimeUnit.MILLISECONDS.sleep(1000);
       } catch (Exception e) {
         LOGGER.error("eventTask:", e);

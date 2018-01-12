@@ -50,10 +50,10 @@
                              slot="reference"></task-progress>
             </el-popover>
             <div class="task-progress-icon">
-              <i v-if="task.status!=2"
+              <i v-if="task.status!=7"
                  :class="iconClass(task)"
                  @click="controlTask(task)"></i>
-              <i v-if="task.status!=5" class="el-icon-task-delete" @click="deleteTask(task)"></i>
+              <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
             </div>
             <p>{{task.fileName}}</p>
           </el-col>
@@ -104,11 +104,25 @@
         return 0;
       },
       speed(task) {
+        if (task.status == 7 || task.status == 5) {
+          return this.speedAvg(task);
+        } else {
+          return this.speedInterval(task);
+        }
+      },
+      speedAvg(task) {
         if (task.lastTime) {
           //下载了多少秒
           let usedTime = (task.lastTime - task.startTime - task.pauseTime) / 1000;
           //计算下载速度
           return Math.floor(task.downSize / usedTime)
+        }
+        return 0;
+      },
+      speedInterval(task) {
+        if (task.intervalTime) {
+          //计算下载速度
+          return Math.floor(task.intervalDownSize / (task.intervalTime / 1000));
         }
         return 0;
       },
@@ -119,7 +133,7 @@
         if (task.status == 5) {
           return '暂停中';
         }
-        let speed = this.speed(task);
+        let speed = this.speedInterval(task);
         if (speed) {
           return Util.timeFmt((task.totalSize - task.downSize) / speed);
         } else {
@@ -134,7 +148,9 @@
           case 6:
             return 'exception';
           case 5:
-            return 'warn';
+            return 'pause';
+          case 1:
+            return 'ready';
           default:
             return null;
         }
@@ -185,31 +201,32 @@
       },
     },
     created() {
-      this.ws.onopen = (e) => {
+      this.ws.onmessage = (e) => {
         if (this.initFlag) {
           this.initFlag = false;
         }
-      };
-      this.ws.onmessage = (e) => {
         let msg = eval('(' + e.data + ')');
         if (msg) {
-          this.tasks = msg.sort((task1, task2) => {
+          /*this.tasks = msg.sort((task1, task2) => {
             return task1.startTime - task2.startTime;
-          });
-          /*this.msg.forEach((task1)=>{
-            this.tasks.forEach((task2, index2) => {
-              if (task2.id == task1.id) {
-                /!*msg.taskInfo.intervalTime = msg.taskInfo.lastTime - task.lastTime;
-                msg.taskInfo.intervalDownSize = msg.taskInfo.downSize - task.downSize;
-                msg.taskInfo.chunkInfoList.forEach((chunk,index) => {
-                  chunk.intervalTime = chunk.lastTime - task.chunkInfoList[index].lastTime;
-                  chunk.intervalDownSize = chunk.downSize - task.chunkInfoList[index].downSize;
-                });*!/
-                Vue.set(this.tasks, index2, task1);
-                return false;
-              }
-            });
           });*/
+          this.tasks = msg.map((task1) => {
+            this.tasks.forEach((task2) => {
+              if (task2.id == task1.id) {
+                task1.intervalTime = task1.lastTime - task2.lastTime;
+                task1.intervalDownSize = task1.downSize - task2.downSize;
+                task1.chunkInfoList.forEach((chunk, index) => {
+                  chunk.intervalTime = chunk.lastTime - task2.chunkInfoList[index].lastTime;
+                  chunk.intervalDownSize = chunk.downSize - task2.chunkInfoList[index].downSize;
+                  if (index == 0 || index == 1 || index == 2) {
+                    console.log(index + ":" + chunk.intervalDownSize + "/" + chunk.intervalTime);
+                  }
+                });
+              }
+              return false;
+            });
+            return task1;
+          });
         }
       };
     }

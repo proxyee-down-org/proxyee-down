@@ -24,7 +24,6 @@ public class TaskInfo implements Serializable {
   private long downSize;
   private long startTime = 0;
   private long lastTime = 0;
-  private long usedTime = 0;
   private long pauseTime = 0;
   private int status;
   private List<ChunkInfo> chunkInfoList;
@@ -38,11 +37,10 @@ public class TaskInfo implements Serializable {
   }
 
   public void reset() {
-    startTime = lastTime = usedTime = pauseTime = 0;
+    startTime = lastTime = pauseTime = 0;
     chunkInfoList.forEach((chunkInfo) -> {
       chunkInfo.setStartTime(0);
       chunkInfo.setLastTime(0);
-      chunkInfo.setUsedTime(0);
       chunkInfo.setPauseTime(0);
     });
   }

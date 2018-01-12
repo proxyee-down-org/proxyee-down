@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lee.study.down.constant.HttpDownStatus;
-import lee.study.down.content.HttpDownContent;
+import lee.study.down.content.ContentManager;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class HttpDownErrorCheckTask extends Thread {
     Map<String, Long> flagMap = new HashMap<>();
     while (true) {
       try {
-        for (TaskInfo taskInfo : HttpDownContent.getStartTasks()) {
+        for (TaskInfo taskInfo : ContentManager.DOWN.getStartTasks()) {
           if (taskInfo.getChunkInfoList() != null) {
             for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
               //30秒没有反应则重新建立连接下载
@@ -36,7 +36,7 @@ public class HttpDownErrorCheckTask extends Thread {
                   LOGGER.debug(
                       "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                   //避免同时下载
-                  HttpDownContent.getBoot(taskInfo.getId()).retryChunkDown(chunkInfo);
+                  ContentManager.DOWN.getBoot(taskInfo.getId()).retryChunkDown(chunkInfo);
                 } else {
                   flagMap.put(key, chunkInfo.getDownSize());
                 }

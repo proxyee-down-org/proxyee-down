@@ -1,6 +1,6 @@
-package lee.study.down.ws;
+package lee.study.down.mvc.ws;
 
-import lee.study.down.content.HttpWsContent;
+import lee.study.down.content.ContentManager;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -10,7 +10,7 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-    HttpWsContent.put(session.getId(), session);
+    ContentManager.WS.put(session.getId(), session);
   }
 
   @Override
@@ -20,6 +20,6 @@ public class HttpDownProgressHandle extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-    HttpWsContent.remove(session.getId());
+    ContentManager.WS.remove(session.getId());
   }
 }

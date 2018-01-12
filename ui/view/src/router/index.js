@@ -4,6 +4,7 @@ import NewTask from '../components/NewTask'
 import TaskList from '../components/TaskList'
 import ToolList from '../components/ToolList'
 import BdyUnzip from '../components/tools/BdyUnzip'
+import ConfigPage from '../components/ConfigPage'
 import AboutPage from '../components/AboutPage'
 
 Vue.use(Router)
@@ -34,6 +35,11 @@ export default new Router({
       path: '/tools/bdyUnzip',
       name: 'bdyUnzip',
       component: BdyUnzip
+    },
+    {
+      path: '/config',
+      name: 'config',
+      component: ConfigPage
     },
     {
       path: '/about',

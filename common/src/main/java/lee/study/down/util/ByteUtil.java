@@ -97,9 +97,9 @@ public class ByteUtil {
       FileUtil.createFile(path, isHidden);
     }
     try (
-        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(path))
+        RandomAccessFile raf = new RandomAccessFile(path, "rw")
     ) {
-      outputStream.writeObject(object);
+      raf.write(objToBts(object));
     }
   }
 

@@ -1,4 +1,4 @@
-package lee.study.down.controller;
+package lee.study.down.mvc.controller;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,19 +6,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import lee.study.down.HttpDownApplication;
 import lee.study.down.HttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
-import lee.study.down.content.HttpDownContent;
-import lee.study.down.form.DownForm;
-import lee.study.down.form.UnzipForm;
+import lee.study.down.content.ContentManager;
 import lee.study.down.io.BdyZip;
 import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.ConfigInfo;
 import lee.study.down.model.DirInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.form.ConfigForm;
+import lee.study.down.mvc.form.DownForm;
+import lee.study.down.mvc.form.UnzipForm;
 import lee.study.down.util.FileUtil;
+import lee.study.proxyee.proxy.ProxyConfig;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,10 +34,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class HttpDownController {
 
+  @Autowired
+  private HttpDownApplication httpDownApplication;
+
   @RequestMapping("/getTask")
   public ResultInfo getTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    TaskInfo taskInfo = HttpDownContent.getTaskInfo(id);
+    TaskInfo taskInfo = ContentManager.DOWN.getTaskInfo(id);
     if (taskInfo == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
@@ -44,7 +52,7 @@ public class HttpDownController {
   @RequestMapping("/getTaskList")
   public ResultInfo getTaskList() {
     ResultInfo resultInfo = new ResultInfo();
-    resultInfo.setData(HttpDownContent.getStartTasks());
+    resultInfo.setData(ContentManager.DOWN.getStartTasks());
     return resultInfo;
   }
 
@@ -63,7 +71,7 @@ public class HttpDownController {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不存在");
       return resultInfo;
     }
-    HttpDownBootstrap bootstrap = HttpDownContent.getBoot(downForm.getId());
+    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(downForm.getId());
     HttpDownInfo httpDownInfo = bootstrap.getHttpDownInfo();
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
@@ -157,7 +165,7 @@ public class HttpDownController {
   @RequestMapping("/pauseTask")
   public ResultInfo pauseTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    HttpDownBootstrap bootstrap = HttpDownContent.getBoot(id);
+    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
@@ -169,7 +177,7 @@ public class HttpDownController {
   @RequestMapping("/continueTask")
   public ResultInfo continueTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    HttpDownBootstrap bootstrap = HttpDownContent.getBoot(id);
+    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
@@ -181,17 +189,18 @@ public class HttpDownController {
   @RequestMapping("/deleteTask")
   public ResultInfo deleteTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    HttpDownBootstrap bootstrap = HttpDownContent.getBoot(id);
+    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
       TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
       bootstrap.close();
-      HttpDownContent.removeBoot(id);
-      HttpDownContent.save();
+      ContentManager.DOWN.removeBoot(id);
+      ContentManager.DOWN.save();
       //删除任务进度记录文件
       synchronized (taskInfo) {
         FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
+        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
       }
     }
     return resultInfo;
@@ -203,8 +212,51 @@ public class HttpDownController {
     try {
       BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath());
     } catch (IOException e) {
-
+      resultInfo.setStatus(ResultStatus.BAD.getCode());
+      resultInfo.setMsg("解压失败，请确定文件格式是否正确");
     }
     return resultInfo;
   }
+
+
+  @RequestMapping("/getConfigInfo")
+  public ResultInfo getConfigInfo() {
+    ResultInfo resultInfo = new ResultInfo();
+    resultInfo.setData(ContentManager.CONFIG.get());
+    return resultInfo;
+  }
+
+  @RequestMapping("/setConfigInfo")
+  public ResultInfo setConfigInfo(@RequestBody ConfigForm configForm) {
+    ResultInfo resultInfo = new ResultInfo();
+    int beforePort = ContentManager.CONFIG.get().getProxyPort();
+    boolean beforeSecProxyEnable = ContentManager.CONFIG.get().isSecProxyEnable();
+    ProxyConfig beforeSecProxyConfig = ContentManager.CONFIG.get().getSecProxyConfig();
+    if (!configForm.isSecProxyEnable()) {
+      configForm.setSecProxyConfig(null);
+    }
+    ConfigInfo configInfo = configForm.convert();
+    ContentManager.CONFIG.set(configInfo);
+    ContentManager.CONFIG.save();
+    //代理服务器需要重新启动
+    if (beforePort != configInfo.getProxyPort()
+        || beforeSecProxyEnable != configInfo.isSecProxyEnable()
+        || (configInfo.isSecProxyEnable() && !configInfo.getSecProxyConfig()
+        .equals(beforeSecProxyConfig))
+        ) {
+      new Thread(() -> {
+        httpDownApplication.getProxyServer().close();
+        httpDownApplication.getProxyServer().setProxyConfig(configInfo.getSecProxyConfig());
+        httpDownApplication.getProxyServer().start(configInfo.getProxyPort());
+      }).start();
+    }
+    return resultInfo;
+  }
+
+  @RequestMapping("/checkUpdate")
+  public ResultInfo checkUpdate() {
+    ResultInfo resultInfo = new ResultInfo();
+    return resultInfo;
+  }
+
 }

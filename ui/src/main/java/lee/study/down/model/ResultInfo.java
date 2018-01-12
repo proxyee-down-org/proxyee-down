@@ -15,7 +15,7 @@ public class ResultInfo {
   private Object data;
   private String msg = MSG_SUCC;
 
-  public static final String MSG_SUCC = "success";
+  public static final String MSG_SUCC = "操作成功";
   public static final String MSG_ERROR = "服务器异常";
 
   public enum ResultStatus {

@@ -1,12 +1,12 @@
 package lee.study.down.content;
 
 import com.alibaba.fastjson.JSON;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import org.slf4j.Logger;
@@ -14,25 +14,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-public class HttpWsContent {
+public class WsContent {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(HttpWsContent.class);
+  private final static Logger LOGGER = LoggerFactory.getLogger(WsContent.class);
   //websocket对象管理
-  private static Map<String, WebSocketSession> wcContent = new ConcurrentHashMap<>();
+  private static Map<String, WebSocketSession> wcContent;
 
-  public static void put(String id, WebSocketSession session) {
+  public void put(String id, WebSocketSession session) {
     wcContent.put(id, session);
   }
 
-  public static void remove(String id) {
+  public void remove(String id) {
     wcContent.remove(id);
   }
 
-  public static void sendMsg() {
+  public void sendMsg() {
     try {
       List<TaskInfo> taskInfos = new LinkedList<>();
-      for (HttpDownInfo httpDownInfo : HttpDownContent.getDownInfos()) {
-        if (httpDownInfo.getTaskInfo().getStatus() != 0) {
+      for (HttpDownInfo httpDownInfo : ContentManager.DOWN.getDownInfos()) {
+        if (httpDownInfo.getTaskInfo().getStatus() != HttpDownStatus.WAIT) {
           taskInfos.add(httpDownInfo.getTaskInfo());
         }
       }
@@ -48,5 +48,9 @@ public class HttpWsContent {
     } catch (Exception e) {
       LOGGER.warn("sendMsg", e);
     }
+  }
+
+  public void init() {
+    wcContent = new ConcurrentHashMap<>();
   }
 }

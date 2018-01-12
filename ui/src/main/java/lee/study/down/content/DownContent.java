@@ -13,24 +13,25 @@ import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
+import lee.study.proxyee.proxy.ProxyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HttpDownContent {
+public class DownContent {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(HttpDownContent.class);
+  private final static Logger LOGGER = LoggerFactory.getLogger(DownContent.class);
 
   //下载对象管理
   private static Map<String, HttpDownBootstrap> downContent;
 
-  public static HttpDownInfo getDownInfo(String id) {
+  public HttpDownInfo getDownInfo(String id) {
     if (downContent.containsKey(id)) {
       return downContent.get(id).getHttpDownInfo();
     }
     return null;
   }
 
-  public static List<HttpDownInfo> getDownInfos() {
+  public List<HttpDownInfo> getDownInfos() {
     List<HttpDownInfo> httpDownInfoList = new ArrayList<>();
     for (String id : downContent.keySet()) {
       HttpDownInfo httpDownInfo = getDownInfo(id);
@@ -39,15 +40,15 @@ public class HttpDownContent {
     return httpDownInfoList;
   }
 
-  public static TaskInfo getTaskInfo(String id) {
-    HttpDownInfo httpDownInfo = downContent.get(id).getHttpDownInfo();
+  public TaskInfo getTaskInfo(String id) {
+    HttpDownInfo httpDownInfo = getDownInfo(id);
     if (httpDownInfo != null) {
       return httpDownInfo.getTaskInfo();
     }
     return null;
   }
 
-  public static List<TaskInfo> getStartTasks() {
+  public List<TaskInfo> getStartTasks() {
     List<TaskInfo> taskInfoList = new ArrayList<>();
     for (String id : downContent.keySet()) {
       TaskInfo taskInfo = getTaskInfo(id);
@@ -58,11 +59,11 @@ public class HttpDownContent {
     return taskInfoList;
   }
 
-  public static void putBoot(HttpDownBootstrap bootstrap) {
+  public void putBoot(HttpDownBootstrap bootstrap) {
     downContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
   }
 
-  public static void putBoot(HttpDownInfo httpDownInfo) {
+  public void putBoot(HttpDownInfo httpDownInfo) {
     HttpDownBootstrap bootstrap = new HttpDownBootstrap(httpDownInfo,
         HttpDownConstant.clientSslContext,
         HttpDownConstant.clientLoopGroup,
@@ -70,7 +71,7 @@ public class HttpDownContent {
     putBoot(bootstrap);
   }
 
-  public static void removeBoot(String id) {
+  public void removeBoot(String id) {
     downContent.remove(id);
   }
 
@@ -81,7 +82,7 @@ public class HttpDownContent {
   /**
    * 写入文件
    */
-  public static void save() {
+  public void save() {
     try {
       List<HttpDownInfo> httpDownInfo = getDownInfos();
       synchronized (httpDownInfo) {
@@ -95,7 +96,7 @@ public class HttpDownContent {
   /**
    * 写入文件
    */
-  public static void saveTask(String id) {
+  public void saveTask(String id) {
     try {
       TaskInfo taskInfo = getTaskInfo(id);
       synchronized (taskInfo) {
@@ -109,7 +110,7 @@ public class HttpDownContent {
   /**
    * 从配置文件中加载信息
    */
-  public static void init() {
+  public void init() {
     downContent = new ConcurrentHashMap<>();
     if (FileUtil.exists(HttpDownConstant.TASK_RECORD_PATH)) {
       try {

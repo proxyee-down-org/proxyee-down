@@ -1,27 +1,27 @@
 package lee.study.down;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.proxy.ProxyHandler;
 import io.netty.handler.ssl.SslContext;
-import java.io.IOException;
+import io.netty.resolver.NoopAddressResolverGroup;
 import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.handle.HttpDownInitializer;
-import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
+import lee.study.proxyee.proxy.ProxyConfig;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -64,9 +64,15 @@ public class HttpDownBootstrap {
     HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
     RequestProto requestProto = requestInfo.requestProto();
     LOGGER.debug("开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-    ChannelFuture cf = new Bootstrap().group(clientLoopGroup).handler(
-        new HttpDownInitializer(requestProto.getSsl(), this, chunkInfo))
-        .connect(requestProto.getHost(), requestProto.getPort());
+    Bootstrap bootstrap = new Bootstrap()
+        .channel(NioSocketChannel.class)
+        .group(clientLoopGroup)
+        .handler(new HttpDownInitializer(requestProto.getSsl(), this, chunkInfo));
+    if (httpDownInfo.getProxyConfig() != null) {
+      //代理服务器解析DNS和连接
+      bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+    }
+    ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort());
     chunkInfo.setStatus(updateStatus);
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
@@ -154,13 +160,16 @@ public class HttpDownBootstrap {
         close();
         startDown();
       } else {
-        taskInfo.setStatus(1);
+        taskInfo.setStatus(HttpDownStatus.RUNNING);
+        long curTime = System.currentTimeMillis();
         taskInfo.setPauseTime(
-            taskInfo.getPauseTime() + (System.currentTimeMillis() - taskInfo.getLastTime()));
+            taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
+        taskInfo.setLastTime(curTime);
         for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
           synchronized (chunkInfo) {
             if (chunkInfo.getStatus() == HttpDownStatus.PAUSE) {
               chunkInfo.setPauseTime(taskInfo.getPauseTime());
+              chunkInfo.setLastTime(curTime);
               retryChunkDown(chunkInfo, HttpDownStatus.CONNECTING_NORMAL);
             }
           }

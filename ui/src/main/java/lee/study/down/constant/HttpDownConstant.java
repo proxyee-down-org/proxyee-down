@@ -16,6 +16,7 @@ public class HttpDownConstant {
 
   public static String HOME_PATH;
   public static String TASK_RECORD_PATH;
+  public static String CONFIG_PATH;
   public static SslContext clientSslContext;
   public static NioEventLoopGroup clientLoopGroup;
   public static HttpDownCallback httpDownCallback;
@@ -29,6 +30,7 @@ public class HttpDownConstant {
       }
     }
     TASK_RECORD_PATH = HOME_PATH + File.separator + "records.inf";
+    CONFIG_PATH = HOME_PATH + File.separator + "config.inf";
     try {
       clientSslContext = SslContextBuilder.forClient()
           .trustManager(InsecureTrustManagerFactory.INSTANCE)

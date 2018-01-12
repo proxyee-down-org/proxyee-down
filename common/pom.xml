@@ -9,6 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
+  <groupId>lee.study</groupId>
   <artifactId>proxyee-down-common</artifactId>
   <packaging>jar</packaging>
 

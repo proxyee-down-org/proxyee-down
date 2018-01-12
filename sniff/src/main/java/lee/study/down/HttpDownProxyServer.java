@@ -7,22 +7,35 @@ import lee.study.proxyee.intercept.CertDownIntercept;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
+import lee.study.proxyee.proxy.ProxyConfig;
 import lee.study.proxyee.server.HttpProxyServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HttpDownProxyServer {
 
-  private int port;
+  private final static Logger LOGGER = LoggerFactory.getLogger(HttpDownProxyServer.class);
+
   private HttpDownInterceptFactory interceptFactory;
 
   private HttpProxyServer proxyServer;
+  private ProxyConfig proxyConfig;
 
-  public HttpDownProxyServer(int port, HttpDownInterceptFactory interceptFactory) {
-    this.port = port;
+  public HttpDownProxyServer(ProxyConfig proxyConfig, HttpDownInterceptFactory interceptFactory) {
+    this.proxyConfig = proxyConfig;
     this.interceptFactory = interceptFactory;
     proxyServer = new HttpProxyServer();
   }
 
-  public void start() {
+  public void setProxyConfig(ProxyConfig proxyConfig) {
+    this.proxyConfig = proxyConfig;
+  }
+
+  public void start(int port) {
+    LOGGER.debug("HttpDownProxyServer listen " + port + "\tproxyConfig:" + proxyConfig);
+    if (proxyConfig != null) {
+      proxyServer.proxyConfig(proxyConfig);
+    }
     //监听http下载请求
     proxyServer.proxyInterceptInitializer(new HttpProxyInterceptInitializer() {
       @Override
@@ -36,6 +49,10 @@ public class HttpDownProxyServer {
         }
       }
     }).start(port);
+  }
+
+  public void close() {
+    proxyServer.close();
   }
 
 }

@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/proxyee-down.iml" filepath="$PROJECT_DIR$/proxyee-down.iml" />
       <module fileurl="file://$PROJECT_DIR$/sniff/sniff.iml" filepath="$PROJECT_DIR$/sniff/sniff.iml" />
       <module fileurl="file://$PROJECT_DIR$/ui/ui.iml" filepath="$PROJECT_DIR$/ui/ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/update/update.iml" filepath="$PROJECT_DIR$/update/update.iml" />
     </modules>
   </component>
 </project>

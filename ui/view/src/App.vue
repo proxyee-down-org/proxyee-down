@@ -22,14 +22,14 @@
                 <i class="el-icon-task-tool"></i>
                 <span slot="title">工具</span>
               </el-menu-item>
+              <el-menu-item index="/config">
+                <i class="el-icon-setting"></i>
+                <span slot="title">设置</span>
+              </el-menu-item>
               <el-menu-item index="/about">
                 <i class="el-icon-info"></i>
                 <span slot="title">关于</span>
               </el-menu-item>
-              <!--<el-menu-item index="3">
-                <i class="el-icon-setting"></i>
-                <span slot="title">设置</span>
-              </el-menu-item>-->
             </el-menu>
           </el-aside>
           <el-main>

@@ -1,7 +1,8 @@
 package lee.study.down;
 
+import javax.swing.JOptionPane;
 import lee.study.down.constant.HttpDownConstant;
-import lee.study.down.content.HttpDownContent;
+import lee.study.down.content.ContentManager;
 import lee.study.down.gui.HttpDownTray;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.task.HttpDownErrorCheckTask;
@@ -29,14 +30,22 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
         .headless(false).build().run(args);
     //获取application实例
     HttpDownApplication application = context.getBean(HttpDownApplication.class);
+    //上下文初始化
+    ContentManager.init();
     //代理服务器启动
-    Thread proxyServerThread = new Thread(() -> application.httpDownProxyServer.start());
-    proxyServerThread.setDaemon(true);
-    proxyServerThread.start();
+    int proxyPort = ContentManager.CONFIG.get().getProxyPort();
+    if (OsUtil.isBusyPort(proxyPort)) {
+      JOptionPane
+          .showMessageDialog(null, "端口(" + proxyPort + ")被占用，请关闭占用端口的软件或设置新的端口号并重启proxyee-down",
+              "运行警告", JOptionPane.WARNING_MESSAGE);
+    } else {
+      application.proxyServer = new HttpDownProxyServer(
+          ContentManager.CONFIG.get().getSecProxyConfig(),
+          new HttpDownHandleInterceptFactory(application.viewServerPort));
+      new Thread(() -> application.proxyServer.start(proxyPort)).start();
+    }
     //托盘初始化
-    application.httpDownTray.init();
-    //任务加载
-    HttpDownContent.init();
+    new HttpDownTray(application.homeUrl).init();
     //打开浏览器访问前端页面
     OsUtil.openBrowse(application.homeUrl);
     //启动线程
@@ -53,23 +62,19 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
   @Value("${tomcat.server.port}")
   private int tomcatServerPort;
 
+  private HttpDownProxyServer proxyServer;
   private String homeUrl;
-  private HttpDownTray httpDownTray;
-  private HttpDownProxyServer httpDownProxyServer;
+
+  public HttpDownProxyServer getProxyServer() {
+    return proxyServer;
+  }
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    boolean isDev = false;
-    if ("dev".equalsIgnoreCase(active.trim())) {
-      isDev = true;
-    } else {
+    if (!"dev".equalsIgnoreCase(active.trim())) {
       viewServerPort = tomcatServerPort = OsUtil.getFreePort(tomcatServerPort);
     }
-    //node.js代理中间件需用localhost访问，不然有时候会出现请求无响应的问题
-    homeUrl = "http://" + (isDev ? "localhost" : "127.0.0.1") + ":" + viewServerPort;
-    httpDownProxyServer = new HttpDownProxyServer(9999,
-        new HttpDownHandleInterceptFactory(isDev, viewServerPort));
-    httpDownTray = new HttpDownTray(homeUrl);
+    homeUrl = "http://127.0.0.1:" + viewServerPort;
   }
 
   @Override

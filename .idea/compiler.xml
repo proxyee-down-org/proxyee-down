@@ -10,6 +10,7 @@
         <module name="core" />
         <module name="sniff" />
         <module name="ui" />
+        <module name="update" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
@@ -18,6 +19,7 @@
       <module name="proxyee-down" target="1.8" />
       <module name="sniff" target="1.8" />
       <module name="ui" target="1.8" />
+      <module name="update" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

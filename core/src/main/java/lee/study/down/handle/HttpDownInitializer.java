@@ -21,6 +21,8 @@ import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
+import lee.study.proxyee.proxy.ProxyConfig;
+import lee.study.proxyee.proxy.ProxyHandleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,9 @@ public class HttpDownInitializer extends ChannelInitializer {
   @Override
   protected void initChannel(Channel ch) throws Exception {
     this.chunkInfo.setChannel(ch);
+    if (bootstrap.getHttpDownInfo().getProxyConfig() != null) {
+      ch.pipeline().addLast(ProxyHandleFactory.build(bootstrap.getHttpDownInfo().getProxyConfig()));
+    }
     if (isSsl) {
       ch.pipeline().addLast(bootstrap.getClientSslContext().newHandler(ch.alloc()));
     }
@@ -72,8 +77,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                 safeClose(ctx.channel());
                 return;
               }
-            }
-            synchronized (taskInfo) {
               taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
             }
             callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
@@ -83,6 +86,8 @@ public class HttpDownInitializer extends ChannelInitializer {
               //分段下载完成回调
               chunkInfo.setStatus(HttpDownStatus.DONE);
               chunkInfo.setLastTime(System.currentTimeMillis());
+              LOGGER.debug("分段下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
+                  + taskInfo.getStatus());
               callback.onChunkDone(bootstrap.getHttpDownInfo(), chunkInfo);
               synchronized (taskInfo) {
                 if (taskInfo.getStatus() == HttpDownStatus.RUNNING
@@ -96,6 +101,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                   }
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
+                  LOGGER.debug("下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                   callback.onDone(bootstrap.getHttpDownInfo());
                 }
               }
@@ -155,7 +161,6 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        LOGGER.debug("下载连接关闭：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         super.channelUnregistered(ctx);
         safeClose(ctx.channel());
       }
