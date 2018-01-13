@@ -18,8 +18,8 @@ pom.properties
 hs_err_pid*
 
 .DS_Store
-view/node_modules/
-view/dist/
+*/view/node_modules/
+*/view/dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -33,5 +33,8 @@ yarn-error.log*
 *.sln
 
 # vue.js build
-src/main/resources/view/
+*/src/main/resources/view/
+*/target/
 target/
+
+.idea/libraries/
