@@ -208,7 +208,7 @@
               this.$message(result.msg);
             }
           });
-        });
+        }).catch(()=>{});
       },
     },
     created() {
