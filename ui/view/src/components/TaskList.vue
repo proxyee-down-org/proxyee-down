@@ -185,12 +185,23 @@
         }
       },
       deleteTask(task) {
-        this.$confirm('确定删除该任务吗?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.$http.get('api/deleteTask?id=' + task.id)
+        const check = document.getElementById("task-delete");
+        if (check) {
+          document.getElementById("task-delete").checked = false;
+        }
+        this.$confirm(
+          '<label>' +
+          '<input id="task-delete" type="checkbox" style="height:18px;width:18px;vertical-align:middle;">'
+          +
+          '<span>删除任务和文件</span>' +
+          '</label>',
+          '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            dangerouslyUseHTMLString: true
+          }).then(() => {
+          this.$http.get('api/deleteTask?id=' + task.id + "&delFile=" + document.getElementById(
+            "task-delete").checked)
           .then((response) => {
             let result = response.data;
             if (result.status != 200) {
@@ -218,14 +229,13 @@
                 task1.chunkInfoList.forEach((chunk, index) => {
                   chunk.intervalTime = chunk.lastTime - task2.chunkInfoList[index].lastTime;
                   chunk.intervalDownSize = chunk.downSize - task2.chunkInfoList[index].downSize;
-                  if (index == 0 || index == 1 || index == 2) {
-                    console.log(index + ":" + chunk.intervalDownSize + "/" + chunk.intervalTime);
-                  }
                 });
               }
               return false;
             });
             return task1;
+          }).sort((task1, task2) => {
+            return task2.startTime - task1.startTime;
           });
         }
       };

@@ -27,7 +27,6 @@
       barStyle() {
         var style = {};
         style.width = this.percentage + '%';
-        debugger;
         style.backgroundColor = this.stroke;
         return style;
       },

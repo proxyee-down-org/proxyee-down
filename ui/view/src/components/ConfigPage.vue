@@ -1,10 +1,22 @@
 <template>
   <el-form ref="form" :model="form" :rules="rules" label-width="80px" size="medium">
     <el-form-item label="端口" prop="proxyPort">
-      <el-input v-model.number="form.proxyPort" class="port-input"></el-input>
+      <el-input v-model.number="form.proxyPort" class="num-input"></el-input>
+      <el-tooltip class="item" content="http代理服务器端口号" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
+    </el-form-item>
+    <el-form-item label="超时时间" prop="timeout">
+      <el-input v-model.number="form.timeout" class="num-input" placeholder="秒"></el-input>
+      <el-tooltip class="item" content="在该时间段内下载未响应则重新发起连接" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
     </el-form-item>
     <el-form-item label="二级代理">
       <el-switch v-model="form.secProxyEnable"></el-switch>
+      <el-tooltip class="item" content="配置下载器的代理服务器" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
     </el-form-item>
     <div v-if="form.secProxyEnable">
       <el-form-item label="类型" prop="secProxyConfig.proxyType">
@@ -21,7 +33,7 @@
         <el-input v-model="form.secProxyConfig.host"></el-input>
       </el-form-item>
       <el-form-item label="端口" prop="secProxyConfig.port">
-        <el-input v-model.number="form.secProxyConfig.port" class="port-input"></el-input>
+        <el-input v-model.number="form.secProxyConfig.port" class="num-input"></el-input>
       </el-form-item>
       <el-form-item label="用户名">
         <el-input v-model="form.secProxyConfig.user"></el-input>
@@ -56,7 +68,11 @@
         rules: {
           proxyPort: [
             {required: true, message: '不能为空'},
-            {type: 'number', message: '必须为数字值'}
+            {type: 'integer', message: '必须为整数'},
+          ],
+          timeout: [
+            {required: true, message: '不能为空'},
+            {type: 'integer', message: '必须为整数'},
           ]
         },
         proxyTypeOptions: [{
@@ -82,7 +98,7 @@
           ];
           this.rules['secProxyConfig.port'] = [
             {required: true, message: '不能为空'},
-            {type: 'number', message: '必须为数字值'}
+            {type: 'integer', message: '必须为整数'},
           ];
         } else {
           this.rules['secProxyConfig.proxyType'] = null;
@@ -96,7 +112,7 @@
         this.$refs['form'].validate((valid) => {
           if (valid) {
             this.load = true;
-            if(!this.form.secProxyEnable){
+            if (!this.form.secProxyEnable) {
 
             }
             this.$http.post('api/setConfigInfo', this.form)
@@ -133,7 +149,7 @@
     width: 50%;
   }
 
-  .port-input {
+  .num-input {
     width: 15%;
   }
 </style>

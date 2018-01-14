@@ -22,7 +22,7 @@
         form: {
           filePath: '',
           toPath: '',
-        },
+        }
       }
     },
     components: {
@@ -36,9 +36,9 @@
           this.load = false;
           let result = response.data;
           if (result.status == 200) {
-            this.$message({showClose: true, message: "解压完成"});
+            this.$message({showClose: true, message: "解压完成", duration: 0});
           } else {
-            this.$message({showClose: true, message: result.msg});
+            this.$message({showClose: true, message: result.msg, duration: 0});
           }
         });
       }

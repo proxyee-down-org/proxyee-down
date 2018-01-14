@@ -3,6 +3,7 @@ package lee.study.down.task;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
 import lee.study.down.model.ChunkInfo;
@@ -45,7 +46,7 @@ public class HttpDownErrorCheckTask extends Thread {
           }
 
         }
-        TimeUnit.MILLISECONDS.sleep(30000);
+        TimeUnit.SECONDS.sleep(ContentManager.CONFIG.get().getTimeout());
       } catch (Exception e) {
         LOGGER.error("checkTask:" + e);
       }

@@ -19,7 +19,7 @@ import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.mvc.form.ConfigForm;
-import lee.study.down.mvc.form.DownForm;
+import lee.study.down.mvc.form.DirForm;
 import lee.study.down.mvc.form.UnzipForm;
 import lee.study.down.util.FileUtil;
 import lee.study.proxyee.proxy.ProxyConfig;
@@ -44,6 +44,7 @@ public class HttpDownController {
     if (taskInfo == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
+      taskInfo.setFilePath(ContentManager.CONFIG.get().getLastPath());
       resultInfo.setData(taskInfo);
     }
     return resultInfo;
@@ -57,50 +58,47 @@ public class HttpDownController {
   }
 
   @RequestMapping("/startTask")
-  public ResultInfo startTask(@RequestBody DownForm downForm) throws Exception {
+  public ResultInfo startTask(@RequestBody TaskInfo taskForm) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    if (StringUtils.isEmpty(downForm.getFileName())) {
+    if (StringUtils.isEmpty(taskForm.getFileName())) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名不能为空");
       return resultInfo;
     }
-    if (StringUtils.isEmpty(downForm.getPath())) {
+    if (StringUtils.isEmpty(taskForm.getFilePath())) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
       return resultInfo;
     }
-    if (!new File(downForm.getPath()).exists()) {
-      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不存在");
-      return resultInfo;
-    }
-    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(downForm.getId());
+    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(taskForm.getId());
     HttpDownInfo httpDownInfo = bootstrap.getHttpDownInfo();
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
       if (taskInfo.getStatus() != HttpDownStatus.WAIT) {
         resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务已添加至下载列表");
       }
-      taskInfo.setFileName(downForm.getFileName());
-      taskInfo.setFilePath(downForm.getPath());
+      taskInfo.setFileName(taskForm.getFileName());
+      taskInfo.setFilePath(taskForm.getFilePath());
       //有文件同名
       if (new File(taskInfo.buildTaskFilePath()).exists()) {
         resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
         return resultInfo;
       }
+      FileUtil.createFileSmart(taskForm.getFilePath());
       List<ChunkInfo> chunkInfoList = new ArrayList<>();
       if (taskInfo.getTotalSize() > 0) {  //非chunked编码
         if (taskInfo.isSupportRange()) {
-          taskInfo.setConnections(downForm.getConnections());
+          taskInfo.setConnections(taskForm.getConnections());
         } else {
           taskInfo.setConnections(1);
         }
         //计算chunk列表
-        for (int i = 0; i < downForm.getConnections(); i++) {
+        for (int i = 0; i < taskForm.getConnections(); i++) {
           ChunkInfo chunkInfo = new ChunkInfo();
           chunkInfo.setIndex(i);
-          long chunkSize = taskInfo.getTotalSize() / downForm.getConnections();
+          long chunkSize = taskInfo.getTotalSize() / taskForm.getConnections();
           chunkInfo.setOriStartPosition(i * chunkSize);
           chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
-          if (i == downForm.getConnections() - 1) { //最后一个连接去下载多出来的字节
-            chunkSize += taskInfo.getTotalSize() % downForm.getConnections();
+          if (i == taskForm.getConnections() - 1) { //最后一个连接去下载多出来的字节
+            chunkSize += taskInfo.getTotalSize() % taskForm.getConnections();
           }
           chunkInfo.setEndPosition(chunkInfo.getOriStartPosition() + chunkSize - 1);
           chunkInfo.setTotalSize(chunkSize);
@@ -115,13 +113,18 @@ public class HttpDownController {
       }
       taskInfo.setChunkInfoList(chunkInfoList);
       bootstrap.startDown();
+      //记录存储路径
+      String lastPath = ContentManager.CONFIG.get().getLastPath();
+      if (!taskForm.getFilePath().equalsIgnoreCase(lastPath)) {
+        ContentManager.CONFIG.get().setLastPath(taskForm.getFilePath());
+        ContentManager.CONFIG.save();
+      }
     }
     return resultInfo;
   }
 
   @RequestMapping("/getChildDirList")
-  public ResultInfo getChildDirList(@RequestParam String model,
-      @RequestBody(required = false) DirInfo body) {
+  public ResultInfo getChildDirList(@RequestBody(required = false) DirForm body) {
     ResultInfo resultInfo = new ResultInfo();
     List<DirInfo> data = new LinkedList<>();
     resultInfo.setData(data);
@@ -138,7 +141,7 @@ public class HttpDownController {
       }
     }
     if (files != null && files.length > 0) {
-      boolean isFileList = "file".equals(model);
+      boolean isFileList = "file".equals(body.getModel());
       for (File tempFile : files) {
         if (tempFile.isFile()) {
           if (isFileList) {
@@ -187,7 +190,8 @@ public class HttpDownController {
   }
 
   @RequestMapping("/deleteTask")
-  public ResultInfo deleteTask(@RequestParam String id) throws Exception {
+  public ResultInfo deleteTask(@RequestParam String id, @RequestParam boolean delFile)
+      throws Exception {
     ResultInfo resultInfo = new ResultInfo();
     HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
@@ -200,7 +204,9 @@ public class HttpDownController {
       //删除任务进度记录文件
       synchronized (taskInfo) {
         FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
-        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
+        if (delFile) {
+          FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
+        }
       }
     }
     return resultInfo;

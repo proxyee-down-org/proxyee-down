@@ -16,7 +16,7 @@
       </el-slider>
     </el-form-item>
     <el-form-item label="路径">
-      <file-choose v-model="form.path"></file-choose>
+      <file-choose v-model="form.filePath"></file-choose>
     </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="onSubmit" :loading="load">创建</el-button>
@@ -39,7 +39,7 @@
           totalSize: 0,
           supportRange: false,
           connections: 1,
-          path: '',
+          filePath: '',
         },
       }
     },
@@ -77,10 +77,7 @@
       .then((response) => {
         let result = response.data;
         if (result.status == 200) {
-          this.form.fileName = result.data.fileName;
-          this.form.totalSize = result.data.totalSize;
-          this.form.supportRange = result.data.supportRange;
-          this.form.connections = result.data.connections;
+          this.form = result.data
           this.load = false;
         } else {
           this.$message({showClose: true,message:result.msg});

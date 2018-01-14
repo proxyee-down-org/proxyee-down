@@ -11,6 +11,7 @@ public class ConfigForm {
 
   private boolean guideFlag;  //是否需要新手引导教程
   private int proxyPort;  //代理端口号
+  private int timeout;  //超时重试时间
   private boolean secProxyEnable; //二级代理开关
   private ProxyConfigForm secProxyConfig; //二级代理设置
   private String lastPath;  //最后保存文件的路径
