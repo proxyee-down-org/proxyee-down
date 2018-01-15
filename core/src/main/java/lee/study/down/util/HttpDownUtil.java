@@ -18,20 +18,21 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslContext;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.channels.FileChannel;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpDownUtil {
-
-  //  private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(64,8192,65536);
 
   /**
    * 检测是否支持断点下载
@@ -153,7 +154,7 @@ public class HttpDownUtil {
     return 0;
   }
 
-  /*public static void safeClose(Channel channel, FileChannel fileChannel,
+  public static void safeClose(Channel channel, FileChannel fileChannel,
       LargeMappedByteBuffer mappedBuffer) throws IOException {
     if (channel != null) {
       //关闭旧的下载连接
@@ -167,5 +168,5 @@ public class HttpDownUtil {
       //关闭旧的下载文件连接
       mappedBuffer.close();
     }
-  }*/
+  }
 }

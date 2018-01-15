@@ -1,12 +1,9 @@
 package lee.study.down;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.RecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
@@ -21,11 +18,13 @@ import java.util.Map;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.handle.HttpDownInitializer;
+import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.FileUtil;
+import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,10 +38,7 @@ public class HttpDownBootstrap {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownBootstrap.class);
   public static final String ATTR_CHANNEL = "channel";
   public static final String ATTR_FILE_CHANNEL = "fileChannel";
-  //tcp bufferSize最大为128K
-  public static final int BUFFER_SIZE = 1024 * 128;
-  private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(
-      64, BUFFER_SIZE, BUFFER_SIZE);
+  public static final String ATTR_MAP_BUFFER = "mapBuffer";
 
   private HttpDownInfo httpDownInfo;
   private SslContext clientSslContext;
@@ -77,8 +73,6 @@ public class HttpDownBootstrap {
     LOGGER.debug("开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
     Bootstrap bootstrap = new Bootstrap()
         .channel(NioSocketChannel.class)
-        .option(ChannelOption.RCVBUF_ALLOCATOR, RECV_BYTE_BUF_ALLOCATOR)
-        .option(ChannelOption.SO_RCVBUF, BUFFER_SIZE)
         .group(clientLoopGroup)
         .handler(new HttpDownInitializer(requestProto.getSsl(), this, chunkInfo));
     if (httpDownInfo.getProxyConfig() != null) {
@@ -194,18 +188,12 @@ public class HttpDownBootstrap {
 
   public void close(ChunkInfo chunkInfo) {
     try {
-      FileChannel fileChannel = (FileChannel) getAttr(chunkInfo, ATTR_FILE_CHANNEL);
-      if (fileChannel != null) {
-        //关闭旧的下载文件连接
-        fileChannel.close();
-      }
       Channel channel = (Channel) getAttr(chunkInfo, ATTR_CHANNEL);
-      if (channel != null) {
-        //关闭旧的下载连接
-        channel.close();
-      }
+      FileChannel fileChannel = (FileChannel) getAttr(chunkInfo, ATTR_FILE_CHANNEL);
+      LargeMappedByteBuffer mapBuffer = (LargeMappedByteBuffer) getAttr(chunkInfo, ATTR_MAP_BUFFER);
+      HttpDownUtil.safeClose(channel, fileChannel, mapBuffer);
     } catch (Exception e) {
-      LOGGER.error("close error", e);
+      LOGGER.error("closeChunk error", e);
     }
   }
 

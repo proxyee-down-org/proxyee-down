@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -17,6 +18,7 @@ import java.nio.channels.FileChannel.MapMode;
 import lee.study.down.HttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.FileUtil;
@@ -44,7 +46,6 @@ public class HttpDownInitializer extends ChannelInitializer {
 
   @Override
   protected void initChannel(Channel ch) throws Exception {
-    bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL, ch);
     if (bootstrap.getHttpDownInfo().getProxyConfig() != null) {
       ch.pipeline().addLast(ProxyHandleFactory.build(bootstrap.getHttpDownInfo().getProxyConfig()));
     }
@@ -52,10 +53,11 @@ public class HttpDownInitializer extends ChannelInitializer {
       ch.pipeline().addLast(bootstrap.getClientSslContext().newHandler(ch.alloc()));
     }
     ch.pipeline()
-        .addLast("httpCodec", new HttpClientCodec(4096, 8192, HttpDownBootstrap.BUFFER_SIZE));
+        .addLast("httpCodec", new HttpClientCodec());
     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
       private FileChannel fileChannel;
+      private LargeMappedByteBuffer mappedBuffer;
       private TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
       private HttpDownCallback callback = bootstrap.getCallback();
 
@@ -67,17 +69,19 @@ public class HttpDownInitializer extends ChannelInitializer {
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
             synchronized (chunkInfo) {
-              if (chunkInfo.getStatus() == HttpDownStatus.RUNNING) {
-                MappedByteBuffer mappedByteBuf = fileChannel.map(MapMode.READ_WRITE,
-                    chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(), readableBytes);
-                mappedByteBuf.put(byteBuf.nioBuffer());
-                FileUtil.unmap(mappedByteBuf);
+              Channel nowChannel = (Channel) bootstrap
+                  .getAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL);
+              LargeMappedByteBuffer nowMapBuffer = (LargeMappedByteBuffer) bootstrap
+                  .getAttr(chunkInfo, HttpDownBootstrap.ATTR_MAP_BUFFER);
+              if (chunkInfo.getStatus() == HttpDownStatus.RUNNING
+                  && nowChannel == ctx.channel()) {
+                nowMapBuffer.put(byteBuf.nioBuffer());
                 //文件已下载大小
                 chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
                 taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
                 callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
               } else {
-                bootstrap.close(chunkInfo);
+                safeClose(ctx.channel());
                 return;
               }
             }
@@ -128,8 +132,13 @@ public class HttpDownInitializer extends ChannelInitializer {
                   || chunkInfo.getStatus() == HttpDownStatus.CONNECTING_CONTINUE) {
                 fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
                     .getChannel();
+                mappedBuffer = new LargeMappedByteBuffer(fileChannel,
+                    MapMode.READ_WRITE, chunkInfo.getOriStartPosition() + chunkInfo.getDownSize(),
+                    chunkInfo.getTotalSize() - chunkInfo.getDownSize());
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
+                bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL, ctx.channel());
                 bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_FILE_CHANNEL, fileChannel);
+                bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_MAP_BUFFER, mappedBuffer);
                 callback.onChunkStart(bootstrap.getHttpDownInfo(), chunkInfo);
               } else {
                 bootstrap.close(chunkInfo);
@@ -146,12 +155,14 @@ public class HttpDownInitializer extends ChannelInitializer {
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         LOGGER.error("down onError:", cause);
-        if (ctx.channel() == bootstrap.getAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL)) {
+        Channel nowChannel = (Channel) bootstrap
+            .getAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL);
+        if (nowChannel == ctx.channel()) {
           chunkInfo.setStatus(HttpDownStatus.CONNECTING_FAIL);
           bootstrap.retryChunkDown(chunkInfo);
           callback.onError(bootstrap.getHttpDownInfo(), chunkInfo, cause);
         } else {
-          bootstrap.close(chunkInfo);
+          safeClose(ctx.channel());
         }
       }
 
@@ -159,6 +170,14 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         super.channelUnregistered(ctx);
         bootstrap.close(chunkInfo);
+      }
+
+      private void safeClose(Channel channel) {
+        try {
+          HttpDownUtil.safeClose(channel, fileChannel, mappedBuffer);
+        } catch (IOException e) {
+          LOGGER.error("connect close fail:", e);
+        }
       }
 
     });
