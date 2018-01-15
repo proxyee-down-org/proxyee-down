@@ -18,26 +18,16 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.AttributeKey;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.channels.FileChannel;
-import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lee.study.down.io.LargeMappedByteBuffer;
-import lee.study.down.io.MappedByteBufAllocator;
-import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class HttpDownUtil {
 
