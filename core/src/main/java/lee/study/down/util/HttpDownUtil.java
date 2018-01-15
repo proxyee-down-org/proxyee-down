@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lee.study.down.io.LargeMappedByteBuffer;
+import lee.study.down.io.MappedByteBufAllocator;
+import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
@@ -161,7 +163,7 @@ public class HttpDownUtil {
     return 0;
   }
 
-  public static void safeClose(Channel channel, FileChannel fileChannel,
+  /*public static void safeClose(Channel channel, FileChannel fileChannel,
       LargeMappedByteBuffer mappedBuffer) throws IOException {
     if (channel != null) {
       //关闭旧的下载连接
@@ -175,5 +177,5 @@ public class HttpDownUtil {
       //关闭旧的下载文件连接
       mappedBuffer.close();
     }
-  }
+  }*/
 }

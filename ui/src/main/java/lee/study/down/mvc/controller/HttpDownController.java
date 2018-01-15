@@ -82,7 +82,7 @@ public class HttpDownController {
         resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
         return resultInfo;
       }
-      FileUtil.createFileSmart(taskForm.getFilePath());
+      FileUtil.createDirSmart(taskForm.getFilePath());
       List<ChunkInfo> chunkInfoList = new ArrayList<>();
       if (taskInfo.getTotalSize() > 0) {  //非chunked编码
         if (taskInfo.isSupportRange()) {
@@ -213,13 +213,14 @@ public class HttpDownController {
   }
 
   @RequestMapping("/bdyUnzip")
-  public ResultInfo bdyUnzip(@RequestBody UnzipForm unzipForm) {
+  public ResultInfo bdyUnzip(@RequestBody UnzipForm unzipForm) throws IOException {
     ResultInfo resultInfo = new ResultInfo();
-    try {
+    File file = new File(unzipForm.getFilePath());
+    if (file.exists() && file.isFile()) {
       BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath());
-    } catch (IOException e) {
+    } else {
       resultInfo.setStatus(ResultStatus.BAD.getCode());
-      resultInfo.setMsg("解压失败，请确定文件格式是否正确");
+      resultInfo.setMsg("解压失败，文件不存在");
     }
     return resultInfo;
   }

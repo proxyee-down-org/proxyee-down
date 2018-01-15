@@ -1,7 +1,8 @@
 <template>
   <div>
     <el-button type="primary" class="file-choose-button" @click="visible=true">选择</el-button>
-    <el-input class="file-choose-input" :value="value" @dblclick.native="visible = true"></el-input>
+    <el-input class="file-choose-input" :value="value" @input="$emit('input',arguments[0])"
+              @dblclick.native="visible = true"></el-input>
     <el-dialog title="目录浏览" :visible="visible" @close="visible = false">
       <el-tree :data="files"
                :props="props"

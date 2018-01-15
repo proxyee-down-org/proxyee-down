@@ -3,6 +3,8 @@ package lee.study.down.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
+import java.nio.MappedByteBuffer;
 import java.nio.file.Files;
 import java.util.Stack;
 
@@ -145,6 +147,17 @@ public class FileUtil {
     return file;
   }
 
+  public static void unmap(MappedByteBuffer mappedBuffer) throws IOException {
+    try {
+      Class<?> clazz = Class.forName("sun.nio.ch.FileChannelImpl");
+      Method m = clazz.getDeclaredMethod("unmap", MappedByteBuffer.class);
+      m.setAccessible(true);
+      m.invoke(clazz, mappedBuffer);
+    } catch (Exception e) {
+      throw new IOException("LargeMappedByteBuffer close", e);
+    }
+  }
+
   public static void main(String[] args) throws Exception {
     String path = "F:\\百度云合并下载研究\\test.txt";
     RandomAccessFile raf2 = new RandomAccessFile(path, "rw");
@@ -154,7 +167,7 @@ public class FileUtil {
     raf3.setLength(0);
     raf3.close();
     /*FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
-    MappedByteBuffer byteBuffer1 = fileChannel.map(MapMode.READ_WRITE,0,1000);
+    MappedByteBuf byteBuffer1 = fileChannel.map(MapMode.READ_WRITE,0,1000);
     byteBuffer1.put(new byte[]{1,2,3,4,5});
     byte[] bytes = new byte[5];
     byteBuffer1.flip();

@@ -1,9 +1,6 @@
 package lee.study.down.model;
 
-import io.netty.channel.Channel;
 import java.io.Serializable;
-import java.nio.channels.FileChannel;
-import lee.study.down.io.LargeMappedByteBuffer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,8 +21,4 @@ public class ChunkInfo implements Serializable {
   private long lastTime = 0;
   private long pauseTime = 0;
   private int status = 0;
-
-  private transient volatile Channel channel;
-  private transient volatile FileChannel fileChannel;
-  private transient volatile LargeMappedByteBuffer mappedBuffer;
 }

@@ -68,11 +68,11 @@
         rules: {
           proxyPort: [
             {required: true, message: '不能为空'},
-            {type: 'integer', message: '必须为整数'},
+            {type: 'integer', min: 1025, max: 65535, message: '请输入在1025-65535之间的数字'},
           ],
           timeout: [
             {required: true, message: '不能为空'},
-            {type: 'integer', message: '必须为整数'},
+            {type: 'integer', min: 10, message: '请输入大于或等于10的数字'},
           ]
         },
         proxyTypeOptions: [{
@@ -98,7 +98,7 @@
           ];
           this.rules['secProxyConfig.port'] = [
             {required: true, message: '不能为空'},
-            {type: 'integer', message: '必须为整数'},
+            {type: 'integer', min: 1025, max: 65535, message: '请输入在1025-65535之间的数字'},
           ];
         } else {
           this.rules['secProxyConfig.proxyType'] = null;

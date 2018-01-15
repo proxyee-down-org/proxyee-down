@@ -1,9 +1,9 @@
 <template>
-  <el-form ref="form" :model="form" label-width="80px" size="medium">
-    <el-form-item label="解压文件">
+  <el-form ref="form" :model="form" :rules="rules" label-width="80px" size="medium">
+    <el-form-item label="解压文件" prop="filePath">
       <file-choose v-model="form.filePath" model="file"></file-choose>
     </el-form-item>
-    <el-form-item label="解压目录">
+    <el-form-item label="解压目录" prop="toPath">
       <file-choose v-model="form.toPath"></file-choose>
     </el-form-item>
     <el-form-item>
@@ -22,7 +22,17 @@
         form: {
           filePath: '',
           toPath: '',
-        }
+        },
+        rules: {
+          filePath: [
+            {required: true, message: '不能为空'},
+            {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
+          ],
+          toPath: [
+            {required: true, message: '不能为空'},
+            {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
+          ]
+        },
       }
     },
     components: {
@@ -30,15 +40,19 @@
     },
     methods: {
       onSubmit() {
-        this.load = true;
-        this.$http.post('api/bdyUnzip', this.form)
-        .then((response) => {
-          this.load = false;
-          let result = response.data;
-          if (result.status == 200) {
-            this.$message({showClose: true, message: "解压完成", duration: 0});
-          } else {
-            this.$message({showClose: true, message: result.msg, duration: 0});
+        this.$refs['form'].validate((valid) => {
+          if (valid) {
+            this.load = true;
+            this.$http.post('api/bdyUnzip', this.form)
+            .then((response) => {
+              this.load = false;
+              let result = response.data;
+              if (result.status == 200) {
+                this.$message({showClose: true, message: "解压完成", duration: 0});
+              } else {
+                this.$message({showClose: true, message: result.msg, duration: 0});
+              }
+            })
           }
         });
       }

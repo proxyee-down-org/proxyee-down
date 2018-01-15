@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class UpdateInfo {
+
   private String url;
-  private String version;
+  private float version;
   private String desc;
 }
