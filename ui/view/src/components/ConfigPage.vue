@@ -15,7 +15,7 @@
         show-input>
       </el-slider>
       <el-tooltip class="item" content="创建新任务时默认的分段数" placement="right">
-        <i class="el-icon-question"></i>
+        <i class="el-icon-question" style="position: relative;top:-15px;"></i>
       </el-tooltip>
     </el-form-item>
     <el-form-item label="超时时间" prop="timeout">
@@ -165,7 +165,7 @@
   .el-slider {
     display: inline-block;
     padding-left: 5px;
-    width: 70%;
+    width: 50%;
   }
 
   .item {

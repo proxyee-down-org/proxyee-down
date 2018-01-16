@@ -2,7 +2,6 @@ package lee.study.down.mvc.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,19 +10,22 @@ import lee.study.down.HttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
 import lee.study.down.io.BdyZip;
-import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.model.DirInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.model.UpdateInfo;
 import lee.study.down.mvc.form.ConfigForm;
 import lee.study.down.mvc.form.DirForm;
 import lee.study.down.mvc.form.UnzipForm;
+import lee.study.down.update.GithubUpdateService;
+import lee.study.down.update.UpdateService;
 import lee.study.down.util.FileUtil;
 import lee.study.proxyee.proxy.ProxyConfig;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +38,9 @@ public class HttpDownController {
 
   @Autowired
   private HttpDownApplication httpDownApplication;
+
+  @Value("${app.version}")
+  private float version;
 
   @RequestMapping("/getTask")
   public ResultInfo getTask(@RequestParam String id) throws Exception {
@@ -85,36 +90,13 @@ public class HttpDownController {
         resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
         return resultInfo;
       }
-      FileUtil.createDirSmart(taskForm.getFilePath());
-      List<ChunkInfo> chunkInfoList = new ArrayList<>();
-      if (taskInfo.getTotalSize() > 0) {  //非chunked编码
-        if (taskInfo.isSupportRange()) {
-          taskInfo.setConnections(taskForm.getConnections());
-        } else {
-          taskInfo.setConnections(1);
-        }
-        //计算chunk列表
-        for (int i = 0; i < taskForm.getConnections(); i++) {
-          ChunkInfo chunkInfo = new ChunkInfo();
-          chunkInfo.setIndex(i);
-          long chunkSize = taskInfo.getTotalSize() / taskForm.getConnections();
-          chunkInfo.setOriStartPosition(i * chunkSize);
-          chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
-          if (i == taskForm.getConnections() - 1) { //最后一个连接去下载多出来的字节
-            chunkSize += taskInfo.getTotalSize() % taskForm.getConnections();
-          }
-          chunkInfo.setEndPosition(chunkInfo.getOriStartPosition() + chunkSize - 1);
-          chunkInfo.setTotalSize(chunkSize);
-          chunkInfoList.add(chunkInfo);
-        }
-      } else { //chunked下载
-        ChunkInfo chunkInfo = new ChunkInfo();
-        chunkInfo.setIndex(0);
-        chunkInfo.setNowStartPosition(0);
-        chunkInfo.setOriStartPosition(0);
-        chunkInfoList.add(chunkInfo);
+      if (taskInfo.isSupportRange()) {
+        taskInfo.setConnections(taskForm.getConnections());
+      } else {
+        taskInfo.setConnections(1);
       }
-      taskInfo.setChunkInfoList(chunkInfoList);
+      FileUtil.createDirSmart(taskForm.getFilePath());
+      taskInfo.buildChunkInfoList();
       bootstrap.startDown();
       //记录存储路径
       String lastPath = ContentManager.CONFIG.get().getLastPath();
@@ -263,8 +245,28 @@ public class HttpDownController {
     return resultInfo;
   }
 
+  @RequestMapping("/getVersion")
+  public ResultInfo getVersion() {
+    ResultInfo resultInfo = new ResultInfo();
+    resultInfo.setData(version);
+    return resultInfo;
+  }
+
   @RequestMapping("/checkUpdate")
-  public ResultInfo checkUpdate() {
+  public ResultInfo checkUpdate() throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    UpdateService updateService = new GithubUpdateService();
+    UpdateInfo updateInfo = updateService.check(version);
+    if (updateInfo == null) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("已经是最新版本");
+    }
+    return resultInfo;
+  }
+
+  private static HttpDownBootstrap updateBootstrap;
+
+  @RequestMapping("/doUpdate")
+  public ResultInfo doUpdate(@RequestBody UpdateInfo updateInfo) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
     return resultInfo;
   }

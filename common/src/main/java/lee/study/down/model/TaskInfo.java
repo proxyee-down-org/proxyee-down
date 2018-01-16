@@ -2,6 +2,7 @@ package lee.study.down.model;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,6 +35,34 @@ public class TaskInfo implements Serializable {
 
   public String buildTaskRecordFilePath() {
     return getFilePath() + File.separator + "." + getFileName() + ".inf";
+  }
+
+  public TaskInfo buildChunkInfoList(){
+    List<ChunkInfo> chunkInfoList = new ArrayList<>();
+    if (getTotalSize() > 0) {  //非chunked编码
+      //计算chunk列表
+      for (int i = 0; i < getConnections(); i++) {
+        ChunkInfo chunkInfo = new ChunkInfo();
+        chunkInfo.setIndex(i);
+        long chunkSize = getTotalSize() / getConnections();
+        chunkInfo.setOriStartPosition(i * chunkSize);
+        chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
+        if (i == getConnections() - 1) { //最后一个连接去下载多出来的字节
+          chunkSize += getTotalSize() % getConnections();
+        }
+        chunkInfo.setEndPosition(chunkInfo.getOriStartPosition() + chunkSize - 1);
+        chunkInfo.setTotalSize(chunkSize);
+        chunkInfoList.add(chunkInfo);
+      }
+    } else { //chunked下载
+      ChunkInfo chunkInfo = new ChunkInfo();
+      chunkInfo.setIndex(0);
+      chunkInfo.setNowStartPosition(0);
+      chunkInfo.setOriStartPosition(0);
+      chunkInfoList.add(chunkInfo);
+    }
+    setChunkInfoList(chunkInfoList);
+    return this;
   }
 
   public void reset() {

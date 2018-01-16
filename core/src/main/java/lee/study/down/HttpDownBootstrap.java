@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@AllArgsConstructor()
+@AllArgsConstructor
 public class HttpDownBootstrap {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownBootstrap.class);
