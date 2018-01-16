@@ -47,10 +47,12 @@ public class ConfigContent {
     }
     if (configContent == null) {
       configContent = new ConfigInfo();
-      //默认30秒无响应重试
-      configContent.setTimeout(30);
       //默认代理端口
       configContent.setProxyPort(9999);
+      //默认分段数
+      configContent.setConnections(16);
+      //默认30秒无响应重试
+      configContent.setTimeout(30);
       save();
     }
   }

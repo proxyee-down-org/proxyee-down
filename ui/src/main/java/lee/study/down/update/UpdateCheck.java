@@ -1,7 +1,7 @@
 package lee.study.down.update;
 
-import lee.study.down.model.HttpDownInfo;
+import lee.study.down.model.UpdateInfo;
 
 public interface UpdateCheck {
-  HttpDownInfo check() throws Exception;
+  UpdateInfo check() throws Exception;
 }

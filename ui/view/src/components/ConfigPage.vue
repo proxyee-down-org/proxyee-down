@@ -6,6 +6,18 @@
         <i class="el-icon-question"></i>
       </el-tooltip>
     </el-form-item>
+    <el-form-item label="分段数" prop="connections">
+      <el-slider
+        v-model="form.connections"
+        :min="2"
+        :max="128"
+        :step="2"
+        show-input>
+      </el-slider>
+      <el-tooltip class="item" content="创建新任务时默认的分段数" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
+    </el-form-item>
     <el-form-item label="超时时间" prop="timeout">
       <el-input v-model.number="form.timeout" class="num-input" placeholder="秒"></el-input>
       <el-tooltip class="item" content="在该时间段内下载未响应则重新发起连接" placement="right">
@@ -112,9 +124,6 @@
         this.$refs['form'].validate((valid) => {
           if (valid) {
             this.load = true;
-            if (!this.form.secProxyEnable) {
-
-            }
             this.$http.post('api/setConfigInfo', this.form)
             .then((response) => {
               let result = response.data;
@@ -151,5 +160,15 @@
 
   .num-input {
     width: 15%;
+  }
+
+  .el-slider {
+    display: inline-block;
+    padding-left: 5px;
+    width: 70%;
+  }
+
+  .item {
+    padding-left: 5px;
   }
 </style>

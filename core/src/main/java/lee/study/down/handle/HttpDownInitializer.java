@@ -71,11 +71,9 @@ public class HttpDownInitializer extends ChannelInitializer {
             synchronized (chunkInfo) {
               Channel nowChannel = (Channel) bootstrap
                   .getAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL);
-              LargeMappedByteBuffer nowMapBuffer = (LargeMappedByteBuffer) bootstrap
-                  .getAttr(chunkInfo, HttpDownBootstrap.ATTR_MAP_BUFFER);
               if (chunkInfo.getStatus() == HttpDownStatus.RUNNING
                   && nowChannel == ctx.channel()) {
-                nowMapBuffer.put(byteBuf.nioBuffer());
+                mappedBuffer.put(byteBuf.nioBuffer());
                 //文件已下载大小
                 chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
                 taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
@@ -92,6 +90,7 @@ public class HttpDownInitializer extends ChannelInitializer {
               chunkInfo.setLastTime(System.currentTimeMillis());
               LOGGER.debug("分段下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
                   + taskInfo.getStatus());
+              taskInfo.refresh(chunkInfo);
               callback.onChunkDone(bootstrap.getHttpDownInfo(), chunkInfo);
               synchronized (taskInfo) {
                 if (taskInfo.getStatus() == HttpDownStatus.RUNNING
@@ -106,6 +105,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
                   LOGGER.debug("下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                  taskInfo.refresh();
                   callback.onDone(bootstrap.getHttpDownInfo());
                 }
               }

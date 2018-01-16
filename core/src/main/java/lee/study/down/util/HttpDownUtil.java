@@ -69,7 +69,6 @@ public class HttpDownUtil {
                     //206表示支持断点下载
                     if (httpResponse.status().equals(HttpResponseStatus.PARTIAL_CONTENT)) {
                       taskInfo.setSupportRange(true);
-                      taskInfo.setConnections(16);
                     }
                     ctx0.channel().close();
                     cdl.countDown();

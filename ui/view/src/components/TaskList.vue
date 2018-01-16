@@ -107,7 +107,12 @@
         if (task.status == 7 || task.status == 5) {
           return this.speedAvg(task);
         } else {
-          return this.speedInterval(task);
+          let speed = this.speedInterval(task);
+          if (task.speedCount > 5 || speed > 0) {
+            return speed;
+          } else {
+            return this.speedAvg(task);
+          }
         }
       },
       speedAvg(task) {
@@ -133,7 +138,7 @@
         if (task.status == 5) {
           return '暂停中';
         }
-        let speed = this.speedInterval(task);
+        let speed = this.speed(task);
         if (speed) {
           return Util.timeFmt((task.totalSize - task.downSize) / speed);
         } else {
@@ -208,7 +213,8 @@
               this.$message(result.msg);
             }
           });
-        }).catch(()=>{});
+        }).catch(() => {
+        });
       },
     },
     created() {
@@ -218,17 +224,34 @@
         }
         let msg = eval('(' + e.data + ')');
         if (msg) {
-          /*this.tasks = msg.sort((task1, task2) => {
-            return task1.startTime - task2.startTime;
-          });*/
           this.tasks = msg.map((task1) => {
             this.tasks.forEach((task2) => {
               if (task2.id == task1.id) {
                 task1.intervalTime = task1.lastTime - task2.lastTime;
                 task1.intervalDownSize = task1.downSize - task2.downSize;
+                task1.speedCount = task2.speedCount;
+                if (task1.intervalDownSize == 0) {
+                  if (!task1.speedCount) {
+                    task1.speedCount = 1;
+                  } else {
+                    task1.speedCount++;
+                  }
+                } else {
+                  task1.speedCount = 1;
+                }
                 task1.chunkInfoList.forEach((chunk, index) => {
                   chunk.intervalTime = chunk.lastTime - task2.chunkInfoList[index].lastTime;
                   chunk.intervalDownSize = chunk.downSize - task2.chunkInfoList[index].downSize;
+                  chunk.speedCount = task2.chunkInfoList[index].speedCount;
+                  if (chunk.intervalDownSize == 0) {
+                    if (!chunk.speedCount) {
+                      chunk.speedCount = 1;
+                    } else {
+                      chunk.speedCount++;
+                    }
+                  } else {
+                    chunk.speedCount = 1;
+                  }
                 });
               }
               return false;

@@ -44,6 +44,9 @@ public class HttpDownController {
     if (taskInfo == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
+      if (taskInfo.isSupportRange()) {
+        taskInfo.setConnections(ContentManager.CONFIG.get().getConnections());
+      }
       taskInfo.setFilePath(ContentManager.CONFIG.get().getLastPath());
       resultInfo.setData(taskInfo);
     }
