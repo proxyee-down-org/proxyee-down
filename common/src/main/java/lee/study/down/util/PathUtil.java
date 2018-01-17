@@ -13,21 +13,28 @@ public class PathUtil {
   static {
     URL url = PathUtil.class.getResource("/");
     String path = url != null ? url.getPath() : PathUtil.class.getResource("").getPath();
+    System.out.println("path:" + path);
     Pattern pattern = Pattern.compile("^file:/([^!]*/)[^/]+\\.jar!/.*$");
     Matcher matcher = pattern.matcher(path);
+    boolean needDecode = false;
     if (matcher.find()) {
       ROOT_PATH = matcher.group(1);
+      needDecode = true;
     } else {
       ROOT_PATH = path;
       if ("1".equals(System.getProperty("exe4j"))) {  //exe4j中文路径特殊处理
-        try {
-          ROOT_PATH = URLDecoder.decode(ROOT_PATH, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-        }
+        needDecode = true;
+      }
+    }
+    if(needDecode){
+      try {
+        ROOT_PATH = URLDecoder.decode(ROOT_PATH,"UTF-8");
+      } catch (UnsupportedEncodingException e) {
       }
     }
     if (ROOT_PATH.indexOf("/") == 0) {
       ROOT_PATH = ROOT_PATH.substring(1);
     }
+    System.out.println("ROOT_PATH:" + ROOT_PATH);
   }
 }
