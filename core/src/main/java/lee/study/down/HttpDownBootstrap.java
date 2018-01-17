@@ -48,7 +48,9 @@ public class HttpDownBootstrap {
 
   public void startDown() throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+    taskInfo.buildChunkInfoList();
     FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
+    FileUtil.createDirSmart(taskInfo.getFilePath());
     try (
         RandomAccessFile randomAccessFile = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
     ) {
@@ -64,7 +66,9 @@ public class HttpDownBootstrap {
       chunkInfo.setStartTime(System.currentTimeMillis());
       startChunkDown(chunkInfo, HttpDownStatus.CONNECTING_NORMAL);
     }
-    callback.onStart(httpDownInfo);
+    if(callback!=null){
+      callback.onStart(httpDownInfo);
+    }
   }
 
   public void startChunkDown(ChunkInfo chunkInfo, int updateStatus) {
@@ -119,7 +123,9 @@ public class HttpDownBootstrap {
       //已经下载完成
       if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
         chunkInfo.setStatus(HttpDownStatus.DONE);
-        callback.onChunkDone(httpDownInfo, chunkInfo);
+        if(callback!=null){
+          callback.onChunkDone(httpDownInfo, chunkInfo);
+        }
         return;
       }
       if (taskInfo.isSupportRange()) {
@@ -152,7 +158,9 @@ public class HttpDownBootstrap {
         }
       }
     }
-    callback.onPause(httpDownInfo);
+    if(callback!=null) {
+      callback.onPause(httpDownInfo);
+    }
   }
 
   /**
@@ -183,7 +191,9 @@ public class HttpDownBootstrap {
         }
       }
     }
-    callback.onContinue(httpDownInfo);
+    if(callback!=null) {
+      callback.onContinue(httpDownInfo);
+    }
   }
 
   public void close(ChunkInfo chunkInfo) {

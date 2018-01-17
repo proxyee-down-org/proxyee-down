@@ -52,12 +52,15 @@
   </dependencies>
 
   <build>
-    <finalName>proxyee-down</finalName>
+    <finalName>proxyee-down-core</finalName>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <version>1.5.9.RELEASE</version>
+        <configuration>
+          <outputDirectory>../target/main</outputDirectory>
+        </configuration>
         <executions>
           <execution>
             <goals>

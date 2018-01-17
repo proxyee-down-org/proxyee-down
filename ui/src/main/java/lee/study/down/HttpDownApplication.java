@@ -25,6 +25,7 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
   }
 
   public static void main(String[] args) throws Exception {
+
     //启动前端页面web server
     ApplicationContext context = new SpringApplicationBuilder(HttpDownApplication.class)
         .headless(false).build().run(args);
@@ -36,7 +37,7 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
     int proxyPort = ContentManager.CONFIG.get().getProxyPort();
     if (OsUtil.isBusyPort(proxyPort)) {
       JOptionPane
-          .showMessageDialog(null, "端口(" + proxyPort + ")被占用，请关闭占用端口的软件或设置新的端口号并重启proxyee-down",
+          .showMessageDialog(null, "端口(" + proxyPort + ")被占用，请关闭占用端口的软件或设置新的端口号",
               "运行警告", JOptionPane.WARNING_MESSAGE);
     } else {
       application.proxyServer = new HttpDownProxyServer(

@@ -54,7 +54,7 @@ public class HttpDownUtil {
         RequestProto requestProto = ProtoUtil.getRequestProto(requestInfo);
         requestInfo.headers().set("Host", requestProto.getHost());
         requestInfo.setRequestProto(requestProto);
-        httpResponse = getResponse(httpRequest, clientSslCtx, loopGroup);
+        return getTaskInfo(httpRequest, null, clientSslCtx, loopGroup);
       }
       resHeaders = httpResponse.headers();
     }

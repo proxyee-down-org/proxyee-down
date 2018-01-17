@@ -1,5 +1,8 @@
 package lee.study.down.util;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -8,13 +11,23 @@ public class PathUtil {
   public static String ROOT_PATH;
 
   static {
-    String path = Thread.currentThread().getContextClassLoader().getResource("").getPath();
-    Pattern pattern = Pattern.compile("^file:/(.*/)[^/]*\\.jar!/BOOT-INF/classes!/$");
+    URL url = PathUtil.class.getResource("/");
+    String path = url != null ? url.getPath() : PathUtil.class.getResource("").getPath();
+    Pattern pattern = Pattern.compile("^file:/([^!]*/)[^/]+\\.jar!/.*$");
     Matcher matcher = pattern.matcher(path);
     if (matcher.find()) {
       ROOT_PATH = matcher.group(1);
     } else {
       ROOT_PATH = path;
+      if ("1".equals(System.getProperty("exe4j"))) {  //exe4j中文路径特殊处理
+        try {
+          ROOT_PATH = URLDecoder.decode(ROOT_PATH, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+        }
+      }
+    }
+    if (ROOT_PATH.indexOf("/") == 0) {
+      ROOT_PATH = ROOT_PATH.substring(1);
     }
   }
 }

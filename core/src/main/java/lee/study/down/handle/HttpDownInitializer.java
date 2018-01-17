@@ -77,7 +77,9 @@ public class HttpDownInitializer extends ChannelInitializer {
                 //文件已下载大小
                 chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
                 taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
-                callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
+                if (callback != null) {
+                  callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
+                }
               } else {
                 safeClose(ctx.channel());
                 return;
@@ -91,7 +93,9 @@ public class HttpDownInitializer extends ChannelInitializer {
               LOGGER.debug("分段下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
                   + taskInfo.getStatus());
               taskInfo.refresh(chunkInfo);
-              callback.onChunkDone(bootstrap.getHttpDownInfo(), chunkInfo);
+              if (callback != null) {
+                callback.onChunkDone(bootstrap.getHttpDownInfo(), chunkInfo);
+              }
               synchronized (taskInfo) {
                 if (taskInfo.getStatus() == HttpDownStatus.RUNNING
                     && taskInfo.getChunkInfoList().stream()
@@ -106,7 +110,9 @@ public class HttpDownInitializer extends ChannelInitializer {
                   taskInfo.setStatus(HttpDownStatus.DONE);
                   LOGGER.debug("下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
                   taskInfo.refresh();
-                  callback.onDone(bootstrap.getHttpDownInfo());
+                  if (callback != null) {
+                    callback.onDone(bootstrap.getHttpDownInfo());
+                  }
                 }
               }
             } else if (realContentSize
@@ -139,7 +145,9 @@ public class HttpDownInitializer extends ChannelInitializer {
                 bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL, ctx.channel());
                 bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_FILE_CHANNEL, fileChannel);
                 bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_MAP_BUFFER, mappedBuffer);
-                callback.onChunkStart(bootstrap.getHttpDownInfo(), chunkInfo);
+                if (callback != null) {
+                  callback.onChunkStart(bootstrap.getHttpDownInfo(), chunkInfo);
+                }
               } else {
                 bootstrap.close(chunkInfo);
               }
@@ -160,7 +168,9 @@ public class HttpDownInitializer extends ChannelInitializer {
         if (nowChannel == ctx.channel()) {
           chunkInfo.setStatus(HttpDownStatus.CONNECTING_FAIL);
           bootstrap.retryChunkDown(chunkInfo);
-          callback.onError(bootstrap.getHttpDownInfo(), chunkInfo, cause);
+          if (callback != null) {
+            callback.onError(bootstrap.getHttpDownInfo(), chunkInfo, cause);
+          }
         } else {
           safeClose(ctx.channel());
         }

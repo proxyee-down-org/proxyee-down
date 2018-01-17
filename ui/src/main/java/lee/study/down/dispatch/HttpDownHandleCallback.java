@@ -1,7 +1,6 @@
 package lee.study.down.dispatch;
 
 import lee.study.down.content.ContentManager;
-import lee.study.down.content.WsContent;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;

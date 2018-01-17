@@ -262,12 +262,10 @@
           });
         }
       };
-    }
-    ,
+    },
     destroyed() {
       this.ws.close();
     }
-    ,
   }
 </script>
 

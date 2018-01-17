@@ -5,8 +5,6 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import javax.net.ssl.SSLException;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.dispatch.HttpDownHandleCallback;
@@ -15,7 +13,7 @@ import lee.study.down.util.PathUtil;
 public class HttpDownConstant {
 
   public static String HOME_PATH;
-  public static String LIB_PATH;
+  public static String MAIN_PATH;
   public static String TASK_RECORD_PATH;
   public static String CONFIG_PATH;
   public static SslContext clientSslContext;
@@ -24,15 +22,9 @@ public class HttpDownConstant {
 
   static {
     HOME_PATH = PathUtil.ROOT_PATH;
-    if ("1".equals(System.getProperty("exe4j"))) {  //exe4j中文路径特殊处理
-      try {
-        HOME_PATH = URLDecoder.decode(HOME_PATH, "UTF-8");
-      } catch (UnsupportedEncodingException e) {
-      }
-    }
-    LIB_PATH = HOME_PATH + "lib";
-    TASK_RECORD_PATH = HOME_PATH + "records.inf";
-    CONFIG_PATH = HOME_PATH + "config.inf";
+    MAIN_PATH = new File(HOME_PATH).getParent() + File.separator + "main";
+    TASK_RECORD_PATH = HOME_PATH + ".records.inf";
+    CONFIG_PATH = HOME_PATH + ".config.inf";
     try {
       clientSslContext = SslContextBuilder.forClient()
           .trustManager(InsecureTrustManagerFactory.INSTANCE)

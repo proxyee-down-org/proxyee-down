@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import lee.study.down.HttpDownApplication;
 import lee.study.down.HttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
@@ -95,8 +96,6 @@ public class HttpDownController {
       } else {
         taskInfo.setConnections(1);
       }
-      FileUtil.createDirSmart(taskForm.getFilePath());
-      taskInfo.buildChunkInfoList();
       bootstrap.startDown();
       //记录存储路径
       String lastPath = ContentManager.CONFIG.get().getLastPath();
@@ -252,22 +251,56 @@ public class HttpDownController {
     return resultInfo;
   }
 
+  private static HttpDownBootstrap bootstrap;
+  private static volatile UpdateInfo updateInfo;
+//  private static final UpdateService updateService = new TestUpdateService();
+  private static final UpdateService updateService = new GithubUpdateService();
+
   @RequestMapping("/checkUpdate")
   public ResultInfo checkUpdate() throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    UpdateService updateService = new GithubUpdateService();
-    UpdateInfo updateInfo = updateService.check(version);
+    updateInfo = updateService.check(version);
     if (updateInfo == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("已经是最新版本");
+      return resultInfo;
+    }
+    resultInfo.setData(updateInfo);
+    return resultInfo;
+  }
+
+  @RequestMapping("/doUpdate")
+  public ResultInfo doUpdate() throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    if (updateInfo == null) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("没有可用版本进行更新");
+      return resultInfo;
+    }
+    if (bootstrap != null) {
+      bootstrap.close();
+      bootstrap = null;
+    }
+    try {
+      bootstrap = updateService.update(updateInfo);
+    } catch (TimeoutException e) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("检测更新超时，请重试");
+      return resultInfo;
     }
     return resultInfo;
   }
 
-  private static HttpDownBootstrap updateBootstrap;
-
-  @RequestMapping("/doUpdate")
-  public ResultInfo doUpdate(@RequestBody UpdateInfo updateInfo) throws Exception {
+  @RequestMapping("/getUpdateProgress")
+  public ResultInfo getUpdateProgress() throws Exception {
     ResultInfo resultInfo = new ResultInfo();
+    if (bootstrap != null) {
+      resultInfo.setData(bootstrap.getHttpDownInfo().getTaskInfo());
+    }
+    return resultInfo;
+  }
+
+  @RequestMapping("/restart")
+  public ResultInfo restart() throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    System.out.println("proxyee-down-update");
     return resultInfo;
   }
 
