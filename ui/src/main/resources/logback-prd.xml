@@ -14,6 +14,4 @@
   <root level="ERROR">
     <appender-ref ref="FILE"/>
   </root>
-
-  <logger name="lee.study.down" level="DEBUG"/>
 </configuration>

@@ -13,7 +13,6 @@ public class PathUtil {
   static {
     URL url = PathUtil.class.getResource("/");
     String path = url != null ? url.getPath() : PathUtil.class.getResource("").getPath();
-    System.out.println("path:" + path);
     Pattern pattern = Pattern.compile("^file:/([^!]*/)[^/]+\\.jar!/.*$");
     Matcher matcher = pattern.matcher(path);
     boolean needDecode = false;
@@ -26,15 +25,14 @@ public class PathUtil {
         needDecode = true;
       }
     }
-    if(needDecode){
+    if (needDecode) {
       try {
-        ROOT_PATH = URLDecoder.decode(ROOT_PATH,"UTF-8");
+        ROOT_PATH = URLDecoder.decode(ROOT_PATH, "UTF-8");
       } catch (UnsupportedEncodingException e) {
       }
     }
-    if (ROOT_PATH.indexOf("/") == 0) {
+    if (OsUtil.isWindows() && ROOT_PATH.indexOf("/") == 0) {
       ROOT_PATH = ROOT_PATH.substring(1);
     }
-    System.out.println("ROOT_PATH:" + ROOT_PATH);
   }
 }
