@@ -1,10 +1,10 @@
-## 下载w
+## 下载
 进入[下载页面](https://github.com/monkeyWie/proxyee-down/releases)，选择proxyee-down-xx-windows-x86.zip文件下载。
 ## 解压并运行
 将下载好的proxyee-down-xx-windows-x86.zip解压至电脑任意目录。双击proxyee-down.exe运行软件，运行成功后右下角会有提示和托盘出现。  
 ![1-1](https://github.com/monkeyWie/proxyee-down/raw/master/view/guide/windows/imgs/1-1.png)
 ## 下载和安装证书
-1. 打开浏览器输入**127.0.0.1:9999**，页面打开后点击**ProxyeeRoot ca.crt**下载下来。  
+1. 打开浏览器输入**127.0.0.1:9999**，页面打开后点击**ProxyeeRoot ca.crt**下载,证书文件如下图。  
 
 ![2-1](https://github.com/monkeyWie/proxyee-down/raw/master/view/guide/windows/imgs/2-1.png)  
 
