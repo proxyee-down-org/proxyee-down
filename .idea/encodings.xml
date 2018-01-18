@@ -2,6 +2,11 @@
 <project version="4">
   <component name="Encoding" defaultCharsetForPropertiesFiles="UTF-8">
     <file url="file://$PROJECT_DIR$" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/common" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/core" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sniff" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ui" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/update" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>
