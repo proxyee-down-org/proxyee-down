@@ -7,8 +7,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.URI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OsUtil {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(OsUtil.class);
 
   private static final String REG_HEAD = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ";
   private static final String REG_TAIL = " /f";
@@ -74,10 +78,10 @@ public class OsUtil {
         URI uri = new URI(url);
         desktop.browse(uri);
       } catch (Exception e) {
-        throw new RuntimeException("can't open browse", e);
+        LOGGER.error("can't open browse", e);
       }
     } else {
-      throw new RuntimeException("don't support browse");
+      LOGGER.error("don't support browse");
     }
   }
 
