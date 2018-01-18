@@ -72,7 +72,7 @@ public class BdyZip {
     ByteBuffer fileNameBuffer = ByteBuffer.allocate((int) zipEntry.getFileNameLength());
     fileChannel.read(fileNameBuffer);
     fileNameBuffer.flip();
-    zipEntry.setFileName(Charset.forName("GBK").decode(fileNameBuffer).toString());
+    zipEntry.setFileName(Charset.forName("GB18030").decode(fileNameBuffer).toString());
     if (zipEntry.getExtraFieldLength() > 0) {
       ByteBuffer extraFieldBuffer = ByteBuffer.allocate((int) zipEntry.getExtraFieldLength());
       fileChannel.read(extraFieldBuffer);

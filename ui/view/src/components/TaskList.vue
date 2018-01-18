@@ -28,7 +28,7 @@
                 </p>
                 <p>
                   <span>速度：</span>
-                  <b>{{sizeFmt(speed(task), '0B')}}/s</b>
+                  <b>{{sizeFmt(speedTask(task), '0B')}}/s</b>
                 </p>
                 <p>
                   <span>状态：</span>
@@ -40,7 +40,7 @@
                   <task-progress :text-inside="true" :stroke-width="18"
                                  :percentage="task.totalProgress||progress(chunk)"
                                  :status="status(chunk)"></task-progress>
-                  <span>{{sizeFmt(speed(chunk), '0B')}}/s</span>
+                  <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
                 </li>
               </ul>
               <task-progress type="circle"
@@ -103,15 +103,23 @@
         }
         return 0;
       },
-      speed(task) {
-        if (task.status == 7 || task.status == 5) {
-          return this.speedAvg(task);
+      speedTask(task) {
+        let sumSpeed = task.chunkInfoList.map((chunk)=>{
+          return this.speedChunk(chunk);
+        }).reduce((speed1, speed2) => {
+          return speed1 + speed2;
+        });
+        return sumSpeed;
+      },
+      speedChunk(chunk) {
+        if (chunk.status == 7 || chunk.status == 5) {
+          return this.speedAvg(chunk);
         } else {
-          let speed = this.speedInterval(task);
-          if (task.speedCount > 5 || speed > 0) {
+          let speed = this.speedInterval(chunk);
+          if (chunk.speedCount > 5 || speed > 0) {
             return speed;
           } else {
-            return this.speedAvg(task);
+            return this.speedAvg(chunk);
           }
         }
       },
@@ -138,7 +146,7 @@
         if (task.status == 5) {
           return '暂停中';
         }
-        let speed = this.speed(task);
+        let speed = this.speedTask(task);
         if (speed) {
           return Util.timeFmt((task.totalSize - task.downSize) / speed);
         } else {
@@ -227,18 +235,6 @@
           this.tasks = msg.map((task1) => {
             this.tasks.forEach((task2) => {
               if (task2.id == task1.id) {
-                task1.intervalTime = task1.lastTime - task2.lastTime;
-                task1.intervalDownSize = task1.downSize - task2.downSize;
-                task1.speedCount = task2.speedCount;
-                if (task1.intervalDownSize == 0) {
-                  if (!task1.speedCount) {
-                    task1.speedCount = 1;
-                  } else {
-                    task1.speedCount++;
-                  }
-                } else {
-                  task1.speedCount = 1;
-                }
                 task1.chunkInfoList.forEach((chunk, index) => {
                   chunk.intervalTime = chunk.lastTime - task2.chunkInfoList[index].lastTime;
                   chunk.intervalDownSize = chunk.downSize - task2.chunkInfoList[index].downSize;

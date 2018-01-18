@@ -100,8 +100,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                 if (taskInfo.getStatus() == HttpDownStatus.RUNNING
                     && taskInfo.getChunkInfoList().stream()
                     .allMatch((chunk) -> chunk.getStatus() == HttpDownStatus.DONE)) {
-                  //记录完成时间
-                  taskInfo.setLastTime(System.currentTimeMillis());
                   if (taskInfo.getTotalSize() <= 0) {  //chunked编码最后更新文件大小
                     taskInfo.setTotalSize(taskInfo.getDownSize());
                     taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
@@ -109,7 +107,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
                   LOGGER.debug("下载完成：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-                  taskInfo.refresh();
                   if (callback != null) {
                     callback.onDone(bootstrap.getHttpDownInfo());
                   }

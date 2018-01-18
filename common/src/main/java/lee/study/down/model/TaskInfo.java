@@ -74,13 +74,6 @@ public class TaskInfo implements Serializable {
     });
   }
 
-  public void refresh() {
-    lastTime = System.currentTimeMillis();
-    chunkInfoList.forEach((chunkInfo) -> {
-      chunkInfo.setLastTime(lastTime);
-    });
-  }
-
   public void refresh(ChunkInfo chunkInfo) {
     lastTime = System.currentTimeMillis();
     chunkInfo.setLastTime(lastTime);

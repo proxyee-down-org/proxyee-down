@@ -17,6 +17,7 @@ import org.jsoup.nodes.Element;
 
 public class GithubUpdateService implements UpdateService {
 
+  private static final String UPDATE_CORE_FILE_NAME = "proxyee-down-core.jar";
   private static final String HOST = "github.com";
 
   @Override
@@ -29,7 +30,7 @@ public class GithubUpdateService implements UpdateService {
     if (maxVersion > currVersion) {
       updateInfo.setVersion(maxVersion);
       for (Element element : releaseDiv.select(".d-block.py-2")) {
-        if (UPDATE_FILE_NAME.equalsIgnoreCase(element.select("strong").text())) {
+        if (UPDATE_CORE_FILE_NAME.equalsIgnoreCase(element.select("strong").text())) {
           updateInfo.setUrl("https://" + HOST + element.select("a").attr("href"));
           break;
         }
@@ -53,7 +54,7 @@ public class GithubUpdateService implements UpdateService {
         .getTaskInfo(requestInfo, null, HttpDownConstant.clientSslContext,
             HttpDownConstant.clientLoopGroup)
         .setConnections(32)
-        .setFileName(UPDATE_FILE_NAME + ".bak")
+        .setFileName(UPDATE_CORE_FILE_NAME + ".bak")
         .setFilePath(HttpDownConstant.MAIN_PATH);
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
     HttpDownBootstrap bootstrap = new HttpDownBootstrap(httpDownInfo,
