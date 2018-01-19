@@ -11,6 +11,9 @@
 1. [Windows](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/windows.md)
 2. [MAC](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/mac.md)
 3. [Linux](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/linux.md)
+### 百度云破解
+在2.02+版本中，下载器配置正确之后，打开百度云页面会有如下提示
+![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/view/bdy-hook.png)
 ### 常见问题
 1. **证书页面无法访问？**  
 *先确认软件是否运行，运行还是无法访问可能是端口号被占用，打开软件设置页面修改代理端口号，保存后再访问http://127.0.0.1:修改后的端口号。*
