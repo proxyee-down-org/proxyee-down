@@ -279,17 +279,11 @@ public class HttpDownUtil {
           HttpContent content = new DefaultLastHttpContent();
           content.content().writeBytes(requestInfo.content());
           future.channel().writeAndFlush(content);
-          requestInfo.setContent(null); //help GC
         }
       } else {
         HttpDownServer.LOGGER.debug(
             "下载连接失败：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
         future.channel().close();
-        //失败等30s重试
-        TimeUnit.SECONDS.sleep(30);
-        HttpDownServer.LOGGER.debug(
-            "连接失败重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
-        retryDown(taskInfo, chunkInfo);
       }
     });
   }
@@ -307,8 +301,8 @@ public class HttpDownUtil {
    */
   public static void retryDown(TaskInfo taskInfo, ChunkInfo chunkInfo, long downSize)
       throws Exception {
-    safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
     synchronized (chunkInfo) {
+      safeClose(chunkInfo.getChannel(), chunkInfo.getFileChannel());
       if (setStatusIfNotDone(chunkInfo, 3)) {
         if (downSize != -1) {
           chunkInfo.setDownSize(downSize);

@@ -33,7 +33,7 @@ public class HttpDownErrorCheckTask extends Thread {
                 for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
                   //下载中或者下载失败的情况下30秒没有反应则重新建立连接下载
                   if (taskInfo.getStatus() == 1 && (chunkInfo.getStatus() == 1
-                      || chunkInfo.getStatus() == 3)) {
+                      || chunkInfo.getStatus() == 3 || chunkInfo.getStatus() == 5)) {
                     String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
                     Long downSize = flagMap.get(key);
                     //下载失败
@@ -61,7 +61,7 @@ public class HttpDownErrorCheckTask extends Thread {
         }
         TimeUnit.MILLISECONDS.sleep(30000);
       } catch (Exception e) {
-        HttpDownServer.LOGGER.error("checkTask:"+e);
+        HttpDownServer.LOGGER.error("checkTask:" + e);
       }
     }
   }

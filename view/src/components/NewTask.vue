@@ -27,7 +27,7 @@
 
 <script>
   import Util from '../common/util'
-  import FileChoose from './FileChoose'
+  import FileChoose from './base/FileChoose'
 
   export default {
     data() {

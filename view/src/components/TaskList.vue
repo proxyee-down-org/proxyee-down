@@ -65,7 +65,7 @@
 
 <script>
   import Util from '../common/util'
-  import TaskProgress from './TaskProgress'
+  import TaskProgress from './base/TaskProgress'
   import Vue from 'vue'
 
   export default {

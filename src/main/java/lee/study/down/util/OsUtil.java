@@ -2,18 +2,11 @@ package lee.study.down.util;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.SocketException;
-import java.net.URL;
-import java.nio.file.Files;
-import lee.study.down.HttpDownServer;
+import java.net.URI;
 
 public class OsUtil {
 
@@ -27,11 +20,11 @@ public class OsUtil {
   /**
    * 获取空闲端口号
    */
-  public static int getFreePort() throws Exception{
+  public static int getFreePort(int defaultPort) throws Exception {
     int port;
     ServerSocket serverSocket1 = null;
     try {
-      serverSocket1= new ServerSocket(9000);
+      serverSocket1 = new ServerSocket(defaultPort);
       port = serverSocket1.getLocalPort();
     } catch (Exception e) {
       ServerSocket serverSocket2 = null;
@@ -40,11 +33,11 @@ public class OsUtil {
         port = serverSocket2.getLocalPort();
       } catch (IOException e1) {
         throw e1;
-      }finally {
+      } finally {
         serverSocket2.close();
       }
-    }finally {
-      if(serverSocket1!=null){
+    } finally {
+      if (serverSocket1 != null) {
         serverSocket1.close();
       }
     }
@@ -54,15 +47,15 @@ public class OsUtil {
   /**
    * 检查端口号是否被占用
    */
-  public static boolean isBusyPort(int port){
+  public static boolean isBusyPort(int port) {
     boolean ret = true;
     ServerSocket serverSocket = null;
     try {
-      serverSocket= new ServerSocket(port);
+      serverSocket = new ServerSocket(port);
       ret = false;
     } catch (Exception e) {
-    }finally {
-      if(serverSocket!=null){
+    } finally {
+      if (serverSocket != null) {
         try {
           serverSocket.close();
         } catch (IOException e) {
@@ -71,6 +64,21 @@ public class OsUtil {
       }
     }
     return ret;
+  }
+
+  public static void openBrowse(String url) {
+    Desktop desktop = Desktop.getDesktop();
+    boolean flag = Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE);
+    if (flag) {
+      try {
+        URI uri = new URI(url);
+        desktop.browse(uri);
+      } catch (Exception e) {
+        throw new RuntimeException("can't open browse", e);
+      }
+    } else {
+      throw new RuntimeException("don't support browse");
+    }
   }
 
   public static void enabledIEProxy(String host, int port) throws IOException {
@@ -99,6 +107,24 @@ public class OsUtil {
       }
     }
     Desktop.getDesktop().open(file);
+  }
+
+  private static final String OS = System.getProperty("os.name").toLowerCase();
+
+  public static boolean isWindows() {
+    return (OS.indexOf("win") >= 0);
+  }
+
+  public static boolean isMac() {
+    return (OS.indexOf("mac") >= 0);
+  }
+
+  public static boolean isUnix() {
+    return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") >= 0);
+  }
+
+  public static boolean isSolaris() {
+    return (OS.indexOf("sunos") >= 0);
   }
 
 }

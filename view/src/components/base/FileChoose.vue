@@ -1,15 +1,15 @@
 <template>
   <div>
-    <el-button type="primary" class="file-choose-button" @click="visible = true">选择
-    </el-button>
-    <el-input class="file-choose-input" readonly :value="value" @dblclick.native="visible = true"></el-input>
+    <el-button type="primary" class="file-choose-button" @click="visible=true">选择</el-button>
+    <el-input class="file-choose-input" :value="value" @input="$emit('input',arguments[0])"
+              @dblclick.native="visible = true"></el-input>
     <el-dialog title="目录浏览" :visible="visible" @close="visible = false">
       <el-tree :data="files"
                :props="props"
                :load="loadChild"
                :highlight-current="true"
-               ref="tree"
                lazy
+               ref="tree"
                class="file-choose-tree"></el-tree>
       <div slot="footer" class="dialog-footer">
         <el-button @click="visible = false">取 消</el-button>
@@ -31,13 +31,17 @@
         files: [],
         props: {
           isLeaf: 'last'
-        },
+        }
       }
     },
-    props: ['value'],
+    props: ['value', 'model'],
     methods: {
       loadChild(node, resolve) {
-        this.$http.post('api/getChildDirList', {path: node.data.path || ''})
+        this.$http.post('api/getChildDirList',
+          {
+            path: node.data.path || '',
+            model: this.model || 'dir',
+          })
         .then((response) => {
           let result = response.data;
           if (result.status == 200) {
@@ -67,6 +71,6 @@
 
   .file-choose-tree {
     overflow-y: auto;
-    height: 400px;
+    height: 250px;
   }
 </style>

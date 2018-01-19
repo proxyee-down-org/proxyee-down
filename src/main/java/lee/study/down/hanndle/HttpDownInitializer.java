@@ -50,25 +50,21 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
           if (msg instanceof HttpContent) {
-            if (fileChannel == null || !fileChannel.isOpen()) {
-              return;
-            }
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
             synchronized (chunkInfo) {
-              if (chunkInfo.getStatus() == 1) {
+              if (chunkInfo.getStatus() == 1 && fileChannel.isOpen()) {
                 fileChannel.write(byteBuf.nioBuffer());
                 //文件已下载大小
                 chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
+                taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
+                callback.onProgress(taskInfo, chunkInfo);
               } else {
+                ctx.channel().close();
                 return;
               }
             }
-            synchronized (taskInfo) {
-              taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
-            }
-            callback.onProgress(taskInfo, chunkInfo);
             //分段下载完成关闭fileChannel
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
               HttpDownUtil.safeClose(ctx.channel(), fileChannel);
@@ -95,33 +91,45 @@ public class HttpDownInitializer extends ChannelInitializer {
                   callback.onDone(taskInfo);
                 }
               }
-            } else if (realContentSize == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()
-                || (realContentSize - 1) == chunkInfo.getDownSize()+chunkInfo.getOriStartPosition()-chunkInfo.getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
+            } else if (realContentSize
+                == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
+                .getNowStartPosition()
+                || (realContentSize - 1)
+                == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
+                .getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
               HttpDownServer.LOGGER.debug(
                   "继续下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
               HttpDownUtil.continueDown(taskInfo, chunkInfo);
-            } else if(chunkInfo.getDownSize() > chunkInfo.getTotalSize()){
+            } else if (chunkInfo.getDownSize() > chunkInfo.getTotalSize()) {
               //错误下载从0开始重新下过
-              HttpDownServer.LOGGER.error("Out of chunk size："+chunkInfo+"\t"+taskInfo);
-              HttpDownUtil.retryDown(taskInfo,chunkInfo,0);
+              HttpDownServer.LOGGER.error("Out of chunk size：" + chunkInfo + "\t" + taskInfo);
+              HttpDownUtil.retryDown(taskInfo, chunkInfo, 0);
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
             realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
             HttpDownServer.LOGGER.debug(
-                "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize()+"\t"+httpResponse.headers().get(
-                    HttpHeaderNames.CONTENT_RANGE)+"\t"+realContentSize);
-            if (taskInfo.getChunkInfoList().size() > 1) {
-              fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
-                  "rw").getChannel();
-              fileChannel.position(fileChannel.size());
-            } else {
-              fileChannel = FileUtil.getRafFile(taskInfo.buildTaskFilePath()).getChannel();
+                "下载响应：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize() + "\t"
+                    + httpResponse.headers().get(
+                    HttpHeaderNames.CONTENT_RANGE) + "\t" + realContentSize);
+            synchronized (chunkInfo) {
+              if (chunkInfo.getStatus() == 1) {
+                ctx.channel().close();
+                return;
+              }
+              if (taskInfo.getChunkInfoList().size() > 1) {
+                fileChannel = new RandomAccessFile(
+                    taskInfo.buildChunkFilePath(chunkInfo.getIndex()),
+                    "rw").getChannel();
+                fileChannel.position(fileChannel.size());
+              } else {
+                fileChannel = FileUtil.getRafFile(taskInfo.buildTaskFilePath()).getChannel();
+              }
+              chunkInfo.setStatus(1);
+              chunkInfo.setFileChannel(fileChannel);
+              callback.onChunkStart(taskInfo, chunkInfo);
             }
-            chunkInfo.setStatus(1);
-            chunkInfo.setFileChannel(fileChannel);
-            callback.onChunkStart(taskInfo, chunkInfo);
           }
         } catch (Exception e) {
           throw e;
@@ -142,6 +150,9 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         super.channelUnregistered(ctx);
         ctx.channel().close();
+        if (fileChannel != null) {
+          fileChannel.close();
+        }
       }
     });
   }
@@ -152,14 +163,14 @@ public class HttpDownInitializer extends ChannelInitializer {
   }
 
   public static void main(String[] args) throws Exception {
-    RandomAccessFile r1 = new RandomAccessFile("f:/down/test1.txt","rw");
-    RandomAccessFile r2 = new RandomAccessFile("f:/down/test2.txt","rw");
-    r1.setLength(1024*1024*16);
-    r1.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
+    RandomAccessFile r1 = new RandomAccessFile("f:/down/test1.txt", "rw");
+    RandomAccessFile r2 = new RandomAccessFile("f:/down/test2.txt", "rw");
+    r1.setLength(1024 * 1024 * 16);
+    r1.write(new byte[]{1, 3, 6, 3, 1, 6, 5, 9, 6, 5, 7});
 //    r1.write(new byte[]{2,6,3,3,9,7,4,7,8});
-    r2.setLength(1024*1024*16);
+    r2.setLength(1024 * 1024 * 16);
 //    r2.write(new byte[]{1,3,6,3,1,6,5,9,6,5,7});
-    r2.write(new byte[]{2,6,3,3,9,7,4,7,8});
+    r2.write(new byte[]{2, 6, 3, 3, 9, 7, 4, 7, 8});
   }
 
 }

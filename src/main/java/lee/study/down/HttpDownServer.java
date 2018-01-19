@@ -75,7 +75,7 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
 
   @Override
   public void afterPropertiesSet() throws Exception {
-    VIEW_SERVER_PORT = viewServerPort == -1 ? OsUtil.getFreePort() : viewServerPort;
+    VIEW_SERVER_PORT = viewServerPort == -1 ? OsUtil.getFreePort(9000) : viewServerPort;
   }
 
   public static void start() {
