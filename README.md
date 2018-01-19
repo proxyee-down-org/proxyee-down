@@ -6,7 +6,7 @@
 ## 使用教程
 ### 下载
 [地址](https://github.com/monkeyWie/proxyee-down/releases)  
-*注：从1.5版本开始下载器仅支持64位操作系统，若是32位操作系统请下载1.5版本*。
+*注：从1.6版本开始下载器仅支持64位操作系统，若是32位操作系统请下载1.5版本*。
 ### 安装
 1. [Windows](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/windows.md)
 2. [MAC](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/mac.md)
@@ -32,6 +32,8 @@
 *可以*
 10. **切换了下载的代理服务器导致网页浏览过慢？**  
 *下载代理服务器只是用与嗅探下载请求的，若没有新的下载任务可以不使用*
+11. **百度云下载没有弹出下载页面？**  
+*浏览器里按F12，看下Console里是否有请求为403，如果是403请尝试重新分享文件再下载*
 
 # 开发
 本项目依赖[proxyee](https://github.com/monkeyWie/proxyee)，因为还没上传maven中央仓库，需自行编译打包至本地仓库。
