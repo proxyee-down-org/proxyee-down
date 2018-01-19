@@ -8,9 +8,9 @@
 [地址](https://github.com/monkeyWie/proxyee-down/releases)  
 *注：从1.6版本开始下载器仅支持64位操作系统，若是32位操作系统请下载1.5版本*。
 ### 安装
-1. [Windows](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/windows.md)
-2. [MAC](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/mac.md)
-3. [Linux](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/linux.md)
+1. [Windows](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/read.md)
+2. [MAC](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/read.md)
+3. [Linux](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/read.md)
 ### 百度云破解
 在2.02+版本中，下载器配置正确之后，打开百度云页面会有如下提示
 ![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/view/bdy-hook.png)
