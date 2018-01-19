@@ -30,6 +30,10 @@
                 <i class="el-icon-info"></i>
                 <span slot="title">关于</span>
               </el-menu-item>
+              <el-menu-item index="/support">
+                <i class="el-icon-task-money"></i>
+                <span slot="title">打赏</span>
+              </el-menu-item>
             </el-menu>
           </el-aside>
           <el-main>

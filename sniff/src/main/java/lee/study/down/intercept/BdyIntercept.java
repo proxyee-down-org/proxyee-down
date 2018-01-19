@@ -1,6 +1,7 @@
 package lee.study.down.intercept;
 
 import io.netty.handler.codec.http.HttpResponse;
+import java.nio.charset.Charset;
 import lee.study.down.intercept.common.ResponseTextIntercept;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.HttpUtil;

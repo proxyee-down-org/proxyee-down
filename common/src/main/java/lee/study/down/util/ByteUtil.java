@@ -14,6 +14,7 @@ import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,12 +117,16 @@ public class ByteUtil {
     }
   }
 
-  public static byte[] stringToBytes(String str) {
+  /*public static byte[] stringToBytes(String str) {
     byte[] bts = new byte[str.length()];
     for (int i = 0; i < str.length(); i++) {
       bts[i] = (byte) str.charAt(i);
     }
     return bts;
+  }*/
+
+  public static byte[] stringToBytes(String str) {
+    return str.getBytes();
   }
 
   public static int findText(ByteBuf byteBuf, String str) {
@@ -171,9 +176,13 @@ public class ByteUtil {
   }
 
   public static String readJsContent(InputStream inputStream) {
+    return readJsContent(inputStream,Charset.defaultCharset());
+  }
+
+  public static String readJsContent(InputStream inputStream,Charset charset) {
     StringBuilder sb = new StringBuilder();
     try (
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream,charset))
     ) {
       sb.append("<script type=\"text/javascript\">");
       String line;

@@ -6,6 +6,7 @@ import ToolList from '../components/ToolList'
 import BdyUnzip from '../components/tools/BdyUnzip'
 import ConfigPage from '../components/ConfigPage'
 import AboutPage from '../components/AboutPage'
+import SupportPage from '../components/SupportPage'
 
 Vue.use(Router)
 
@@ -45,6 +46,11 @@ export default new Router({
       path: '/about',
       name: 'about',
       component: AboutPage
+    },
+    {
+      path: '/support',
+      name: 'support',
+      component: SupportPage
     }
   ]
 })
