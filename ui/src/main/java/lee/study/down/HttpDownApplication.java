@@ -1,5 +1,7 @@
 package lee.study.down;
 
+import io.netty.util.ResourceLeakDetector;
+import io.netty.util.ResourceLeakDetector.Level;
 import javax.swing.JOptionPane;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
@@ -8,6 +10,8 @@ import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.task.HttpDownErrorCheckTask;
 import lee.study.down.task.HttpDownProgressEventTask;
 import lee.study.down.util.OsUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,6 +22,8 @@ import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
 public class HttpDownApplication implements InitializingBean, EmbeddedServletContainerCustomizer {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownApplication.class);
 
   static {
     //设置slf4j日志打印目录
@@ -48,7 +54,11 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
     //托盘初始化
     new HttpDownTray(application.homeUrl).init();
     //打开浏览器访问前端页面
-    OsUtil.openBrowse(application.homeUrl);
+    try {
+      OsUtil.openBrowse(application.homeUrl);
+    } catch (Exception e) {
+      LOGGER.error("openBrowse:", e);
+    }
     //启动线程
     new HttpDownErrorCheckTask().start();
     new HttpDownProgressEventTask().start();
@@ -73,7 +83,16 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
   @Override
   public void afterPropertiesSet() throws Exception {
     if (!"dev".equalsIgnoreCase(active.trim())) {
-      viewServerPort = tomcatServerPort = OsUtil.getFreePort(tomcatServerPort);
+      try {
+        viewServerPort = tomcatServerPort = OsUtil.getFreePort(tomcatServerPort);
+      } catch (Exception e) {
+        LOGGER.error("getFreePort:", e);
+        JOptionPane.showMessageDialog(null, "系统异常，请尝试在命令行中执行netsh winsock reset，再运行软件", "运行警告",
+            JOptionPane.ERROR_MESSAGE);
+        throw e;
+      }
+    } else {
+      ResourceLeakDetector.setLevel(Level.ADVANCED);
     }
     homeUrl = "http://127.0.0.1:" + viewServerPort;
   }

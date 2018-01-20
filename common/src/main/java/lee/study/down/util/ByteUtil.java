@@ -224,19 +224,14 @@ public class ByteUtil {
     return -1;
   }
 
-  public static long getNextTokenSize(FileChannel fileChannel, byte[]... btsArr)
-      throws IOException {
-    return getNextTokenSize(fileChannel, -1, btsArr);
-  }
-
   public static long getNextTokenSize(FileChannel fileChannel, long position, byte[]... btsArr)
       throws IOException {
     long ret = -1;
     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
+    long startPosition = fileChannel.position();
     if (position >= 0) {
       fileChannel.position(position);
     }
-    long startPosition = fileChannel.position();
     outer:
     while (fileChannel.read(buffer) != -1) {
       buffer.flip();

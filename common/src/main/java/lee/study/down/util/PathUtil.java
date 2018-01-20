@@ -26,6 +26,7 @@ public class PathUtil {
       }
     }
     if (needDecode) {
+      ROOT_PATH = ROOT_PATH.replaceAll("\\+", "%2b");
       try {
         ROOT_PATH = URLDecoder.decode(ROOT_PATH, "UTF-8");
       } catch (UnsupportedEncodingException e) {

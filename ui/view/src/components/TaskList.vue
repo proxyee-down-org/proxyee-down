@@ -104,12 +104,17 @@
         return 0;
       },
       speedTask(task) {
-        let sumSpeed = task.chunkInfoList.map((chunk)=>{
+        if(task.status == 7 || task.status == 5){
+          return this.speedAvg(task);
+        }
+        return task.chunkInfoList.map((chunk)=>{
+          if(chunk.status == 7 || chunk.status == 5){
+            return 0;
+          }
           return this.speedChunk(chunk);
         }).reduce((speed1, speed2) => {
           return speed1 + speed2;
         });
-        return sumSpeed;
       },
       speedChunk(chunk) {
         if (chunk.status == 7 || chunk.status == 5) {

@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 
 public class OsUtil {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(OsUtil.class);
-
   private static final String REG_HEAD = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ";
   private static final String REG_TAIL = " /f";
   private static final String PROXY_ENABLE_KEY = "ProxyEnable ";
@@ -38,7 +36,9 @@ public class OsUtil {
       } catch (IOException e1) {
         throw e1;
       } finally {
-        serverSocket2.close();
+        if (serverSocket2 != null) {
+          serverSocket2.close();
+        }
       }
     } finally {
       if (serverSocket1 != null) {
@@ -70,7 +70,7 @@ public class OsUtil {
     return ret;
   }
 
-  public static void openBrowse(String url) {
+  public static void openBrowse(String url) throws Exception {
     Desktop desktop = Desktop.getDesktop();
     boolean flag = Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE);
     if (flag) {
@@ -78,10 +78,10 @@ public class OsUtil {
         URI uri = new URI(url);
         desktop.browse(uri);
       } catch (Exception e) {
-        LOGGER.error("can't open browse", e);
+        throw new Exception("can't open browse", e);
       }
     } else {
-      LOGGER.error("don't support browse");
+      throw new Exception("don't support browse");
     }
   }
 

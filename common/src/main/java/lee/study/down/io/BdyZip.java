@@ -93,8 +93,8 @@ public class BdyZip {
         isEnd = true;
       } else if (!ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize,
           ZIP_ENTRY_FILE_HEARD)) {
-        //找到真实文件长度
-        fileSize = ByteUtil.getNextTokenSize(fileChannel, ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
+        //找到真实文件长度 大于4G找4G之后的标识
+        fileSize = ByteUtil.getNextTokenSize(fileChannel,fileChannel.position()+Integer.MAX_VALUE, ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
         if (ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
           isEnd = true;
         }

@@ -1,8 +1,10 @@
 package lee.study.down;
 
+import io.netty.channel.Channel;
 import lee.study.down.intercept.BdyIntercept;
 import lee.study.down.intercept.HttpDownSniffIntercept;
 import lee.study.down.intercept.common.HttpDownInterceptFactory;
+import lee.study.proxyee.exception.HttpProxyExceptionHandle;
 import lee.study.proxyee.intercept.CertDownIntercept;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
@@ -45,6 +47,17 @@ public class HttpDownProxyServer {
         if (downIntercept != null) {
           pipeline.addLast(downIntercept);
         }
+      }
+    })
+    .httpProxyExceptionHandle(new HttpProxyExceptionHandle() {
+      @Override
+      public void beforeCatch(Channel clientChannel, Throwable cause) throws Exception {
+        LOGGER.warn("beforeCatch:",cause);
+      }
+
+      @Override
+      public void afterCatch(Channel clientChannel, Channel proxyChannel, Throwable cause) throws Exception {
+        LOGGER.warn("afterCatch:",cause);
       }
     }).start(port);
   }

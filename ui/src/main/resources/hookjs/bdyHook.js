@@ -14,13 +14,20 @@ if (Object.defineProperty) {
   navigator.__defineGetter__('userAgent', uaHook);
 }
 window.onload = function () {
-  var pd_dd = $('.module-header-wrapper dl:first').find('dd:first');
-  var pd_parent_span_class = pd_dd.find(">span").attr("class").split(" ")[0];
-  var pd_child_span_class = pd_dd.find(">span>span").attr("class").split(" ")[0];
-  $('.module-header-wrapper dl:first').find('dd:first').append(
-      '<span class="'+pd_parent_span_class+' find-light">'
-      + '<a href="https://github.com/monkeyWie/proxyee-down" target="_blank" title="proxyee-down">proxyee-down</a>'
-      + '<span class="'+pd_child_span_class+'"></span>'
-      + '<i class="find-light-icon"></i>'
-      + '</span>');
+  var initHookInterval = setInterval(function(){
+    try {
+    var pd_dd = $('.module-header-wrapper dl:first').find('dd:first');
+      if(pd_dd.find(">span").attr("class")&&pd_dd.find(">span>span").attr("class")){
+        var pd_parent_span_class = pd_dd.find(">span").attr("class").split(" ")[0];
+        var pd_child_span_class = pd_dd.find(">span>span").attr("class").split(" ")[0];
+        $('.module-header-wrapper dl:first').find('dd:first').append(
+            '<span class="'+pd_parent_span_class+' find-light">'
+            + '<a href="https://github.com/monkeyWie/proxyee-down" target="_blank" title="百度云下载插件加载成功">proxyee-down</a>'
+            + '<span class="'+pd_child_span_class+'"></span>'
+            + '<i class="find-light-icon"></i>'
+            + '</span>');
+        clearInterval(initHookInterval);
+      }
+    }catch (e){}
+  },200)
 }
