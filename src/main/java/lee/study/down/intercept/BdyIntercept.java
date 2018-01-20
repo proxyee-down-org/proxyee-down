@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import lee.study.down.intercept.common.ResponseTextIntercept;
+import lee.study.down.util.ByteUtil;
 import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
@@ -34,15 +35,9 @@ import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
  */
 public class BdyIntercept extends ResponseTextIntercept {
 
-  private static final String hookJs = "<script type=\"text/javascript\">"
-      + "var hook=function(){return 'GYun';};"
-      + "if(Object.defineProperty){"
-      + "Object.defineProperty(navigator,'platform',{get:hook,configurable:true});"
-      + "}"
-      + "else if(Object.prototype.__defineGetter__){"
-      + "navigator.__defineGetter__('platform',hook);"
-      + "}"
-      + "</script>";
+  private static final String hookJs = ByteUtil
+      .readJsContent(Thread.currentThread().getContextClassLoader()
+          .getResourceAsStream("hookjs/bdyHook.js"));
 
   @Override
   public boolean match(HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {

@@ -109,19 +109,13 @@ public class HttpDownServer implements InitializingBean, EmbeddedServletContaine
     })
         .httpProxyExceptionHandle(new HttpProxyExceptionHandle() {
           @Override
-          public void beforeCatch(Channel clientChannel, Throwable cause) {
-            if (cause instanceof ConnectException) {
-              LOGGER.warn("连接超时:" + cause.toString());
-            } else if (cause instanceof IOException) {
-              LOGGER.warn("IO异常:" + cause.toString());
-            } else {
-              LOGGER.error("服务器异常:",cause);
-            }
+          public void beforeCatch(Channel clientChannel, Throwable cause) throws Exception {
+            LOGGER.warn("beforeCatch:",cause);
           }
 
           @Override
-          public void afterCatch(Channel clientChannel, Channel proxyChannel, Throwable cause) {
-            beforeCatch(clientChannel, cause);
+          public void afterCatch(Channel clientChannel, Channel proxyChannel, Throwable cause) throws Exception {
+            LOGGER.warn("afterCatch:",cause);
           }
         })
         .start(CONFIG_INFO.getLocalPort());

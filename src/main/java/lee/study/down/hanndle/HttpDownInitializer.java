@@ -142,6 +142,10 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         HttpDownServer.LOGGER.debug(
             "服务器响应异常重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+        ctx.channel().close();
+        if (fileChannel != null) {
+          fileChannel.close();
+        }
         callback.onError(taskInfo, chunkInfo, cause);
         HttpDownServer.LOGGER.error("down onError:", cause);
       }

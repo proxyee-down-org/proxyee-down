@@ -117,11 +117,7 @@ public class ByteUtil {
   }
 
   public static byte[] stringToBytes(String str) {
-    byte[] bts = new byte[str.length()];
-    for (int i = 0; i < str.length(); i++) {
-      bts[i] = (byte) str.charAt(i);
-    }
-    return bts;
+    return str.getBytes();
   }
 
   public static int findText(ByteBuf byteBuf, String str) {

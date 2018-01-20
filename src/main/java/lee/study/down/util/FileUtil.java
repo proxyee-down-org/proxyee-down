@@ -117,36 +117,44 @@ public class FileUtil {
   }
 
   public static File createFileSmart(String path) throws IOException {
-    File file = new File(path);
-    if (file.exists()) {
-      file.delete();
-      file.createNewFile();
-    } else {
-      createDirSmart(file.getParent());
-      file.createNewFile();
+    try {
+      File file = new File(path);
+      if (file.exists()) {
+        file.delete();
+        file.createNewFile();
+      } else {
+        createDirSmart(file.getParent());
+        file.createNewFile();
+      }
+      return file;
+    } catch (IOException e) {
+      throw new IOException("createFileSmart=" + path, e);
     }
-    return file;
   }
 
   public static File createDirSmart(String path) throws IOException {
-    File file = new File(path);
-    if (file.exists()) {
-      file.delete();
-      file.mkdir();
-    } else {
-      Stack<File> stack = new Stack<>();
-      while (file != null) {
-        stack.push(file);
-        file = file.getParentFile();
-      }
-      while (stack.size() > 0) {
-        File dir = stack.pop();
-        if (!dir.exists()) {
-          dir.mkdir();
+    try {
+      File file = new File(path);
+      if (file.exists()) {
+        file.delete();
+        file.mkdir();
+      } else {
+        Stack<File> stack = new Stack<>();
+        while (file != null) {
+          stack.push(file);
+          file = file.getParentFile();
+        }
+        while (stack.size() > 0) {
+          File dir = stack.pop();
+          if (!dir.exists()) {
+            dir.mkdir();
+          }
         }
       }
+      return file;
+    } catch (Exception e) {
+      throw new IOException("createDirSmart=" + path, e);
     }
-    return file;
   }
 
   public static void main(String[] args) throws Exception {
