@@ -2,7 +2,6 @@ package lee.study.down;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import lee.study.down.util.PathUtil;
 
@@ -25,10 +24,10 @@ public class Bootstrap {
 
   static {
     String execPath = File.separator + "bin" + File.separator + "java.exe";
-    File file = new File(
-        PathUtil.ROOT_PATH + "jre1.8.0_152" + execPath);
-    if (file.exists()) {
-      JAVA_EXEC_HOME = file.getAbsolutePath();
+    File dir = new File(PathUtil.ROOT_PATH);
+    File[] files = dir.listFiles((d, name) -> d.isDirectory() && name.indexOf("jre") > -1);
+    if (files.length > 0) {
+      JAVA_EXEC_HOME = files[0].getAbsolutePath()+execPath;
     } else {
       JAVA_EXEC_HOME = System.getenv("JAVA_HOME") + execPath;
     }
