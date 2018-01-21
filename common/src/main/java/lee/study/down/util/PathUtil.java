@@ -13,7 +13,7 @@ public class PathUtil {
   static {
     URL url = PathUtil.class.getResource("/");
     String path = url != null ? url.getPath() : PathUtil.class.getResource("").getPath();
-    Pattern pattern = Pattern.compile("^file:/([^!]*/)[^/]+\\.jar!/.*$");
+    Pattern pattern = Pattern.compile("^file:(/[^!]*/)[^/]+\\.jar!/.*$");
     Matcher matcher = pattern.matcher(path);
     boolean needDecode = false;
     if (matcher.find()) {

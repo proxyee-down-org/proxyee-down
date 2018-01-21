@@ -29,6 +29,7 @@ public class BdyZip {
   @NoArgsConstructor
   @Accessors(chain = true)
   public static class BdyZipEntry {
+
     private byte[] header = new byte[4];
     private byte[] version = new byte[2];
     private byte[] general = new byte[2];
@@ -81,6 +82,8 @@ public class BdyZip {
     return zipEntry;
   }
 
+  private static final long _4G = 1024 * 1024 * 1024 * 4L - 1;
+
   public static void unzip(String path, String toPath) throws IOException {
     File zipFile = new File(path);
     File toDir = FileUtil.createDirSmart(toPath);
@@ -89,17 +92,22 @@ public class BdyZip {
     while (!isEnd) {
       BdyZipEntry bdyZipEntry = getNextBdyZipEntry(fileChannel);
       long fileSize = bdyZipEntry.getCompressedSize();
-      if (ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
+      if (ByteUtil
+          .matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
         isEnd = true;
       } else if (!ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize,
           ZIP_ENTRY_FILE_HEARD)) {
         //找到真实文件长度 大于4G找4G之后的标识
-        fileSize = ByteUtil.getNextTokenSize(fileChannel,fileChannel.position()+Integer.MAX_VALUE, ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
-        if (ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
+        fileSize = ByteUtil
+            .getNextTokenSize(fileChannel, fileChannel.position() + _4G,
+                ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
+        System.out.println(fileSize);
+        if (ByteUtil
+            .matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
           isEnd = true;
         }
       }
-      LOGGER.debug("bdyUnzip:"+bdyZipEntry.getFileName()+"\t"+fileSize+"\t"+isEnd);
+      LOGGER.debug("bdyUnzip:" + bdyZipEntry.getFileName() + "\t" + fileSize + "\t" + isEnd);
       if (fileSize == 0
           && bdyZipEntry.getFileName().lastIndexOf("/") == bdyZipEntry.getFileName().length() - 1) {
         FileUtil.createDirSmart(toDir.getPath() + File.separator + bdyZipEntry.getFileName());

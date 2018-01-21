@@ -3,6 +3,7 @@ package lee.study.down;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import lee.study.down.util.OsUtil;
 import lee.study.down.util.PathUtil;
 
 public class Bootstrap {
@@ -20,22 +21,27 @@ public class Bootstrap {
   private static final String CORE_PATH = MAIN_PATH + "proxyee-down-core.jar";
   private static final String UPDATE_PATH = MAIN_PATH + "proxyee-down-core.jar.bak";
   private static Process process;
-  private static String JAVA_EXEC_HOME;
+  private static String CMD;
 
   static {
     String execPath = File.separator + "bin" + File.separator + "java.exe";
     File dir = new File(PathUtil.ROOT_PATH);
     File[] files = dir.listFiles((d, name) -> d.isDirectory() && name.indexOf("jre") > -1);
-    if (files.length > 0) {
-      JAVA_EXEC_HOME = files[0].getAbsolutePath()+execPath;
+    String javaHome;
+    if (files != null && files.length > 0) {
+      javaHome = files[0].getAbsolutePath() + execPath;
     } else {
-      JAVA_EXEC_HOME = System.getenv("JAVA_HOME") + execPath;
+      javaHome = System.getenv("JAVA_HOME") + execPath;
     }
-    JAVA_EXEC_HOME = "\"" + JAVA_EXEC_HOME + "\"";
+    if (OsUtil.isWindows()) {
+      CMD = "\"" + javaHome + "\" -jar \"" + CORE_PATH + "\"";
+    } else {
+      CMD = javaHome + " -jar " + CORE_PATH;
+    }
   }
 
   private static void fork() throws Exception {
-    process = Runtime.getRuntime().exec(JAVA_EXEC_HOME + " -jar \"" + CORE_PATH + "\"");
+    process = Runtime.getRuntime().exec(CMD);
     BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
     String line;
     boolean isUpdate = false;
