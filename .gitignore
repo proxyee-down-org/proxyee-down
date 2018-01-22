@@ -37,4 +37,5 @@ yarn-error.log*
 */target/
 target/
 
-.idea/libraries/
+.idea/
+*.iml

@@ -34,4 +34,12 @@ public class HttpDownStatus {
    * 下载完成
    */
   public final static int DONE = 7;
+  /**
+   * 合并文件
+   */
+  public final static int MERGE = 8;
+  /**
+   * 取消合并文件
+   */
+  public final static int MERGE_CANCEL = 9;
 }

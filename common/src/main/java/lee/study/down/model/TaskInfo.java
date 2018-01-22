@@ -33,11 +33,21 @@ public class TaskInfo implements Serializable {
     return getFilePath() + File.separator + getFileName();
   }
 
+  public String buildChunksPath() {
+    return getFilePath() + File.separator + "." + getFileName() + "_cks";
+  }
+
+  public String buildChunkFilePath(int index) {
+    int size = chunkInfoList == null ? 0 : (chunkInfoList.size() + "").length();
+    return buildChunksPath() + File.separator + "ck_" + String.format("%0" + size + "d", index)
+        + ".tmp";
+  }
+
   public String buildTaskRecordFilePath() {
     return getFilePath() + File.separator + "." + getFileName() + ".inf";
   }
 
-  public TaskInfo buildChunkInfoList(){
+  public TaskInfo buildChunkInfoList() {
     List<ChunkInfo> chunkInfoList = new ArrayList<>();
     if (getTotalSize() > 0) {  //非chunked编码
       //计算chunk列表

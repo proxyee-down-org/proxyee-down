@@ -19,6 +19,9 @@
           case 'pause':
             ret = '#6C6C6C';
             break;
+          case 'merge':
+            ret = '#40636c';
+            break;
           default:
             ret = '#20a0ff';
         }

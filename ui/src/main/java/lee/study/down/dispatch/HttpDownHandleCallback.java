@@ -47,6 +47,12 @@ public class HttpDownHandleCallback implements HttpDownCallback {
   }
 
   @Override
+  public void onMerge(HttpDownInfo httpDownInfo) throws Exception {
+    ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
+    ContentManager.WS.sendMsg();
+  }
+
+  @Override
   public void onDone(HttpDownInfo httpDownInfo) throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     //更改任务下载状态为已完成

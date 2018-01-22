@@ -19,5 +19,7 @@ public interface HttpDownCallback {
 
   void onChunkDone(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception;
 
+  void onMerge(HttpDownInfo httpDownInfo) throws Exception;
+
   void onDone(HttpDownInfo httpDownInfo) throws Exception;
 }

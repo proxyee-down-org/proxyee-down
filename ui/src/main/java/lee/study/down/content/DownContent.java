@@ -6,14 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import lee.study.down.HttpDownBootstrap;
+import lee.study.down.boot.AbstractHttpDownBootstrap;
+import lee.study.down.boot.HttpDownBootstrapFactory;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
-import lee.study.proxyee.proxy.ProxyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ public class DownContent {
   private final static Logger LOGGER = LoggerFactory.getLogger(DownContent.class);
 
   //下载对象管理
-  private static Map<String, HttpDownBootstrap> downContent;
+  private static Map<String, AbstractHttpDownBootstrap> downContent;
 
   public HttpDownInfo getDownInfo(String id) {
     if (downContent.containsKey(id)) {
@@ -59,12 +59,12 @@ public class DownContent {
     return taskInfoList;
   }
 
-  public void putBoot(HttpDownBootstrap bootstrap) {
+  public void putBoot(AbstractHttpDownBootstrap bootstrap) {
     downContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
   }
 
   public void putBoot(HttpDownInfo httpDownInfo) {
-    HttpDownBootstrap bootstrap = new HttpDownBootstrap(httpDownInfo,
+    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
         HttpDownConstant.clientSslContext,
         HttpDownConstant.clientLoopGroup,
         HttpDownConstant.httpDownCallback);
@@ -75,7 +75,7 @@ public class DownContent {
     downContent.remove(id);
   }
 
-  public static HttpDownBootstrap getBoot(String id) {
+  public static AbstractHttpDownBootstrap getBoot(String id) {
     return downContent.get(id);
   }
 
@@ -117,7 +117,7 @@ public class DownContent {
         List<HttpDownInfo> records = (List<HttpDownInfo>) ByteUtil
             .deserialize(HttpDownConstant.TASK_RECORD_PATH);
         for (HttpDownInfo httpDownInfo : records) {
-          HttpDownBootstrap bootstrap = new HttpDownBootstrap(httpDownInfo,
+          AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
               HttpDownConstant.clientSslContext,
               HttpDownConstant.clientLoopGroup,
               HttpDownConstant.httpDownCallback);
@@ -135,9 +135,16 @@ public class DownContent {
             } else {
               taskInfo.reset();
             }
-            //设置为暂停状态
-            taskInfo.setStatus(HttpDownStatus.PAUSE);
-            taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setStatus(HttpDownStatus.PAUSE));
+            if (taskInfo.getStatus() == HttpDownStatus.MERGE) {
+              //设置为合并取消状态
+              taskInfo.setStatus(HttpDownStatus.MERGE_CANCEL);
+              taskInfo.getChunkInfoList()
+                  .forEach((chunk) -> chunk.setStatus(HttpDownStatus.MERGE_CANCEL));
+            } else {
+              //设置为暂停状态
+              taskInfo.setStatus(HttpDownStatus.PAUSE);
+              taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setStatus(HttpDownStatus.PAUSE));
+            }
           }
           putBoot(bootstrap);
         }

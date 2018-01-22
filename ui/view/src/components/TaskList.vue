@@ -50,10 +50,15 @@
                              slot="reference"></task-progress>
             </el-popover>
             <div class="task-progress-icon">
-              <i v-if="task.status!=7"
-                 :class="iconClass(task)"
-                 @click="controlTask(task)"></i>
-              <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
+              <div v-if="task.status!=8">
+                <i v-if="task.status!=7"
+                   :class="iconClass(task)"
+                   @click="controlTask(task)"></i>
+                <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
+              </div>
+              <div v-else>
+                <i class="el-icon-loading"></i>
+              </div>
             </div>
             <p>{{task.fileName}}</p>
           </el-col>
@@ -104,11 +109,11 @@
         return 0;
       },
       speedTask(task) {
-        if(task.status == 7 || task.status == 5){
+        if (task.status == 7 || task.status == 5) {
           return this.speedAvg(task);
         }
-        return task.chunkInfoList.map((chunk)=>{
-          if(chunk.status == 7 || chunk.status == 5){
+        return task.chunkInfoList.map((chunk) => {
+          if (chunk.status == 7 || chunk.status == 5) {
             return 0;
           }
           return this.speedChunk(chunk);
@@ -148,6 +153,9 @@
         if (task.status == 7) {
           return '已完成';
         }
+        if (task.status == 8) {
+          return '合并中';
+        }
         if (task.status == 5) {
           return '暂停中';
         }
@@ -162,6 +170,8 @@
         switch (task.status) {
           case 7:
             return 'success';
+          case 8:
+            return 'merge';
           case 2:
           case 6:
             return 'exception';

@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import lee.study.down.HttpDownApplication;
-import lee.study.down.HttpDownBootstrap;
+import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
 import lee.study.down.io.BdyZip;
@@ -77,7 +77,7 @@ public class HttpDownController {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
       return resultInfo;
     }
-    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(taskForm.getId());
+    AbstractHttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(taskForm.getId());
     HttpDownInfo httpDownInfo = bootstrap.getHttpDownInfo();
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
@@ -152,7 +152,7 @@ public class HttpDownController {
   @RequestMapping("/pauseTask")
   public ResultInfo pauseTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
+    AbstractHttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
@@ -164,7 +164,7 @@ public class HttpDownController {
   @RequestMapping("/continueTask")
   public ResultInfo continueTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
+    AbstractHttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
@@ -177,7 +177,7 @@ public class HttpDownController {
   public ResultInfo deleteTask(@RequestParam String id, @RequestParam boolean delFile)
       throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    HttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
+    AbstractHttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(id);
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
@@ -189,6 +189,7 @@ public class HttpDownController {
       synchronized (taskInfo) {
         FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
         if (delFile) {
+          FileUtil.deleteIfExists(taskInfo.buildChunksPath());
           FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
         }
       }
@@ -251,9 +252,9 @@ public class HttpDownController {
     return resultInfo;
   }
 
-  private static HttpDownBootstrap bootstrap;
+  private static AbstractHttpDownBootstrap bootstrap;
   private static volatile UpdateInfo updateInfo;
-//  private static final UpdateService updateService = new TestUpdateService();
+  //  private static final UpdateService updateService = new TestUpdateService();
   private static final UpdateService updateService = new GithubUpdateService();
 
   @RequestMapping("/checkUpdate")

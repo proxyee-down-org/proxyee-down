@@ -7,24 +7,18 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.ReferenceCountUtil;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
-import lee.study.down.HttpDownBootstrap;
+import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
-import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
-import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.proxy.ProxyHandleFactory;
 import org.slf4j.Logger;
@@ -35,12 +29,12 @@ public class HttpDownInitializer extends ChannelInitializer {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownInitializer.class);
 
   private boolean isSsl;
-  private HttpDownBootstrap bootstrap;
+  private AbstractHttpDownBootstrap bootstrap;
   private ChunkInfo chunkInfo;
 
   private long realContentSize;
 
-  public HttpDownInitializer(boolean isSsl, HttpDownBootstrap bootstrap,
+  public HttpDownInitializer(boolean isSsl, AbstractHttpDownBootstrap bootstrap,
       ChunkInfo chunkInfo) {
     this.isSsl = isSsl;
     this.bootstrap = bootstrap;
@@ -59,8 +53,7 @@ public class HttpDownInitializer extends ChannelInitializer {
         .addLast("httpCodec", new HttpClientCodec());
     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
-      private FileChannel fileChannel;
-      private LargeMappedByteBuffer mappedBuffer;
+      private Closeable[] fileChannels;
       private TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
       private HttpDownCallback callback = bootstrap.getCallback();
 
@@ -72,12 +65,10 @@ public class HttpDownInitializer extends ChannelInitializer {
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
             synchronized (chunkInfo) {
-              Channel nowChannel = (Channel) bootstrap
-                  .getAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL);
+              Channel nowChannel = bootstrap.getChannel(chunkInfo);
               if (chunkInfo.getStatus() == HttpDownStatus.RUNNING
                   && nowChannel == ctx.channel()
-                  && mappedBuffer != null) {
-                mappedBuffer.put(byteBuf.nioBuffer());
+                  && bootstrap.doFileWriter(chunkInfo, byteBuf.nioBuffer())) {
                 //文件已下载大小
                 chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
                 taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
@@ -90,11 +81,10 @@ public class HttpDownInitializer extends ChannelInitializer {
               }
             }
             if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
+              LOGGER.debug("分段下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
               bootstrap.close(chunkInfo);
               //分段下载完成回调
               chunkInfo.setStatus(HttpDownStatus.DONE);
-              chunkInfo.setLastTime(System.currentTimeMillis());
-              LOGGER.debug("分段下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
               taskInfo.refresh(chunkInfo);
               if (callback != null) {
                 callback.onChunkDone(bootstrap.getHttpDownInfo(), chunkInfo);
@@ -106,6 +96,9 @@ public class HttpDownInitializer extends ChannelInitializer {
                   if (taskInfo.getTotalSize() <= 0) {  //chunked编码最后更新文件大小
                     taskInfo.setTotalSize(taskInfo.getDownSize());
                     taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
+                  }
+                  if (taskInfo.getChunkInfoList().size() > 1) {
+                    bootstrap.merge();
                   }
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
@@ -138,16 +131,8 @@ public class HttpDownInitializer extends ChannelInitializer {
                 LOGGER.debug(
                     "下载响应：channelId[" + ctx.channel().id() + "]\t contentSize[" + realContentSize
                         + "]" + chunkInfo);
-                fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
-                    .getChannel();
-                mappedBuffer = new LargeMappedByteBuffer(fileChannel,
-                    MapMode.READ_WRITE, chunkInfo.getNowStartPosition(),
-                    chunkInfo.getEndPosition() - chunkInfo.getNowStartPosition() + 1);
+                fileChannels = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
-                chunkInfo
-                    .setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
-                bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_FILE_CHANNEL, fileChannel);
-                bootstrap.setAttr(chunkInfo, HttpDownBootstrap.ATTR_MAP_BUFFER, mappedBuffer);
                 if (callback != null) {
                   callback.onChunkStart(bootstrap.getHttpDownInfo(), chunkInfo);
                 }
@@ -166,8 +151,7 @@ public class HttpDownInitializer extends ChannelInitializer {
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         LOGGER.error("down onError:", cause);
-        Channel nowChannel = (Channel) bootstrap
-            .getAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL);
+        Channel nowChannel = bootstrap.getChannel(chunkInfo);
         safeClose(ctx.channel());
         if (nowChannel == ctx.channel()) {
           chunkInfo.setStatus(HttpDownStatus.CONNECTING_FAIL);
@@ -186,7 +170,7 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       private void safeClose(Channel channel) {
         try {
-          HttpDownUtil.safeClose(channel, fileChannel, mappedBuffer);
+          HttpDownUtil.safeClose(channel, fileChannels);
         } catch (IOException e) {
           LOGGER.error("safeClose fail:", e);
         }

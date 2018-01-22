@@ -116,15 +116,29 @@ public class OsUtil {
   private static final String OS = System.getProperty("os.name").toLowerCase();
 
   public static boolean isWindows() {
-    return (OS.indexOf("win") >= 0);
+    return OS.indexOf("win") >= 0;
   }
 
   public static boolean isMac() {
-    return (OS.indexOf("mac") >= 0);
+    return OS.indexOf("mac") >= 0;
   }
 
   public static boolean isUnix() {
-    return (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") >= 0);
+    return OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") >= 0;
+  }
+
+  private static final String ARCH = System.getProperty("sun.arch.data.model");
+
+  public static boolean is64() {
+    return "64".equals(ARCH);
+  }
+
+  public static boolean is32() {
+    return "32".equals(ARCH);
+  }
+
+  public static void main(String[] args) {
+    System.out.println(System.getProperty("sun.arch.data.model"));
   }
 
   public static boolean isSolaris() {

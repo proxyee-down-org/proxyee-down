@@ -18,6 +18,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslContext;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -208,19 +209,21 @@ public class HttpDownUtil {
     return httpResponses[0];
   }
 
-  public static void safeClose(Channel channel, FileChannel fileChannel,
-      LargeMappedByteBuffer mappedBuffer) throws IOException {
+  /**
+   * 关闭tcp连接和文件描述符
+   */
+  public static void safeClose(Channel channel, Closeable... fileChannels) throws IOException {
     if (channel != null) {
       //关闭旧的下载连接
       channel.close();
     }
-    if (fileChannel != null) {
-      //关闭旧的下载文件连接
-      fileChannel.close();
-    }
-    if (mappedBuffer != null) {
-      //关闭旧的下载文件连接
-      mappedBuffer.close();
+    if (fileChannels != null && fileChannels.length > 0) {
+      for (Closeable closeable : fileChannels) {
+        if (closeable != null) {
+          //关闭旧的下载文件连接
+          closeable.close();
+        }
+      }
     }
   }
 }

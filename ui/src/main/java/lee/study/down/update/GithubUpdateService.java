@@ -1,7 +1,8 @@
 package lee.study.down.update;
 
 import io.netty.handler.codec.http.HttpMethod;
-import lee.study.down.HttpDownBootstrap;
+import lee.study.down.boot.AbstractHttpDownBootstrap;
+import lee.study.down.boot.HttpDownBootstrapFactory;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.HttpHeadsInfo;
@@ -45,7 +46,7 @@ public class GithubUpdateService implements UpdateService {
   }
 
   @Override
-  public HttpDownBootstrap update(UpdateInfo updateInfo)
+  public AbstractHttpDownBootstrap update(UpdateInfo updateInfo)
       throws Exception {
     HttpRequestInfo requestInfo = new HttpRequestInfo(HttpVer.HTTP_1_1, HttpMethod.GET.toString(),
         updateInfo.getUrl(), buildHead(), null);
@@ -57,7 +58,7 @@ public class GithubUpdateService implements UpdateService {
         .setFileName(UPDATE_CORE_FILE_NAME + ".bak")
         .setFilePath(HttpDownConstant.MAIN_PATH);
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
-    HttpDownBootstrap bootstrap = new HttpDownBootstrap(httpDownInfo,
+    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
         HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup, null);
     bootstrap.startDown();
     return bootstrap;
