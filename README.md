@@ -8,9 +8,9 @@
 [地址](https://github.com/monkeyWie/proxyee-down/releases)  
 *注：从1.6版本开始下载器仅支持64位操作系统，若是32位操作系统请下载1.5版本*。
 ### 安装
-1. [Windows](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/read.md)
-2. [MAC](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/read.md)
-3. [Linux](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/read.md)
+1. [Windows安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/read.md)
+2. [MAC安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/read.md)
+3. [Linux安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/read.md)
 ### 百度云破解
 在2.02+版本中，下载器配置正确之后，打开百度云页面会有如下提示
 ![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/view/bdy-hook.png)
@@ -22,7 +22,7 @@
 3. **浏览器显示代理服务器无响应？**  
 *先确认软件是否运行，再检查浏览器的代理设置是否正确。*
 4. **百度云下载速度太慢？**  
-*可能被百度云10kb限速了，请尝试下载文件夹或勾选多个文件一起下载。*
+*调大分段数，若还是下载慢可能被百度云10kb限速了，请尝试下载文件夹或勾选多个文件一起下载。*
 5. **百度云合并下载文件无法解压？**  
 *可以使用下载器，工具栏的百度云解压工具进行解压。*
 6. **浏览器显示该网页无法正常运行(ERR_EMPTY_RESPONSE)？**  

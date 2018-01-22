@@ -138,9 +138,10 @@ public class FileUtil {
         file.mkdir();
       } else {
         Stack<File> stack = new Stack<>();
-        while (file != null) {
-          stack.push(file);
-          file = file.getParentFile();
+        File temp = new File(path);
+        while (temp != null) {
+          stack.push(temp);
+          temp = temp.getParentFile();
         }
         while (stack.size() > 0) {
           File dir = stack.pop();

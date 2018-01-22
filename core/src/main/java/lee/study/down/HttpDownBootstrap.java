@@ -66,7 +66,7 @@ public class HttpDownBootstrap {
       chunkInfo.setStartTime(System.currentTimeMillis());
       startChunkDown(chunkInfo, HttpDownStatus.CONNECTING_NORMAL);
     }
-    if(callback!=null){
+    if (callback != null) {
       callback.onStart(httpDownInfo);
     }
   }
@@ -74,7 +74,7 @@ public class HttpDownBootstrap {
   public void startChunkDown(ChunkInfo chunkInfo, int updateStatus) {
     HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
     RequestProto requestProto = requestInfo.requestProto();
-    LOGGER.debug("开始下载：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+    LOGGER.debug("开始下载：" + chunkInfo);
     Bootstrap bootstrap = new Bootstrap()
         .channel(NioSocketChannel.class)
         .group(clientLoopGroup)
@@ -87,8 +87,11 @@ public class HttpDownBootstrap {
     chunkInfo.setStatus(updateStatus);
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
+        synchronized (chunkInfo){
+          setAttr(chunkInfo, HttpDownBootstrap.ATTR_CHANNEL,future.channel());
+        }
         synchronized (requestInfo) {
-          LOGGER.debug("下载连接成功：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+          LOGGER.debug("下载连接成功：channelId[" + future.channel().id() + "]\t" + chunkInfo);
           if (httpDownInfo.getTaskInfo().isSupportRange()) {
             requestInfo.headers()
                 .set(HttpHeaderNames.RANGE,
@@ -105,7 +108,7 @@ public class HttpDownBootstrap {
           future.channel().writeAndFlush(content);
         }
       } else {
-        LOGGER.debug("下载连接失败：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+        LOGGER.debug("下载连接失败：" + chunkInfo);
         chunkInfo.setStatus(HttpDownStatus.FAIL);
         future.channel().close();
       }
@@ -123,7 +126,7 @@ public class HttpDownBootstrap {
       //已经下载完成
       if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
         chunkInfo.setStatus(HttpDownStatus.DONE);
-        if(callback!=null){
+        if (callback != null) {
           callback.onChunkDone(httpDownInfo, chunkInfo);
         }
         return;
@@ -158,7 +161,7 @@ public class HttpDownBootstrap {
         }
       }
     }
-    if(callback!=null) {
+    if (callback != null) {
       callback.onPause(httpDownInfo);
     }
   }
@@ -191,7 +194,7 @@ public class HttpDownBootstrap {
         }
       }
     }
-    if(callback!=null) {
+    if (callback != null) {
       callback.onContinue(httpDownInfo);
     }
   }
@@ -201,6 +204,8 @@ public class HttpDownBootstrap {
       Channel channel = (Channel) getAttr(chunkInfo, ATTR_CHANNEL);
       FileChannel fileChannel = (FileChannel) getAttr(chunkInfo, ATTR_FILE_CHANNEL);
       LargeMappedByteBuffer mapBuffer = (LargeMappedByteBuffer) getAttr(chunkInfo, ATTR_MAP_BUFFER);
+      LOGGER.debug(
+          "下载连接关闭：channelId[" + (channel != null ? channel.id() : "null") + "]\t" + chunkInfo);
       HttpDownUtil.safeClose(channel, fileChannel, mapBuffer);
     } catch (Exception e) {
       LOGGER.error("closeChunk error", e);

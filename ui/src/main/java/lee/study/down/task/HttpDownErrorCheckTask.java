@@ -34,8 +34,7 @@ public class HttpDownErrorCheckTask extends Thread {
                 Long downSize = flagMap.get(key);
                 //下载失败
                 if (downSize != null && downSize == chunkInfo.getDownSize()) {
-                  LOGGER.debug(
-                      "30秒内无响应重试：" + chunkInfo.getIndex() + "\t" + chunkInfo.getDownSize());
+                  LOGGER.debug("30秒内无响应重试：" + chunkInfo);
                   //避免同时下载
                   ContentManager.DOWN.getBoot(taskInfo.getId()).retryChunkDown(chunkInfo);
                 } else {
