@@ -6,21 +6,21 @@
 ## 使用教程
 ### 下载
 [前往](https://github.com/monkeyWie/proxyee-down/releases)  
-#### windows
+1. #### windows
 根据操作系统的位数选择对应proxyee-down-x.xx-windows-xxx.zip文件进行下载。
-#### 非windows
+2. #### 非windows
 1. 根据操作系统[下载](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)对应JRE进行安装。
 2. 下载proxyee-down-x.xx-jar.zip文件
 ### 安装
 1. [Windows安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/windows/read.md)
 2. [MAC安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/read.md)
 3. [Linux安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/read.md)
-### 百度云破解
-在2.02+版本中，下载器配置正确之后，打开百度云页面会有如下提示
-![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/view/bdy-hook.png)
 ### 安装成功
 在安装成功之后，浏览器下载资源时会跳转到创建任务页面，然后选择保存的路径和分段数进行创建下载任务。
 ![新建任务](https://github.com/monkeyWie/proxyee-down/raw/master/view/new-task.png)
+### 百度云破解
+在2.02+版本中，下载器配置正确之后，打开百度云页面会有如下提示
+![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/view/bdy-hook.png)
 ### 常见问题
 1. **证书页面无法访问？**  
 *先确认软件是否运行，运行还是无法访问可能是端口号被占用，打开软件设置页面修改代理端口号，保存后再访问http://127.0.0.1:修改后的端口号。*
