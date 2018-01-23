@@ -16,7 +16,7 @@
 代理设置分为两种：全局代理和局部代理，推荐使用局部代理
 ### 全局代理
 1. 右键点击托盘，点击全局代理选择开启
-![3-1](https://github.com/monkeyWie/proxyee-down/raw/master/view/guide/windows/imgs/3-1-1.png)  
+![3-1](https://github.com/monkeyWie/proxyee-down/raw/master/view/guide/windows/imgs/3-1.png)  
 
 ### 局部代理
 局部代理需配合浏览器代理切换插件来使用，这里推荐SwitchyOmega，教程也以该插件为例。
