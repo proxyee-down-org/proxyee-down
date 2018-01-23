@@ -1,9 +1,10 @@
 package lee.study.down.model;
 
+import java.io.Serializable;
 import lombok.Data;
 
 @Data
-public class ConfigBaseInfo {
+public class ConfigBaseInfo implements Serializable {
 
   private boolean guideFlag;  //是否需要新手引导教程
   private int proxyPort;  //代理端口号

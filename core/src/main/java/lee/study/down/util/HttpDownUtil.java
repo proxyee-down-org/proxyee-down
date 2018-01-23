@@ -93,8 +93,8 @@ public class HttpDownUtil {
         try {
           fileName = new String(bts, "UTF-8");
           fileName = URLDecoder.decode(fileName, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-          fileName = null;
+        } catch (Exception e) {
+
         }
       }
     }
