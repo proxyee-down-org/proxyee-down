@@ -5,10 +5,10 @@
 2. 百度云合并下载解压工具(可解压4G大文件)
 ## 使用教程
 ### 下载
-[前往](https://github.com/monkeyWie/proxyee-down/releases)  
-1. #### windows
+[前往下载](https://github.com/monkeyWie/proxyee-down/releases)，请根据操作系统和位数下载对应的文件。
+### windows
 根据操作系统的位数选择对应proxyee-down-x.xx-windows-xxx.zip文件进行下载。
-2. #### 非windows
+### 非windows
 1. 根据操作系统[下载](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)对应JRE进行安装。
 2. 下载proxyee-down-x.xx-jar.zip文件
 ### 安装
