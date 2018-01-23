@@ -1,6 +1,7 @@
 package lee.study.down.update;
 
 import io.netty.handler.codec.http.HttpMethod;
+import java.util.Collections;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.boot.HttpDownBootstrapFactory;
 import lee.study.down.constant.HttpDownConstant;
@@ -15,6 +16,7 @@ import lee.study.proxyee.util.ProtoUtil.RequestProto;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class GithubUpdateService implements UpdateService {
 
@@ -25,11 +27,16 @@ public class GithubUpdateService implements UpdateService {
   public UpdateInfo check(float currVersion) throws Exception {
     UpdateInfo updateInfo = new UpdateInfo();
     Document document = Jsoup.connect("https://github.com/monkeyWie/proxyee-down/releases").get();
-    Element releaseDiv = document.select(".release-body.commit").get(0);
-    Element version = releaseDiv.select(".release-title.text-normal").get(0);
-    float maxVersion = Float.parseFloat(version.text());
+    Elements versions = document.select("h1.release-title.text-normal");
+    Collections.sort(versions, (v1, v2) -> {
+      float version1 = Float.parseFloat(v1.text());
+      float version2 = Float.parseFloat(v2.text());
+      return version1 < version2 ? 1 : -1;
+    });
+    float maxVersion = Float.parseFloat(versions.get(0).text());
     if (maxVersion > currVersion) {
       updateInfo.setVersion(maxVersion);
+      Element releaseDiv = versions.get(0).parent().parent();
       for (Element element : releaseDiv.select(".d-block.py-2")) {
         if (UPDATE_CORE_FILE_NAME.equalsIgnoreCase(element.select("strong").text())) {
           updateInfo.setUrl("https://" + HOST + element.select("a").attr("href"));
@@ -84,12 +91,6 @@ public class GithubUpdateService implements UpdateService {
   public static void main(String[] args) throws Exception {
     GithubUpdateService githubUpdateService = new GithubUpdateService();
     UpdateInfo updateInfo = githubUpdateService.check(1.0F);
-    HttpRequestInfo requestInfo = new HttpRequestInfo(HttpVer.HTTP_1_1, HttpMethod.GET.toString(),
-        updateInfo.getUrl(), buildHead(), null);
-    requestInfo.setRequestProto(new RequestProto("github.com", 443, true));
-    System.out.println(HttpDownUtil.getResponse(requestInfo, HttpDownConstant.clientSslContext,
-        HttpDownConstant.clientLoopGroup).toString());
-    System.out.println(HttpDownUtil.getResponse(requestInfo, HttpDownConstant.clientSslContext,
-        HttpDownConstant.clientLoopGroup).toString());
+    System.out.println(updateInfo);
   }
 }
