@@ -20,7 +20,9 @@ public class HttpDownProgressEventTask extends Thread {
       try {
         for (TaskInfo taskInfo : ContentManager.DOWN.getStartTasks()) {
           if (taskInfo.getStatus() != HttpDownStatus.DONE
-              && taskInfo.getStatus() != HttpDownStatus.PAUSE) {
+              && taskInfo.getStatus() != HttpDownStatus.PAUSE
+              && taskInfo.getStatus() != HttpDownStatus.MERGE
+              && taskInfo.getStatus() != HttpDownStatus.MERGE_CANCEL) {
             taskInfo.setLastTime(System.currentTimeMillis());
             for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
               if (chunkInfo.getStatus() != HttpDownStatus.DONE

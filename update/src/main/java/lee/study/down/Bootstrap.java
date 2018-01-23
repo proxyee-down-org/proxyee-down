@@ -24,7 +24,7 @@ public class Bootstrap {
   private static String CMD;
 
   static {
-    String execPath = File.separator + "bin" + File.separator + "java.exe";
+    String execPath = File.separator + "bin" + File.separator + "java";
     File dir = new File(PathUtil.ROOT_PATH);
     File[] files = dir.listFiles((d, name) -> d.isDirectory() && name.indexOf("jre") > -1);
     String javaHome;

@@ -117,20 +117,8 @@ public class ByteUtil {
     }
   }
 
-  /*public static byte[] stringToBytes(String str) {
-    byte[] bts = new byte[str.length()];
-    for (int i = 0; i < str.length(); i++) {
-      bts[i] = (byte) str.charAt(i);
-    }
-    return bts;
-  }*/
-
-  public static byte[] stringToBytes(String str) {
-    return str.getBytes();
-  }
-
   public static int findText(ByteBuf byteBuf, String str) {
-    byte[] text = stringToBytes(str);
+    byte[] text = str.getBytes();
     int matchIndex = 0;
     for (int i = byteBuf.readerIndex(); i < byteBuf.readableBytes(); i++) {
       for (int j = matchIndex; j < text.length; j++) {
@@ -149,12 +137,16 @@ public class ByteUtil {
   }
 
   public static ByteBuf insertText(ByteBuf byteBuf, int index, String str) {
+    return insertText(byteBuf, index, str, Charset.defaultCharset());
+  }
+
+  public static ByteBuf insertText(ByteBuf byteBuf, int index, String str, Charset charset) {
     byte[] begin = new byte[index + 1];
     byte[] end = new byte[byteBuf.readableBytes() - begin.length];
     byteBuf.readBytes(begin);
     byteBuf.readBytes(end);
     byteBuf.writeBytes(begin);
-    byteBuf.writeBytes(stringToBytes(str));
+    byteBuf.writeBytes(str.getBytes(charset));
     byteBuf.writeBytes(end);
     return byteBuf;
   }
@@ -176,13 +168,13 @@ public class ByteUtil {
   }
 
   public static String readJsContent(InputStream inputStream) {
-    return readJsContent(inputStream,Charset.defaultCharset());
+    return readJsContent(inputStream, Charset.defaultCharset());
   }
 
-  public static String readJsContent(InputStream inputStream,Charset charset) {
+  public static String readJsContent(InputStream inputStream, Charset charset) {
     StringBuilder sb = new StringBuilder();
     try (
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream,charset))
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, charset))
     ) {
       sb.append("<script type=\"text/javascript\">");
       String line;

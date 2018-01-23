@@ -170,26 +170,18 @@ public abstract class AbstractHttpDownBootstrap {
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
-      if (taskInfo.getStatus() == HttpDownStatus.MERGE_CANCEL) {
-        merge();
-      } else {
-        //如果文件被删除重新开始下载
-        if (!FileUtil.exists(taskInfo.buildTaskFilePath())) {
-          close();
-          startDown();
-        } else {
-          taskInfo.setStatus(HttpDownStatus.RUNNING);
-          long curTime = System.currentTimeMillis();
-          taskInfo.setPauseTime(
-              taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
-          taskInfo.setLastTime(curTime);
-          for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
-            synchronized (chunkInfo) {
-              if (chunkInfo.getStatus() == HttpDownStatus.PAUSE) {
-                chunkInfo.setPauseTime(taskInfo.getPauseTime());
-                chunkInfo.setLastTime(curTime);
-                retryChunkDown(chunkInfo, HttpDownStatus.CONNECTING_NORMAL);
-              }
+      if (continueDownHandle()) {
+        taskInfo.setStatus(HttpDownStatus.RUNNING);
+        long curTime = System.currentTimeMillis();
+        taskInfo.setPauseTime(
+            taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
+        taskInfo.setLastTime(curTime);
+        for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
+          synchronized (chunkInfo) {
+            if (chunkInfo.getStatus() == HttpDownStatus.PAUSE) {
+              chunkInfo.setPauseTime(taskInfo.getPauseTime());
+              chunkInfo.setLastTime(curTime);
+              retryChunkDown(chunkInfo, HttpDownStatus.CONNECTING_NORMAL);
             }
           }
         }
@@ -200,14 +192,18 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
+  public abstract boolean continueDownHandle() throws Exception;
+
   public abstract void merge() throws Exception;
 
   public void close(ChunkInfo chunkInfo) {
     try {
       Channel channel = getChannel(chunkInfo);
+      Closeable[] fileChannels = getFileWriter(chunkInfo);
       LOGGER.debug(
           "下载连接关闭：channelId[" + (channel != null ? channel.id() : "null") + "]\t" + chunkInfo);
-      HttpDownUtil.safeClose(channel, getFileWriter(chunkInfo));
+      attr.remove(chunkInfo.getIndex());
+      HttpDownUtil.safeClose(channel, fileChannels);
     } catch (Exception e) {
       LOGGER.error("closeChunk error", e);
     }

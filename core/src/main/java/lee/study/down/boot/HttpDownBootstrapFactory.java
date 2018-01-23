@@ -10,10 +10,10 @@ public class HttpDownBootstrapFactory {
 
   public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo,
       SslContext clientSslContext, NioEventLoopGroup clientLoopGroup, HttpDownCallback callback) {
-    /*if (OsUtil.is64()) {
+    if (OsUtil.is64()) {
       return new X64HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
-    } else {*/
-    return new X32HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
-//    }
+    } else {
+      return new X32HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+    }
   }
 }

@@ -131,6 +131,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                 LOGGER.debug(
                     "下载响应：channelId[" + ctx.channel().id() + "]\t contentSize[" + realContentSize
                         + "]" + chunkInfo);
+                chunkInfo.setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
                 fileChannels = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
                 if (callback != null) {

@@ -99,8 +99,10 @@ public class DownContent {
   public void saveTask(String id) {
     try {
       TaskInfo taskInfo = getTaskInfo(id);
-      synchronized (taskInfo) {
-        ByteUtil.serialize(taskInfo, taskInfo.buildTaskRecordFilePath());
+      if (taskInfo != null) {
+        synchronized (taskInfo) {
+          ByteUtil.serialize(taskInfo, taskInfo.buildTaskRecordFilePath());
+        }
       }
     } catch (IOException e) {
       LOGGER.error("写入配置文件失败：", e);
@@ -138,8 +140,6 @@ public class DownContent {
             if (taskInfo.getStatus() == HttpDownStatus.MERGE) {
               //设置为合并取消状态
               taskInfo.setStatus(HttpDownStatus.MERGE_CANCEL);
-              taskInfo.getChunkInfoList()
-                  .forEach((chunk) -> chunk.setStatus(HttpDownStatus.MERGE_CANCEL));
             } else {
               //设置为暂停状态
               taskInfo.setStatus(HttpDownStatus.PAUSE);

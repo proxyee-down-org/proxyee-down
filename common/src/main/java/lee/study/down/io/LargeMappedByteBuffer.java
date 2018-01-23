@@ -47,7 +47,9 @@ public class LargeMappedByteBuffer implements Closeable {
         bufferList.get(index).put(byteBuffer);
       }
     } catch (Exception e) {
-      throw new IOException("LargeMappedByteBuffer put rawPosition-"+rawPosition+" size-"+size, e);
+      throw new IOException(
+          "LargeMappedByteBuffer put rawPosition-" + rawPosition + "\tposition-" + position
+              + "\tsize-" + size, e);
     }
   }
 

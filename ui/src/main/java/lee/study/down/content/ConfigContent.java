@@ -45,7 +45,7 @@ public class ConfigContent {
         LOGGER.error("加载配置文件失败：", e);
       }
     }
-    if (configContent == null) {
+    if (configContent == null || configContent.getProxyPort() == 0) {
       configContent = new ConfigInfo();
       //默认代理端口
       configContent.setProxyPort(9999);
@@ -53,6 +53,8 @@ public class ConfigContent {
       configContent.setConnections(16);
       //默认30秒无响应重试
       configContent.setTimeout(30);
+      //默认全局代理
+      configContent.setProxyModel(1);
       save();
     }
   }

@@ -31,18 +31,33 @@ public class X32HttpDownBootstrap extends AbstractHttpDownBootstrap {
   @Override
   public void initBoot() throws Exception {
     TaskInfo taskInfo = getHttpDownInfo().getTaskInfo();
-    FileUtil.deleteIfExists(taskInfo.buildChunksPath());
-    FileUtil.createDirSmart(taskInfo.buildChunksPath());
+    if (taskInfo.getChunkInfoList().size() > 1) {
+      FileUtil.deleteIfExists(taskInfo.buildChunksPath());
+      FileUtil.createDirSmart(taskInfo.buildChunksPath());
+      FileUtil.createFile(taskInfo.buildTaskFilePath());
+    }
+  }
+
+  @Override
+  public boolean continueDownHandle() throws Exception {
+    TaskInfo taskInfo = getHttpDownInfo().getTaskInfo();
+    if (taskInfo.getStatus() == HttpDownStatus.MERGE_CANCEL) {
+      merge();
+    } else if (!FileUtil.exists(taskInfo.buildChunksPath())) {
+      close();
+      startDown();
+    } else {
+      return true;
+    }
+    return false;
   }
 
   @Override
   public void merge() throws Exception {
     TaskInfo taskInfo = getHttpDownInfo().getTaskInfo();
     String filePath = taskInfo.buildTaskFilePath();
-    FileUtil.deleteIfExists(filePath);
     long position = 0;
     taskInfo.setStatus(HttpDownStatus.MERGE);
-    taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setStatus(HttpDownStatus.MERGE));
     if (getCallback() != null) {
       getCallback().onMerge(getHttpDownInfo());
     }
@@ -70,10 +85,15 @@ public class X32HttpDownBootstrap extends AbstractHttpDownBootstrap {
 
   @Override
   public Closeable[] initFileWriter(ChunkInfo chunkInfo) throws Exception {
-    FileChannel fileChannel = new RandomAccessFile(
-        getHttpDownInfo().getTaskInfo().buildChunkFilePath(chunkInfo.getIndex()), "rw")
-        .getChannel();
-    fileChannel.position(chunkInfo.getNowStartPosition());
+    TaskInfo taskInfo = getHttpDownInfo().getTaskInfo();
+    FileChannel fileChannel;
+    if (taskInfo.getChunkInfoList().size() > 1) {
+      fileChannel = new RandomAccessFile(taskInfo.buildChunkFilePath(chunkInfo.getIndex()), "rw")
+          .getChannel();
+    } else {
+      fileChannel = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw").getChannel();
+    }
+    fileChannel.position(chunkInfo.getDownSize());
     Closeable[] fileChannels = new Closeable[]{fileChannel};
     setAttr(chunkInfo, ATTR_FILE_CHANNELS, fileChannels);
     return fileChannels;
@@ -84,7 +104,7 @@ public class X32HttpDownBootstrap extends AbstractHttpDownBootstrap {
     Closeable[] fileChannels = getFileWriter(chunkInfo);
     if (fileChannels != null && fileChannels.length > 0) {
       FileChannel fileChannel = (FileChannel) getFileWriter(chunkInfo)[0];
-      if (fileChannel != null) {
+      if (fileChannel != null && fileChannel.isOpen()) {
         fileChannel.write(buffer);
         return true;
       }

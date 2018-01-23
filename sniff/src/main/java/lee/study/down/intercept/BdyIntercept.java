@@ -14,7 +14,7 @@ public class BdyIntercept extends ResponseTextIntercept {
 
   private static final String hookJs = ByteUtil
       .readJsContent(Thread.currentThread().getContextClassLoader()
-          .getResourceAsStream("hookjs/bdyHook.js"));
+          .getResourceAsStream("hookjs/bdyHook.js"), Charset.forName("UTF-8"));
 
   @Override
   public boolean match(HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {

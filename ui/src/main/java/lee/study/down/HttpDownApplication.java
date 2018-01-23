@@ -52,12 +52,16 @@ public class HttpDownApplication implements InitializingBean, EmbeddedServletCon
       new Thread(() -> application.proxyServer.start(proxyPort)).start();
     }
     //托盘初始化
-    new HttpDownTray(application.homeUrl).init();
+    try {
+      new HttpDownTray(application.homeUrl).init();
+    } catch (Exception e) {
+      LOGGER.error("tray init error:", e);
+    }
     //打开浏览器访问前端页面
     try {
       OsUtil.openBrowse(application.homeUrl);
     } catch (Exception e) {
-      LOGGER.error("openBrowse:", e);
+      LOGGER.error("openBrowse error:", e);
     }
     //启动线程
     new HttpDownErrorCheckTask().start();

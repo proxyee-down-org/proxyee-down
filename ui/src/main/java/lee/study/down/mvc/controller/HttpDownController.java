@@ -1,6 +1,7 @@
 package lee.study.down.mvc.controller;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -96,7 +97,12 @@ public class HttpDownController {
       } else {
         taskInfo.setConnections(1);
       }
-      bootstrap.startDown();
+      try {
+        bootstrap.startDown();
+      } catch (FileNotFoundException e) {
+        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问下载路径，请修改或使用管理员身份运行");
+        return resultInfo;
+      }
       //记录存储路径
       String lastPath = ContentManager.CONFIG.get().getLastPath();
       if (!taskForm.getFilePath().equalsIgnoreCase(lastPath)) {
@@ -183,10 +189,10 @@ public class HttpDownController {
     } else {
       TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
       bootstrap.close();
-      ContentManager.DOWN.removeBoot(id);
-      ContentManager.DOWN.save();
       //删除任务进度记录文件
       synchronized (taskInfo) {
+        ContentManager.DOWN.removeBoot(id);
+        ContentManager.DOWN.save();
         FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
         if (delFile) {
           FileUtil.deleteIfExists(taskInfo.buildChunksPath());
@@ -202,7 +208,12 @@ public class HttpDownController {
     ResultInfo resultInfo = new ResultInfo();
     File file = new File(unzipForm.getFilePath());
     if (file.exists() && file.isFile()) {
-      BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath());
+      if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
+        BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath());
+      } else {
+        resultInfo.setStatus(ResultStatus.BAD.getCode());
+        resultInfo.setMsg("解压失败，请确认是否为百度云合并下载zip文件");
+      }
     } else {
       resultInfo.setStatus(ResultStatus.BAD.getCode());
       resultInfo.setMsg("解压失败，文件不存在");

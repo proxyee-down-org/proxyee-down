@@ -3,18 +3,17 @@ package lee.study.down.boot;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 import java.io.Closeable;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.util.FileUtil;
 
 public class X64HttpDownBootstrap extends AbstractHttpDownBootstrap {
 
@@ -23,6 +22,17 @@ public class X64HttpDownBootstrap extends AbstractHttpDownBootstrap {
       NioEventLoopGroup clientLoopGroup,
       HttpDownCallback callback) {
     super(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+  }
+
+  @Override
+  public boolean continueDownHandle() throws Exception {
+    TaskInfo taskInfo = getHttpDownInfo().getTaskInfo();
+    if (!FileUtil.exists(taskInfo.buildTaskFilePath())) {
+      close();
+      startDown();
+      return false;
+    }
+    return true;
   }
 
   @Override
@@ -48,7 +58,6 @@ public class X64HttpDownBootstrap extends AbstractHttpDownBootstrap {
     LargeMappedByteBuffer mappedBuffer = new LargeMappedByteBuffer(fileChannel,
         MapMode.READ_WRITE, chunkInfo.getNowStartPosition(),
         chunkInfo.getEndPosition() - chunkInfo.getNowStartPosition() + 1);
-    chunkInfo.setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
     Closeable[] fileChannels = new Closeable[]{fileChannel, mappedBuffer};
     setAttr(chunkInfo, ATTR_FILE_CHANNELS, fileChannels);
     return fileChannels;

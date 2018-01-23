@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class OsUtil {
 
@@ -95,19 +93,21 @@ public class OsUtil {
     Runtime.getRuntime().exec(REG_HEAD + PROXY_ENABLE_KEY + "/d 0" + REG_TYPE_DWORD + REG_TAIL);
   }
 
-  public static void execFile(InputStream inputStream, String dirPath) throws IOException {
-    File file = new File(dirPath + File.separator + "ca.crt");
-    try (
-        FileOutputStream fos = new FileOutputStream(file)
-    ) {
-      byte[] bts = new byte[8192];
-      int len;
-      while ((len = inputStream.read(bts)) != -1) {
-        fos.write(bts, 0, len);
-      }
-    } finally {
-      if (inputStream != null) {
-        inputStream.close();
+  public static void execFile(InputStream inputStream, String filePath) throws IOException {
+    File file = new File(filePath);
+    if (!file.exists()) {
+      try (
+          FileOutputStream fos = new FileOutputStream(file)
+      ) {
+        byte[] bts = new byte[8192];
+        int len;
+        while ((len = inputStream.read(bts)) != -1) {
+          fos.write(bts, 0, len);
+        }
+      } finally {
+        if (inputStream != null) {
+          inputStream.close();
+        }
       }
     }
     Desktop.getDesktop().open(file);
@@ -127,6 +127,10 @@ public class OsUtil {
     return OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") >= 0;
   }
 
+  public static boolean isSolaris() {
+    return (OS.indexOf("sunos") >= 0);
+  }
+
   private static final String ARCH = System.getProperty("sun.arch.data.model");
 
   public static boolean is64() {
@@ -136,13 +140,4 @@ public class OsUtil {
   public static boolean is32() {
     return "32".equals(ARCH);
   }
-
-  public static void main(String[] args) {
-    System.out.println(System.getProperty("sun.arch.data.model"));
-  }
-
-  public static boolean isSolaris() {
-    return (OS.indexOf("sunos") >= 0);
-  }
-
 }

@@ -139,7 +139,7 @@
           let result = response.data;
           if (result.status == 200) {
             this.updateInfo = result.data;
-            this.updateInfo.version = this.updateInfo.version.toFixed(2);
+            this.updateInfo.version = this.fmtVersion(this.updateInfo.version);
             this.dialogVisible = true;
           } else {
             this.$message({showClose: true, message: result.msg});
@@ -176,13 +176,20 @@
             return null;
         }
       },
+      fmtVersion(version) {
+        if (parseInt(version) == version) {
+          return version.toFixed(1);
+        } else {
+          return version;
+        }
+      }
     },
     created() {
       this.$http.get('api/getVersion')
       .then((response) => {
         let result = response.data;
         if (result.status == 200) {
-          this.version = result.data.toFixed(2);
+          this.version = this.fmtVersion(result.data);
         } else {
           this.$message({showClose: true, message: result.msg});
         }

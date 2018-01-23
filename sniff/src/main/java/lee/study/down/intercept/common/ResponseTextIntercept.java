@@ -40,15 +40,6 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
           httpResponse.headers().set(HttpHeaderNames.CONTENT_ENCODING, HttpHeaderValues.GZIP);
         }
         contentBuf = PooledByteBufAllocator.DEFAULT.buffer();
-        /*contentBuf.writeBytes(hookResponse().getBytes());
-        for (HttpProxyIntercept intercept : pipeline) {
-          if (intercept != this && intercept instanceof ResponseTextIntercept) {
-            ResponseTextIntercept textIntercept = (ResponseTextIntercept) intercept;
-            if (textIntercept.match(httpResponse, pipeline)) {
-              contentBuf.writeBytes(textIntercept.hookResponse().getBytes());
-            }
-          }
-        }*/
       }
       //直接调用默认拦截器，跳过下载拦截器
       pipeline.getDefault()
@@ -66,7 +57,8 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
       try {
         contentBuf.writeBytes(httpContent.content());
         if (httpContent instanceof LastHttpContent) {
-          ByteUtil.insertText(contentBuf,ByteUtil.findText(contentBuf,"<head>"),hookResponse());
+          ByteUtil.insertText(contentBuf, ByteUtil.findText(contentBuf, "<head>"), hookResponse(),
+              Charset.forName("UTF-8"));
           HttpContent hookHttpContent = new DefaultLastHttpContent();
           if (isGzip) { //转化成gzip编码
             byte[] temp = new byte[contentBuf.readableBytes()];

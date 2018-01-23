@@ -20,7 +20,7 @@
             ret = '#6C6C6C';
             break;
           case 'merge':
-            ret = '#40636c';
+            ret = '#d497ee';
             break;
           default:
             ret = '#20a0ff';
