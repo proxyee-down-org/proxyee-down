@@ -40,6 +40,5 @@
 6. 切换到刚刚设置的情景模式去下载：点击switchyomega插件->选中刚刚新建的情景模式  
 ![3-2-6](https://github.com/monkeyWie/proxyee-down/raw/master/view/guide/windows/imgs/3-2-6.png)  
 ## 完成
-打开浏览器,选择要下载的资源进行下载就会弹出下载页面了。  
-![4-1](https://github.com/monkeyWie/proxyee-down/raw/master/view/guide/windows/imgs/4-1.png)  
+打开浏览器,选择要下载的资源进行下载就会弹出下载页面了。    
 

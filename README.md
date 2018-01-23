@@ -16,7 +16,7 @@
 2. [MAC安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/mac/read.md)
 3. [Linux安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/view/guide/linux/read.md)
 ### 安装成功
-在安装成功之后，浏览器下载资源时会跳转到创建任务页面，然后选择保存的路径和分段数进行创建下载任务。
+在安装成功之后，浏览器下载资源时会跳转到创建任务页面，然后选择保存的路径和分段数进行创建下载任务。  
 ![新建任务](https://github.com/monkeyWie/proxyee-down/raw/master/view/new-task.png)
 ### 百度云破解
 在2.02+版本中，下载器配置正确之后，打开百度云页面会有如下提示
