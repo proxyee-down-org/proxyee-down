@@ -36,7 +36,13 @@ public class HttpDownHandleCallback implements HttpDownCallback {
   }
 
   @Override
-  public void onError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
+  public void onError(HttpDownInfo httpDownInfo, Throwable cause) {
+    ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
+    ContentManager.WS.sendMsg();
+  }
+
+  @Override
+  public void onChunkError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
     ContentManager.WS.sendMsg();
   }
 

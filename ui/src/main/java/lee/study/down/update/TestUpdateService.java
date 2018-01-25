@@ -34,13 +34,13 @@ public class TestUpdateService implements UpdateService {
         updateInfo.getUrl(), buildHead(), null);
     requestInfo.setRequestProto(new RequestProto(HOST, 80, false));
     TaskInfo taskInfo = HttpDownUtil
-        .getTaskInfo(requestInfo, null, HttpDownConstant.clientSslContext,
+        .getTaskInfo(requestInfo, null, null, HttpDownConstant.clientSslContext,
             HttpDownConstant.clientLoopGroup)
         .setConnections(64)
         .setFileName("proxyee-down-core.jar.bak")
         .setFilePath(HttpDownConstant.MAIN_PATH);
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
-    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
+    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo, 5,
         HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup, null);
     bootstrap.startDown();
     return bootstrap;
@@ -68,9 +68,11 @@ public class TestUpdateService implements UpdateService {
     HttpRequestInfo requestInfo = new HttpRequestInfo(HttpVer.HTTP_1_1, HttpMethod.GET.toString(),
         updateInfo.getUrl(), buildHead(), null);
     requestInfo.setRequestProto(new RequestProto("github.com", 443, true));
-    System.out.println(HttpDownUtil.getResponse(requestInfo, HttpDownConstant.clientSslContext,
-        HttpDownConstant.clientLoopGroup).toString());
-    System.out.println(HttpDownUtil.getResponse(requestInfo, HttpDownConstant.clientSslContext,
-        HttpDownConstant.clientLoopGroup).toString());
+    System.out
+        .println(HttpDownUtil.getResponse(requestInfo, null, HttpDownConstant.clientSslContext,
+            HttpDownConstant.clientLoopGroup).toString());
+    System.out
+        .println(HttpDownUtil.getResponse(requestInfo, null, HttpDownConstant.clientSslContext,
+            HttpDownConstant.clientLoopGroup).toString());
   }
 }

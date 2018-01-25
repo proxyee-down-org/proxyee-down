@@ -33,12 +33,13 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
           HttpResponse httpResponse,
           HttpProxyInterceptPipeline pipeline) throws Exception {
         HttpRequest httpRequest = pipeline.getHttpRequest();
+        ProxyConfig proxyConfig = ContentManager.CONFIG.get().getSecProxyConfig();
         TaskInfo taskInfo = HttpDownUtil.getTaskInfo(httpRequest,
             httpResponse.headers(),
+            proxyConfig,
             HttpDownConstant.clientSslContext,
             HttpDownConstant.clientLoopGroup);
-        HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest,
-            ContentManager.CONFIG.get().getSecProxyConfig());
+        HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest, proxyConfig);
         ContentManager.DOWN.putBoot(httpDownInfo);
 
         HttpHeaders httpHeaders = httpResponse.headers();
