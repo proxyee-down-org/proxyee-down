@@ -1,5 +1,12 @@
 <template>
   <el-form ref="form" :rules="rules" :model="form" label-width="80px" size="medium">
+    <el-form-item label="链接" prop="url">
+      <el-input v-model="form.url"></el-input>
+    </el-form-item>
+    <el-form-item label="附加">
+      <el-checkbox v-model="checked">请求头</el-checkbox>
+      <el-checkbox v-model="checked">请求体</el-checkbox>
+    </el-form-item>
     <el-form-item label="文件名" prop="fileName">
       <el-input v-model="form.fileName"></el-input>
     </el-form-item>
@@ -19,7 +26,7 @@
       <file-choose v-model="form.filePath"></file-choose>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="onSubmit" :loading="load">创建</el-button>
+      <el-button type="primary" @click="onSubmit" disabled>创建</el-button>
       <el-button @click="onCancle">取消</el-button>
     </el-form-item>
   </el-form>
@@ -42,6 +49,10 @@
           filePath: '',
         },
         rules: {
+          url: [
+            {required: true, message: '不能为空'},
+            {type: 'url', message: '格式不正确'}
+          ],
           fileName: [
             {required: true, message: '不能为空'}
           ],
@@ -95,7 +106,8 @@
         } else {
           this.$message({showClose: true, message: result.msg});
         }
-      })
+      }).catch(e => {
+      });
     }
   }
 </script>
@@ -104,6 +116,10 @@
 <style scoped>
   .el-input {
     width: 50%;
+  }
+
+  .el-checkbox + .el-checkbox {
+    margin-left: 10px;
   }
 
   .el-slider {

@@ -14,23 +14,27 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslContext;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.channels.FileChannel;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lee.study.down.io.LargeMappedByteBuffer;
+import lee.study.down.model.HttpHeadsInfo;
 import lee.study.down.model.HttpRequestInfo;
+import lee.study.down.model.HttpRequestInfo.HttpVer;
 import lee.study.down.model.TaskInfo;
 import lee.study.proxyee.util.ProtoUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
@@ -99,7 +103,7 @@ public class HttpDownUtil {
       }
     }
     if (fileName == null) {
-      Pattern pattern = Pattern.compile("^.*/([^/]*\\.[^./]{1,5})(\\?[^?]*)?$");
+      Pattern pattern = Pattern.compile("^.*/([^/?]*\\.[^./]+)(\\?[^?]*)?$");
       Matcher matcher = pattern.matcher(httpRequest.uri());
       if (matcher.find()) {
         fileName = matcher.group(1);
@@ -225,5 +229,45 @@ public class HttpDownUtil {
         }
       }
     }
+  }
+
+  public static HttpRequestInfo buildGetRequest(String url, Map<String, String> heads, String body)
+      throws MalformedURLException {
+    URL u = new URL(url);
+    HttpHeadsInfo headsInfo = new HttpHeadsInfo();
+    headsInfo.add("Host", u.getHost());
+    headsInfo.add("Connection", "keep-alive");
+    headsInfo.add("Upgrade-Insecure-Requests", "1");
+    headsInfo.add("User-Agent",
+        "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36");
+    headsInfo.add("Accept",
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+    headsInfo.add("Referer", u.getHost());
+    headsInfo.add("Accept-Encoding", "gzip, deflate, br");
+    headsInfo.add("Accept-Language", "zh-CN,zh;q=0.9");
+    if (heads != null) {
+      for (Entry<String, String> entry : heads.entrySet()) {
+        headsInfo.set(entry.getKey(), entry.getValue());
+      }
+    }
+    byte[] content = null;
+    if (body != null && body.length() > 0) {
+      content = body.getBytes();
+      headsInfo.add("Content-Length", content.length);
+    }
+    HttpRequestInfo requestInfo = new HttpRequestInfo(HttpVer.HTTP_1_1, HttpMethod.GET.toString(),
+        url, headsInfo, content);
+    requestInfo.setRequestProto(ProtoUtil.getRequestProto(requestInfo));
+    return requestInfo;
+  }
+
+  public static HttpRequestInfo buildGetRequest(String url, Map<String, String> heads)
+      throws MalformedURLException {
+    return buildGetRequest(url, heads, null);
+  }
+
+  public static HttpRequestInfo buildGetRequest(String url)
+      throws MalformedURLException {
+    return buildGetRequest(url, null, null);
   }
 }

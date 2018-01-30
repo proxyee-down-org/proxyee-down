@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory {
 
-  private int viewPort;
+  private HttpDownDispatch httpDownDispatch;
 
   @Override
   public HttpProxyIntercept create() {
@@ -40,25 +40,14 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
         HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest,
             ContentManager.CONFIG.get().getSecProxyConfig());
         ContentManager.DOWN.putBoot(httpDownInfo);
-
-        HttpHeaders httpHeaders = httpResponse.headers();
-        httpHeaders.clear();
-        httpResponse.setStatus(HttpResponseStatus.OK);
-        httpHeaders.set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-        String host = ((InetSocketAddress) clientChannel.localAddress()).getHostString();
-        String js =
-            "<script>"
-                + "window.top.location.href='http://" + host + ":" + viewPort + "/#/tasks/new/"
-                + httpDownInfo
-                .getTaskInfo().getId() + "';"
-                + "</script>";
-        HttpContent content = new DefaultLastHttpContent();
-        content.content().writeBytes(js.getBytes());
-        httpHeaders.set(HttpHeaderNames.CONTENT_LENGTH, js.getBytes().length);
-        clientChannel.writeAndFlush(httpResponse);
-        clientChannel.writeAndFlush(content);
+        httpDownDispatch.dispatch(httpDownInfo);
         clientChannel.close();
       }
     };
+  }
+
+  public interface HttpDownDispatch {
+
+    void dispatch(HttpDownInfo httpDownInfo);
   }
 }

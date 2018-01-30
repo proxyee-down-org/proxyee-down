@@ -71,6 +71,7 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
           } else {
             hookHttpContent.content().writeBytes(contentBuf);
           }
+          ReferenceCountUtil.release(contentBuf);
           pipeline.getDefault()
               .afterResponse(clientChannel, proxyChannel, hookHttpContent, pipeline);
         }

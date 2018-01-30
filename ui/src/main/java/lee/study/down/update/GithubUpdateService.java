@@ -55,9 +55,7 @@ public class GithubUpdateService implements UpdateService {
   @Override
   public AbstractHttpDownBootstrap update(UpdateInfo updateInfo)
       throws Exception {
-    HttpRequestInfo requestInfo = new HttpRequestInfo(HttpVer.HTTP_1_1, HttpMethod.GET.toString(),
-        updateInfo.getUrl(), buildHead(), null);
-    requestInfo.setRequestProto(new RequestProto(HOST, 443, true));
+    HttpRequestInfo requestInfo = HttpDownUtil.buildGetRequest(updateInfo.getUrl());
     TaskInfo taskInfo = HttpDownUtil
         .getTaskInfo(requestInfo, null, HttpDownConstant.clientSslContext,
             HttpDownConstant.clientLoopGroup)
@@ -71,26 +69,9 @@ public class GithubUpdateService implements UpdateService {
     return bootstrap;
   }
 
-  private static HttpHeadsInfo buildHead() {
-    return new HttpHeadsInfo() {
-      {
-        add("Host", HOST);
-        add("Cache-Control", "max-age=0");
-        add("Upgrade-Insecure-Requests", "1");
-        add("User-Agent",
-            "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36");
-        add("Accept",
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
-        add("Referer", "https://github.com/monkeyWie/proxyee-down/releases");
-        add("Accept-Encoding", "gzip, deflate, br");
-        add("Accept-Language", "zh-CN,zh;q=0.9");
-      }
-    };
-  }
-
   public static void main(String[] args) throws Exception {
     GithubUpdateService githubUpdateService = new GithubUpdateService();
     UpdateInfo updateInfo = githubUpdateService.check(1.0F);
-    System.out.println(updateInfo);
+    githubUpdateService.update(updateInfo);
   }
 }

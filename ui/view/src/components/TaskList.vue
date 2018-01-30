@@ -1,92 +1,115 @@
 <template>
-  <div v-if="initFlag" v-loading="initFlag" style="height: 500px"
-       element-loading-background="rgba(0, 0, 0, 0)">
-  </div>
-  <div v-else-if="tasks.length>0">
-    <el-row type="flex" justify="center">
-      <el-col :span="20">
-        <el-row v-for="row in Math.ceil(tasks.length/cellSize)" :key="row">
-          <el-col :span="8" v-for="task in rowTasks(row)" class="task-list-container"
-                  :key="task.id">
-            <el-popover
-              placement="right-end"
-              title="下载详情"
-              width="400"
-              trigger="click">
-              <div class="file-detail">
-                <p>
-                  <span>名称：</span>
-                  <b>{{task.fileName}}</b>
-                </p>
-                <p>
-                  <span>路径：</span>
-                  <b>{{task.filePath}}</b>
-                </p>
-                <p>
-                  <span>大小：</span>
-                  <b>{{sizeFmt(task.totalSize, '未知大小')}}</b>
-                </p>
-                <p>
-                  <span>速度：</span>
-                  <b>{{sizeFmt(speedTask(task), '0B')}}/s</b>
-                </p>
-                <p>
-                  <span>状态：</span>
-                  <b>{{leftTime(task)}}</b>
-                </p>
+  <div>
+    <button @click="newTaskShow=true">+</button>
+    <el-dialog
+      title="创建任务"
+      :visible.sync="newTaskShow"
+      :before-close="closeHandle">
+      <build-task v-if="newTaskShow"
+                  @onSubmit="buildTask"
+                  @onCancel="newTaskShow=false"></build-task>
+    </el-dialog>
+    <div v-if="initFlag" v-loading="initFlag" style="height: 500px"
+         element-loading-background="rgba(0, 0, 0, 0)">
+    </div>
+    <div v-else-if="tasks.length>0">
+      <el-row type="flex" justify="center">
+        <el-col :span="20">
+          <el-row v-for="row in Math.ceil(tasks.length/cellSize)" :key="row">
+            <el-col :span="8" v-for="task in rowTasks(row)" class="task-list-container"
+                    :key="task.id">
+              <el-popover
+                placement="right-end"
+                title="下载详情"
+                width="400"
+                trigger="click">
+                <div class="file-detail">
+                  <p>
+                    <span>名称：</span>
+                    <b>{{task.fileName}}</b>
+                  </p>
+                  <p>
+                    <span>路径：</span>
+                    <b>{{task.filePath}}</b>
+                  </p>
+                  <p>
+                    <span>大小：</span>
+                    <b>{{sizeFmt(task.totalSize, '未知大小')}}</b>
+                  </p>
+                  <p>
+                    <span>速度：</span>
+                    <b>{{sizeFmt(speedTask(task), '0B')}}/s</b>
+                  </p>
+                  <p>
+                    <span>状态：</span>
+                    <b>{{leftTime(task)}}</b>
+                  </p>
+                </div>
+                <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=16}">
+                  <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
+                    <task-progress :text-inside="true" :stroke-width="18"
+                                   :percentage="task.totalProgress||progress(chunk)"
+                                   :status="status(chunk)"></task-progress>
+                    <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
+                  </li>
+                </ul>
+                <task-progress type="circle"
+                               :percentage="task.totalProgress||progress(task)"
+                               :status="status(task)"
+                               :width="200"
+                               slot="reference"></task-progress>
+              </el-popover>
+              <div class="task-progress-icon">
+                <div v-if="task.status!=8">
+                  <i v-if="task.status!=7"
+                     :class="iconClass(task)"
+                     @click="controlTask(task)"></i>
+                  <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
+                </div>
+                <div v-else>
+                  <i class="el-icon-loading"></i>
+                </div>
               </div>
-              <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=16}">
-                <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
-                  <task-progress :text-inside="true" :stroke-width="18"
-                                 :percentage="task.totalProgress||progress(chunk)"
-                                 :status="status(chunk)"></task-progress>
-                  <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
-                </li>
-              </ul>
-              <task-progress type="circle"
-                             :percentage="task.totalProgress||progress(task)"
-                             :status="status(task)"
-                             :width="200"
-                             slot="reference"></task-progress>
-            </el-popover>
-            <div class="task-progress-icon">
-              <div v-if="task.status!=8">
-                <i v-if="task.status!=7"
-                   :class="iconClass(task)"
-                   @click="controlTask(task)"></i>
-                <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
-              </div>
-              <div v-else>
-                <i class="el-icon-loading"></i>
-              </div>
-            </div>
-            <p>{{task.fileName}}</p>
-          </el-col>
-        </el-row>
-      </el-col>
-    </el-row>
-  </div>
-  <div v-else>
-    <p>暂无下载任务</p>
+              <p>{{task.fileName}}</p>
+            </el-col>
+          </el-row>
+        </el-col>
+      </el-row>
+    </div>
+    <div v-else>
+      <p>暂无下载任务</p>
+    </div>
   </div>
 </template>
 
 <script>
   import Util from '../common/util'
+  import BuildTask from './BuildTask'
+  import NewTask from './NewTask'
   import TaskProgress from './base/TaskProgress'
-  import Vue from 'vue'
+  import {mapState} from 'vuex'
 
   export default {
-    data() {
-      return {
-        tasks: [],
-        cellSize: 3,
-        ws: new WebSocket('ws://' + window.location.host + '/ws/onProgress'),
-        initFlag: true,
-      }
-    },
     components: {
+      BuildTask,
+      NewTask,
       TaskProgress
+    },
+    computed: {
+      newTaskShow: {
+        get: function () {
+          return this.$store.state.tasks.newTaskShow;
+        },
+        set: function (newValue) {
+          this.$store.commit("tasks/setNewTaskShow", newValue)
+        }
+      },
+      ...mapState('tasks', [
+          'tasks',
+          'cellSize',
+          'initFlag',
+        ],
+      )
     },
     methods: {
       rowTasks(row) {
@@ -243,43 +266,11 @@
         }).catch(() => {
         });
       },
-    },
-    created() {
-      this.ws.onmessage = (e) => {
-        if (this.initFlag) {
-          this.initFlag = false;
-        }
-        let msg = eval('(' + e.data + ')');
-        if (msg) {
-          this.tasks = msg.map((task1) => {
-            this.tasks.forEach((task2) => {
-              if (task2.id == task1.id) {
-                task1.chunkInfoList.forEach((chunk, index) => {
-                  chunk.intervalTime = chunk.lastTime - task2.chunkInfoList[index].lastTime;
-                  chunk.intervalDownSize = chunk.downSize - task2.chunkInfoList[index].downSize;
-                  chunk.speedCount = task2.chunkInfoList[index].speedCount;
-                  if (chunk.intervalDownSize == 0) {
-                    if (!chunk.speedCount) {
-                      chunk.speedCount = 1;
-                    } else {
-                      chunk.speedCount++;
-                    }
-                  } else {
-                    chunk.speedCount = 1;
-                  }
-                });
-              }
-              return false;
-            });
-            return task1;
-          }).sort((task1, task2) => {
-            return task2.startTime - task1.startTime;
-          });
-        }
-      };
-    },
-    destroyed() {
-      this.ws.close();
+      closeHandle(done) {
+      },
+      buildTask() {
+
+      }
     }
   }
 </script>

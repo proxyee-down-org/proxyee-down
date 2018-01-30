@@ -3,30 +3,38 @@ package lee.study.down.mvc.controller;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import lee.study.down.HttpDownApplication;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
+import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
+import lee.study.down.gui.HttpDownApplication;
 import lee.study.down.io.BdyZip;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.model.DirInfo;
 import lee.study.down.model.HttpDownInfo;
+import lee.study.down.model.HttpHeadsInfo;
+import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.model.UpdateInfo;
+import lee.study.down.mvc.form.BuildTaskForm;
 import lee.study.down.mvc.form.ConfigForm;
 import lee.study.down.mvc.form.DirForm;
 import lee.study.down.mvc.form.UnzipForm;
 import lee.study.down.update.GithubUpdateService;
 import lee.study.down.update.UpdateService;
 import lee.study.down.util.FileUtil;
+import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.proxy.ProxyConfig;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,9 +45,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 public class HttpDownController {
-
-  @Autowired
-  private HttpDownApplication httpDownApplication;
 
   @Value("${app.version}")
   private float version;
@@ -248,9 +253,9 @@ public class HttpDownController {
         .equals(beforeSecProxyConfig))
         ) {
       new Thread(() -> {
-        httpDownApplication.getProxyServer().close();
-        httpDownApplication.getProxyServer().setProxyConfig(configInfo.getSecProxyConfig());
-        httpDownApplication.getProxyServer().start(configInfo.getProxyPort());
+        HttpDownApplication.getProxyServer().close();
+        HttpDownApplication.getProxyServer().setProxyConfig(configInfo.getSecProxyConfig());
+        HttpDownApplication.getProxyServer().start(configInfo.getProxyPort());
       }).start();
     }
     return resultInfo;
@@ -312,7 +317,39 @@ public class HttpDownController {
   @RequestMapping("/restart")
   public ResultInfo restart() throws Exception {
     ResultInfo resultInfo = new ResultInfo();
+    //通知父进程重启
     System.out.println("proxyee-down-update");
+    return resultInfo;
+  }
+
+  @RequestMapping("/buildTask")
+  public ResultInfo buildTask(@RequestBody BuildTaskForm form) throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    Map<String, String> heads = new LinkedHashMap<>();
+    if (form.getHeads() != null) {
+      for (Map<String, String> head : form.getHeads()) {
+        String key = head.get("key");
+        String value = head.get("value");
+        if (!StringUtils.isEmpty(head.get("key")) && !StringUtils.isEmpty(head.get("value"))) {
+          heads.put(key, value);
+        }
+      }
+    }
+    try {
+      HttpRequestInfo requestInfo = HttpDownUtil
+          .buildGetRequest(form.getUrl(), heads, form.getBody());
+      TaskInfo taskInfo = HttpDownUtil
+          .getTaskInfo(requestInfo, null, HttpDownConstant.clientSslContext,
+              HttpDownConstant.clientLoopGroup);
+      HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo,
+          ContentManager.CONFIG.get().getSecProxyConfig());
+      ContentManager.DOWN.putBoot(httpDownInfo);
+      resultInfo.setMsg(taskInfo.getId());
+    } catch (MalformedURLException e) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("链接格式不正确");
+    } catch (Exception e) {
+      throw new RuntimeException("buildTask error:" + form.toString());
+    }
     return resultInfo;
   }
 
