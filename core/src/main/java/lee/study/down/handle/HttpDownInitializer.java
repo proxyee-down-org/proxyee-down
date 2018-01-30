@@ -33,6 +33,7 @@ public class HttpDownInitializer extends ChannelInitializer {
   private ChunkInfo chunkInfo;
 
   private long realContentSize;
+  private boolean isSucc;
 
   public HttpDownInitializer(boolean isSsl, AbstractHttpDownBootstrap bootstrap,
       ChunkInfo chunkInfo) {
@@ -61,6 +62,9 @@ public class HttpDownInitializer extends ChannelInitializer {
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
           if (msg instanceof HttpContent) {
+            if (!isSucc) {
+              return;
+            }
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
             int readableBytes = byteBuf.readableBytes();
@@ -120,6 +124,7 @@ public class HttpDownInitializer extends ChannelInitializer {
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
             if ((httpResponse.status().code() + "").indexOf("20") != 0) {
+              chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
               throw new RuntimeException("http down response error:" + httpResponse);
             }
             realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
@@ -131,12 +136,14 @@ public class HttpDownInitializer extends ChannelInitializer {
                 LOGGER.debug(
                     "下载响应：channelId[" + ctx.channel().id() + "]\t contentSize[" + realContentSize
                         + "]" + chunkInfo);
-                chunkInfo.setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
+                chunkInfo
+                    .setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
                 fileChannels = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
                 if (callback != null) {
                   callback.onChunkStart(bootstrap.getHttpDownInfo(), chunkInfo);
                 }
+                isSucc = true;
               } else {
                 safeClose(ctx.channel());
               }
@@ -151,14 +158,13 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        LOGGER.error("down onError:", cause);
+        LOGGER.error("down onChunkError:", cause);
         Channel nowChannel = bootstrap.getChannel(chunkInfo);
         safeClose(ctx.channel());
         if (nowChannel == ctx.channel()) {
-          chunkInfo.setStatus(HttpDownStatus.CONNECTING_FAIL);
           bootstrap.retryChunkDown(chunkInfo);
           if (callback != null) {
-            callback.onError(bootstrap.getHttpDownInfo(), chunkInfo, cause);
+            callback.onChunkError(bootstrap.getHttpDownInfo(), chunkInfo, cause);
           }
         }
       }

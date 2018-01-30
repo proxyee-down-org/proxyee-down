@@ -42,6 +42,7 @@ public abstract class AbstractHttpDownBootstrap {
   protected static final String ATTR_FILE_CHANNELS = "fileChannels";
 
   private HttpDownInfo httpDownInfo;
+  private int retryCount;
   private SslContext clientSslContext;
   private NioEventLoopGroup clientLoopGroup;
   private HttpDownCallback callback;
@@ -131,7 +132,18 @@ public abstract class AbstractHttpDownBootstrap {
       if (taskInfo.isSupportRange()) {
         chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition() + chunkInfo.getDownSize());
       }
-      startChunkDown(chunkInfo, updateStatus);
+      if (chunkInfo.getErrorCount() < retryCount) {
+        startChunkDown(chunkInfo, updateStatus);
+      } else {
+        if (taskInfo.getChunkInfoList().stream()
+            .allMatch((chunk) -> chunk.getErrorCount() >= retryCount)) {
+          taskInfo.setStatus(HttpDownStatus.FAIL);
+          if (callback != null) {
+            callback.onError(httpDownInfo, null);
+          }
+        }
+      }
+
     }
   }
 
@@ -172,13 +184,15 @@ public abstract class AbstractHttpDownBootstrap {
     synchronized (taskInfo) {
       if (continueDownHandle()) {
         taskInfo.setStatus(HttpDownStatus.RUNNING);
+        taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setErrorCount(0));
         long curTime = System.currentTimeMillis();
         taskInfo.setPauseTime(
             taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
         taskInfo.setLastTime(curTime);
         for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
           synchronized (chunkInfo) {
-            if (chunkInfo.getStatus() == HttpDownStatus.PAUSE) {
+            if (chunkInfo.getStatus() == HttpDownStatus.PAUSE
+                || chunkInfo.getStatus() == HttpDownStatus.CONNECTING_FAIL) {
               chunkInfo.setPauseTime(taskInfo.getPauseTime());
               chunkInfo.setLastTime(curTime);
               retryChunkDown(chunkInfo, HttpDownStatus.CONNECTING_NORMAL);

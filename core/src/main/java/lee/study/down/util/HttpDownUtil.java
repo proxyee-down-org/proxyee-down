@@ -18,20 +18,20 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.ssl.SslContext;
+import io.netty.resolver.NoopAddressResolverGroup;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.channels.FileChannel;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.proxyee.proxy.ProxyConfig;
+import lee.study.proxyee.proxy.ProxyHandleFactory;
 import lee.study.proxyee.util.ProtoUtil;
 import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
@@ -41,11 +41,12 @@ public class HttpDownUtil {
    * 检测是否支持断点下载
    */
   public static TaskInfo getTaskInfo(HttpRequest httpRequest, HttpHeaders resHeaders,
+      ProxyConfig proxyConfig,
       SslContext clientSslCtx, NioEventLoopGroup loopGroup)
       throws Exception {
     HttpResponse httpResponse = null;
     if (resHeaders == null) {
-      httpResponse = getResponse(httpRequest, clientSslCtx, loopGroup);
+      httpResponse = getResponse(httpRequest, proxyConfig, clientSslCtx, loopGroup);
       //处理重定向
       if ((httpResponse.status().code() + "").indexOf("30") == 0) {
         String redirectUrl = httpResponse.headers().get(HttpHeaderNames.LOCATION);
@@ -55,7 +56,7 @@ public class HttpDownUtil {
         RequestProto requestProto = ProtoUtil.getRequestProto(requestInfo);
         requestInfo.headers().set("Host", requestProto.getHost());
         requestInfo.setRequestProto(requestProto);
-        return getTaskInfo(httpRequest, null, clientSslCtx, loopGroup);
+        return getTaskInfo(httpRequest, null, proxyConfig, clientSslCtx, loopGroup);
       }
       resHeaders = httpResponse.headers();
     }
@@ -66,7 +67,7 @@ public class HttpDownUtil {
     //chunked编码不支持断点下载
     if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
       if (httpResponse == null) {
-        httpResponse = getResponse(httpRequest, clientSslCtx, loopGroup);
+        httpResponse = getResponse(httpRequest, proxyConfig, clientSslCtx, loopGroup);
       }
       //206表示支持断点下载
       if (httpResponse.status().equals(HttpResponseStatus.PARTIAL_CONTENT)) {
@@ -93,8 +94,8 @@ public class HttpDownUtil {
         try {
           fileName = new String(bts, "UTF-8");
           fileName = URLDecoder.decode(fileName, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-          fileName = null;
+        } catch (Exception e) {
+
         }
       }
     }
@@ -153,7 +154,8 @@ public class HttpDownUtil {
   /**
    * 取请求响应
    */
-  public static HttpResponse getResponse(HttpRequest httpRequest, SslContext clientSslCtx,
+  public static HttpResponse getResponse(HttpRequest httpRequest, ProxyConfig proxyConfig,
+      SslContext clientSslCtx,
       NioEventLoopGroup loopGroup) throws Exception {
     final HttpResponse[] httpResponses = new HttpResponse[1];
     CountDownLatch cdl = new CountDownLatch(1);
@@ -166,6 +168,9 @@ public class HttpDownUtil {
 
           @Override
           protected void initChannel(Channel ch) throws Exception {
+            if (proxyConfig != null) {
+              ch.pipeline().addLast(ProxyHandleFactory.build(proxyConfig));
+            }
             if (requestProto.getSsl()) {
               ch.pipeline().addLast(clientSslCtx.newHandler(ch.alloc()));
             }
@@ -186,6 +191,10 @@ public class HttpDownUtil {
           }
 
         });
+    if (proxyConfig != null) {
+      //代理服务器解析DNS和连接
+      bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+    }
     ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
