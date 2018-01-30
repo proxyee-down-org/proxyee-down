@@ -59,13 +59,13 @@ public class GithubUpdateService implements UpdateService {
         updateInfo.getUrl(), buildHead(), null);
     requestInfo.setRequestProto(new RequestProto(HOST, 443, true));
     TaskInfo taskInfo = HttpDownUtil
-        .getTaskInfo(requestInfo, null, HttpDownConstant.clientSslContext,
+        .getTaskInfo(requestInfo, null, null, HttpDownConstant.clientSslContext,
             HttpDownConstant.clientLoopGroup)
         .setConnections(32)
         .setFileName(UPDATE_CORE_FILE_NAME + ".bak")
         .setFilePath(HttpDownConstant.MAIN_PATH);
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
-    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
+    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo, 5,
         HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup, null);
     bootstrap.startDown();
     return bootstrap;

@@ -109,7 +109,7 @@
         return 0;
       },
       speedTask(task) {
-        if (task.status == 7 || task.status == 5 || task.status == 8 || task.status == 9) {
+        if (task.status == 5 || task.status == 7 || task.status == 8 || task.status == 9) {
           return this.speedAvg(task);
         }
         return task.chunkInfoList.map((chunk) => {
@@ -150,6 +150,9 @@
         return 0;
       },
       leftTime(task) {
+        if (task.status == 6) {
+          return '失败';
+        }
         if (task.status == 7) {
           return '已完成';
         }
@@ -191,14 +194,14 @@
         return Util.sizeFmt(size, def);
       },
       iconClass(task) {
-        if (task.status == 5 || task.status == 9) {
+        if (task.status == 5 || task.status == 6 || task.status == 9) {
           return 'el-icon-task-start';
         } else {
           return 'el-icon-task-pause';
         }
       },
       controlTask(task) {
-        if (task.status == 5 || task.status == 9) {
+        if (task.status == 5 || task.status == 6 || task.status == 9) {
           this.$http.get('api/continueTask?id=' + task.id)
           .then((response) => {
             let result = response.data;

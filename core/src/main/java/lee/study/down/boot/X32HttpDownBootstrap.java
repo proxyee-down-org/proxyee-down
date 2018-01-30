@@ -22,10 +22,11 @@ import lee.study.down.util.FileUtil;
 public class X32HttpDownBootstrap extends AbstractHttpDownBootstrap {
 
   public X32HttpDownBootstrap(HttpDownInfo httpDownInfo,
+      int retryCount,
       SslContext clientSslContext,
       NioEventLoopGroup clientLoopGroup,
       HttpDownCallback callback) {
-    super(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+    super(httpDownInfo, retryCount, clientSslContext, clientLoopGroup, callback);
   }
 
   @Override

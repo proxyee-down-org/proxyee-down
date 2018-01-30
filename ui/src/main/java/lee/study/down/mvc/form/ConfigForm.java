@@ -5,9 +5,11 @@ import lee.study.down.model.ConfigInfo;
 import lee.study.proxyee.proxy.ProxyConfig;
 import lee.study.proxyee.proxy.ProxyType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.springframework.beans.BeanUtils;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 public class ConfigForm extends ConfigBaseInfo {
 
   private ProxyConfigForm secProxyConfig; //二级代理设置

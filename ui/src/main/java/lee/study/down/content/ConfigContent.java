@@ -1,16 +1,12 @@
 package lee.study.down.content;
 
 import java.io.IOException;
-import java.io.Serializable;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
-import lee.study.proxyee.proxy.ProxyConfig;
-import lee.study.proxyee.proxy.ProxyType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 
 public class ConfigContent {
 
@@ -45,7 +41,7 @@ public class ConfigContent {
         LOGGER.error("加载配置文件失败：", e);
       }
     }
-    if (configContent == null) {
+    if (configContent == null || configContent.getProxyPort() == 0) {
       configContent = new ConfigInfo();
       //默认代理端口
       configContent.setProxyPort(9999);
@@ -55,6 +51,8 @@ public class ConfigContent {
       configContent.setTimeout(30);
       //默认全局代理
       configContent.setProxyModel(1);
+      //默认重试次数
+      configContent.setRetryCount(5);
       save();
     }
   }

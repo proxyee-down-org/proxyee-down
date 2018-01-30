@@ -15,7 +15,10 @@ public interface HttpDownCallback {
 
   void onContinue(HttpDownInfo httpDownInfo) throws Exception;
 
-  void onError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) throws Exception;
+  void onError(HttpDownInfo httpDownInfo, Throwable cause) throws Exception;
+
+  void onChunkError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause)
+      throws Exception;
 
   void onChunkDone(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception;
 

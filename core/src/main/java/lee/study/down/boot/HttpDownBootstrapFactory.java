@@ -8,12 +8,14 @@ import lee.study.down.util.OsUtil;
 
 public class HttpDownBootstrapFactory {
 
-  public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo,
+  public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo, int retryCount,
       SslContext clientSslContext, NioEventLoopGroup clientLoopGroup, HttpDownCallback callback) {
     if (OsUtil.is64()) {
-      return new X64HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+      return new X64HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
+          callback);
     } else {
-      return new X32HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+      return new X32HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
+          callback);
     }
   }
 }
