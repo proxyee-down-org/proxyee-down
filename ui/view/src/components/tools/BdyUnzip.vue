@@ -44,14 +44,11 @@
           if (valid) {
             this.load = true;
             this.$http.post('api/bdyUnzip', this.form)
-            .then((response) => {
-              this.load = false;
-              let result = response.data;
-              if (result.status == 200) {
-                this.$message({showClose: true, message: "解压完成", duration: 0});
-              } else {
-                this.$message({showClose: true, message: result.msg, duration: 0});
-              }
+            .then(() => {
+              this.$message({showClose: true, message: "解压完成", duration: 0});
+              this.load = false
+            }).catch(() => {
+              this.load = false
             })
           }
         });

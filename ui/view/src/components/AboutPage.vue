@@ -135,30 +135,26 @@
       checkUpdate() {
         this.checkLoading = true;
         this.$http.get('api/checkUpdate')
-        .then((response) => {
-          let result = response.data;
-          if (result.status == 200) {
-            this.updateInfo = result.data;
-            this.updateInfo.version = this.fmtVersion(this.updateInfo.version);
-            this.dialogVisible = true;
-          } else {
-            this.$message({showClose: true, message: result.msg});
-          }
+        .then(result => {
+          this.updateInfo = result.data;
+          this.updateInfo.version = this.fmtVersion(this.updateInfo.version);
+          this.dialogVisible = true;
           this.checkLoading = false;
+        }).catch(() => {
+          this.checkLoading = false
         });
       },
       doUpdate() {
         this.updateLoading = true;
         this.$http.get('api/doUpdate')
-        .then((response) => {
-          let result = response.data;
-          if (result.status == 200) {
-          } else {
-            this.$message({showClose: true, message: result.msg});
-          }
+        .then(() => {
+          this.dialogVisible = false;
+          this.updateLoading = false;
+        }).catch(() => {
           this.dialogVisible = false;
           this.updateLoading = false;
         });
+        ;
       },
       progress(task) {
         let fileDownSize = task.downSize;
@@ -186,20 +182,15 @@
     },
     created() {
       this.$http.get('api/getVersion')
-      .then((response) => {
-        let result = response.data;
-        if (result.status == 200) {
-          this.version = this.fmtVersion(result.data);
-        } else {
-          this.$message({showClose: true, message: result.msg});
-        }
+      .then(result => {
+        this.version = this.fmtVersion(result.data);
+      }).catch(() => {
       });
       this.intervalId = setInterval(() => {
 
         this.$http.get('api/getUpdateProgress')
-        .then((response) => {
-          let result = response.data
-          if (result.status == 200 && result.data) {
+        .then(result => {
+          if (result.data) {
             this.updateTask = result.data;
             if (this.updateTask.status == 7) {
               clearInterval(this.intervalId);
@@ -217,6 +208,7 @@
               });
             }
           }
+        }).catch(() => {
         });
       }, 1000);
     },

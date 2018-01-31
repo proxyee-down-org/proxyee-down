@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.common.HttpDownInterceptFactory;
@@ -28,6 +29,7 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
   @Override
   public HttpProxyIntercept create() {
     return new HttpProxyIntercept() {
+
       @Override
       public void afterResponse(Channel clientChannel, Channel proxyChannel,
           HttpResponse httpResponse,
@@ -40,8 +42,23 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
         HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, httpRequest,
             ContentManager.CONFIG.get().getSecProxyConfig());
         ContentManager.DOWN.putBoot(httpDownInfo);
-        httpDownDispatch.dispatch(httpDownInfo);
+        httpResponse.setStatus(HttpResponseStatus.OK);
+        httpResponse.headers().clear();
+        httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
+        byte[] content = (
+            "<html>"
+                + "<head>"
+                + "<script type=\"text/javascript\">window.history.back();</script>"
+                + "</head>"
+          + "</html>")
+            .getBytes("utf-8");
+        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.length);
+        clientChannel.writeAndFlush(httpResponse);
+        HttpContent httpContent = new DefaultLastHttpContent();
+        httpContent.content().writeBytes(content);
+        clientChannel.writeAndFlush(httpContent);
         clientChannel.close();
+        httpDownDispatch.dispatch(httpDownInfo);
       }
     };
   }

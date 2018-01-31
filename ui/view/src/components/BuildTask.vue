@@ -26,7 +26,7 @@
       </el-input>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="onSubmit">确定</el-button>
+      <el-button type="primary" @click="onSubmit" :loading="load">确定</el-button>
       <el-button @click="$emit('onCancel',arguments[0]);">取消</el-button>
     </el-form-item>
   </el-form>
@@ -36,10 +36,11 @@
   export default {
     data() {
       return {
+        load: false,
         hasHead: false,
         hasBody: false,
         form: {
-          url:'',
+          url: '',
           heads: [
             {key: '', value: ''},
           ],
@@ -60,13 +61,16 @@
       delHead(index) {
         this.form.heads.splice(index, 1);
       },
-      onSubmit(e) {
+      onSubmit() {
         this.$refs['form'].validate(valid => {
           if (valid) {
-            this.$http.post('api/buildTask',this.form)
-            .then((result) => {
-              this.$emit('onSubmit', e);
-            }).catch(e => {
+            this.load = true;
+            this.$http.post('api/buildTask', this.form)
+            .then(result => {
+              this.load = false;
+              this.$emit('onSubmit', result);
+            }).catch(() => {
+              this.load = false;
             });
           }
         });

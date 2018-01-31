@@ -12,7 +12,7 @@ public class HttpDownHandleCallback implements HttpDownCallback {
   public void onStart(HttpDownInfo httpDownInfo) throws Exception {
     //保存下载记录
     ContentManager.DOWN.save();
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
   @Override
@@ -27,29 +27,29 @@ public class HttpDownHandleCallback implements HttpDownCallback {
 
   @Override
   public void onPause(HttpDownInfo httpDownInfo) throws Exception {
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
   @Override
   public void onContinue(HttpDownInfo httpDownInfo) throws Exception {
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
   @Override
   public void onError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
   @Override
   public void onChunkDone(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
   @Override
   public void onMerge(HttpDownInfo httpDownInfo) throws Exception {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
   @Override
@@ -61,6 +61,6 @@ public class HttpDownHandleCallback implements HttpDownCallback {
     synchronized (taskInfo) {
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
     }
-    ContentManager.WS.sendMsg();
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 }

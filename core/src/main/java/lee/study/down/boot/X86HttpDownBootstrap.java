@@ -19,9 +19,9 @@ import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.FileUtil;
 
-public class X32HttpDownBootstrap extends AbstractHttpDownBootstrap {
+public class X86HttpDownBootstrap extends AbstractHttpDownBootstrap {
 
-  public X32HttpDownBootstrap(HttpDownInfo httpDownInfo,
+  public X86HttpDownBootstrap(HttpDownInfo httpDownInfo,
       SslContext clientSslContext,
       NioEventLoopGroup clientLoopGroup,
       HttpDownCallback callback) {

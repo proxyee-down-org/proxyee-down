@@ -12,6 +12,8 @@ import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
 import org.slf4j.Logger;
@@ -52,15 +54,37 @@ public class DownContent {
     List<TaskInfo> taskInfoList = new ArrayList<>();
     for (String id : downContent.keySet()) {
       TaskInfo taskInfo = getTaskInfo(id);
-      if (taskInfo != null && taskInfo.getStatus() != 0) {
+      if (taskInfo != null && taskInfo.getStatus() != HttpDownStatus.WAIT) {
         taskInfoList.add(taskInfo);
       }
     }
     return taskInfoList;
   }
 
+  public TaskInfo getWaitTask() {
+    for (String id : downContent.keySet()) {
+      TaskInfo taskInfo = getTaskInfo(id);
+      if (taskInfo != null && taskInfo.getStatus() == HttpDownStatus.WAIT) {
+        return taskInfo;
+      }
+    }
+    return null;
+  }
+
+  public WsForm buildWsForm() {
+    return new WsForm(WsDataType.TASK_LIST, getStartTasks());
+  }
+
   public void putBoot(AbstractHttpDownBootstrap bootstrap) {
-    downContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
+    synchronized (downContent) {
+      if (bootstrap.getHttpDownInfo().getTaskInfo().getStatus() == HttpDownStatus.WAIT) {
+        TaskInfo taskInfo = getWaitTask();
+        if(taskInfo!=null){
+          downContent.remove(taskInfo.getId());
+        }
+      }
+      downContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
+    }
   }
 
   public void putBoot(HttpDownInfo httpDownInfo) {

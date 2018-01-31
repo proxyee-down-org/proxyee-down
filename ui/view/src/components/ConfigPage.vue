@@ -125,10 +125,11 @@
           if (valid) {
             this.load = true;
             this.$http.post('api/setConfigInfo', this.form)
-            .then((response) => {
-              let result = response.data;
+            .then(() => {
+              this.$message({showClose: true, message: '保存成功'});
               this.load = false;
-              this.$message({showClose: true, message: result.msg});
+            }).catch(() => {
+              this.load = false;
             });
           }
         });
@@ -136,17 +137,14 @@
     },
     created() {
       this.$http.get('api/getConfigInfo')
-      .then((response) => {
-        let result = response.data;
-        if (result.status == 200) {
-          if (!result.data.secProxyEnable) {
-            result.data.secProxyConfig = this.form.secProxyConfig;
-          }
-          this.form = result.data;
-          this.load = false;
-        } else {
-          this.$message({showClose: true, message: result.msg});
+      .then(result => {
+        if (!result.data.secProxyEnable) {
+          result.data.secProxyConfig = this.form.secProxyConfig;
         }
+        this.form = result.data;
+        this.load = false;
+      }).catch(() => {
+        this.load = false;
       });
     }
   }

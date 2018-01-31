@@ -13,7 +13,7 @@ public class HttpDownBootstrapFactory {
     if (OsUtil.is64()) {
       return new X64HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
     } else {
-      return new X32HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+      return new X86HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
     }
   }
 }

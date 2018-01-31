@@ -1,13 +1,23 @@
 <template>
   <div>
-    <button @click="newTaskShow=true">+</button>
+    <el-tooltip content="创建任务" placement="right">
+      <el-button class="el-icon-plus" @click="setNewTaskStatus(1)"></el-button>
+    </el-tooltip>
     <el-dialog
-      title="创建任务"
-      :visible.sync="newTaskShow"
-      :before-close="closeHandle">
-      <build-task v-if="newTaskShow"
-                  @onSubmit="buildTask"
-                  @onCancel="newTaskShow=false"></build-task>
+      :title="newTaskTitle"
+      :visible="newTaskStatus>0"
+      :show-close="false"
+      :append-to-body="true"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :before-close="dialogCloseHandle">
+      <build-task v-if="newTaskStatus==1"
+                  @onSubmit="buildTaskHandle"
+                  @onCancel="dialogCloseHandle"></build-task>
+      <new-task v-if="newTaskStatus==2"
+                :taskId="newTaskId"
+                @onSubmit="dialogCloseHandle"
+                @onCancel="dialogCloseHandle"></new-task>
     </el-dialog>
     <div v-if="initFlag" v-loading="initFlag" style="height: 500px"
          element-loading-background="rgba(0, 0, 0, 0)">
@@ -35,6 +45,10 @@
                   <p>
                     <span>大小：</span>
                     <b>{{sizeFmt(task.totalSize, '未知大小')}}</b>
+                  </p>
+                  <p>
+                    <span>分段：</span>
+                    <b>{{task.connections}}</b>
                   </p>
                   <p>
                     <span>速度：</span>
@@ -76,8 +90,8 @@
         </el-col>
       </el-row>
     </div>
-    <div v-else>
-      <p>暂无下载任务</p>
+    <div v-else style="text-align: center;margin-top: 10%">
+      <h1>暂无下载任务</h1>
     </div>
   </div>
 </template>
@@ -87,27 +101,31 @@
   import BuildTask from './BuildTask'
   import NewTask from './NewTask'
   import TaskProgress from './base/TaskProgress'
-  import {mapState} from 'vuex'
+  import {mapState, mapMutations} from 'vuex'
+  import ElButton from "../../node_modules/element-ui/packages/button/src/button.vue";
 
   export default {
     components: {
+      ElButton,
       BuildTask,
       NewTask,
       TaskProgress
     },
     computed: {
-      newTaskShow: {
-        get: function () {
-          return this.$store.state.tasks.newTaskShow;
-        },
-        set: function (newValue) {
-          this.$store.commit("tasks/setNewTaskShow", newValue)
+      newTaskTitle(){
+        if(this.newTaskStatus==1){
+          return '创建任务';
+        }else if(this.newTaskStatus==2){
+          return '开始任务';
         }
+        return null;
       },
       ...mapState('tasks', [
+          'newTaskStatus',
           'tasks',
           'cellSize',
           'initFlag',
+          'newTaskId',
         ],
       )
     },
@@ -223,19 +241,13 @@
       controlTask(task) {
         if (task.status == 5 || task.status == 9) {
           this.$http.get('api/continueTask?id=' + task.id)
-          .then((response) => {
-            let result = response.data;
-            if (result.status != 200) {
-              this.$message(result.msg);
-            }
+          .then(() => {
+          }).catch(() => {
           });
         } else {
           this.$http.get('api/pauseTask?id=' + task.id)
-          .then((response) => {
-            let result = response.data;
-            if (result.status != 200) {
-              this.$message(result.msg);
-            }
+          .then(() => {
+          }).catch(() => {
           });
         }
       },
@@ -257,20 +269,32 @@
           }).then(() => {
           this.$http.get('api/deleteTask?id=' + task.id + "&delFile=" + document.getElementById(
             "task-delete").checked)
-          .then((response) => {
-            let result = response.data;
-            if (result.status != 200) {
-              this.$message(result.msg);
-            }
+          .then(() => {
+          }).catch(() => {
           });
         }).catch(() => {
         });
       },
-      closeHandle(done) {
+      dialogCloseHandle() {
+        this.setNewTaskStatus(0);
       },
-      buildTask() {
-
-      }
+      buildTaskHandle(result) {
+        if (result.data) {
+          this.setNewTaskId(result.data);
+          this.setNewTaskStatus(2);
+        }
+      },
+      ...mapMutations('tasks', [
+        'setNewTaskStatus',
+        'setNewTaskId',
+      ]),
+    },
+    created() {
+      this.$http.get('api/getNewTask')
+      .then(result => {
+        this.buildTaskHandle(result);
+      }).catch(() => {
+      });
     }
   }
 </script>

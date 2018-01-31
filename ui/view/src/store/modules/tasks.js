@@ -2,13 +2,17 @@ export default {
   namespaced: true,
   state: {
     tasks: [],
-    newTaskShow: false,
-    cellSize: 3,
+    newTaskStatus: 0, //0.无 1.创建任务 2.开始任务
+    cellSize: 4,
     initFlag: true,
+    newTaskId: null,
   },
   mutations: {
-    setNewTaskShow(state, newTaskShow) {
-      state.newTaskShow = newTaskShow;
+    setNewTaskStatus(state, newTaskStatus) {
+      state.newTaskStatus = newTaskStatus;
+    },
+    setNewTaskId(state, newTaskId) {
+      state.newTaskId = newTaskId;
     },
     setTasks(state, tasks) {
       if (state.initFlag) {

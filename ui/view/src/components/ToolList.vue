@@ -1,5 +1,5 @@
 <template>
-  <el-row type="flex" justify="center">
+  <el-row v-if="listView" type="flex" justify="center">
     <el-col :span="20">
       <el-row>
         <el-col :span="8">
@@ -11,10 +11,19 @@
       </el-row>
     </el-col>
   </el-row>
+  <div v-else>
+
+  </div>
 </template>
 
 <script>
-  export default {}
+  export default {
+    data() {
+      return {
+        listView: true,
+      }
+    }
+  }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

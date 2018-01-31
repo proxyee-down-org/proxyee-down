@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.form.WsForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
@@ -28,7 +29,7 @@ public class WsContent {
     wcContent.remove(id);
   }
 
-  public void sendMsg() {
+  /*public void sendMsg() {
     try {
       List<TaskInfo> taskInfos = new LinkedList<>();
       for (HttpDownInfo httpDownInfo : ContentManager.DOWN.getDownInfos()) {
@@ -37,6 +38,22 @@ public class WsContent {
         }
       }
       TextMessage message = new TextMessage(JSON.toJSONString(taskInfos));
+      for (Entry<String, WebSocketSession> entry : wcContent.entrySet()) {
+        WebSocketSession session = entry.getValue();
+        if (session.isOpen()) {
+          synchronized (session) {
+            session.sendMessage(message);
+          }
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.warn("sendMsg", e);
+    }
+  }*/
+
+  public void sendMsg(WsForm wsForm) {
+    try {
+      TextMessage message = new TextMessage(JSON.toJSONString(wsForm));
       for (Entry<String, WebSocketSession> entry : wcContent.entrySet()) {
         WebSocketSession session = entry.getValue();
         if (session.isOpen()) {

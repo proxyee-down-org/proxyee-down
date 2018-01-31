@@ -22,6 +22,7 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
   private final static Logger LOGGER = LoggerFactory.getLogger(HttpDownSniffIntercept.class);
 
   private ByteBuf content;
+  private boolean downFlag = false;
 
   @Override
   public void beforeRequest(Channel clientChannel, HttpRequest httpRequest,
@@ -57,7 +58,6 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
   @Override
   public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpResponse httpResponse,
       HttpProxyInterceptPipeline pipeline) throws Exception {
-    boolean downFlag = false;
     if ((httpResponse.status().code() + "").indexOf("20") == 0) { //响应码为20x
       HttpHeaders httpResHeaders = httpResponse.headers();
       String accept = pipeline.getHttpRequest().headers().get(HttpHeaderNames.ACCEPT);
@@ -90,5 +90,15 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
       }
     }
     pipeline.getDefault().afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
+  }
+
+  @Override
+  public void afterResponse(Channel clientChannel, Channel proxyChannel, HttpContent httpContent,
+      HttpProxyInterceptPipeline pipeline) throws Exception {
+    if (downFlag) {
+      httpContent.release();
+    } else {
+      pipeline.afterResponse(clientChannel, proxyChannel, httpContent);
+    }
   }
 }

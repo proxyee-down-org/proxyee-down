@@ -30,8 +30,11 @@ import javax.swing.SwingUtilities;
 import lee.study.down.HttpDownProxyServer;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
+import lee.study.down.content.WsContent;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.mvc.HttpDownSpringBoot;
+import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.task.HttpDownErrorCheckTask;
 import lee.study.down.task.HttpDownProgressEventTask;
 import lee.study.down.util.ConfigUtil;
@@ -107,9 +110,12 @@ public class HttpDownApplication extends Application {
     //嗅探代理服务器启动
     proxyServer = new HttpDownProxyServer(
         ContentManager.CONFIG.get().getSecProxyConfig(),
-        new HttpDownHandleInterceptFactory(
-            (httpDownInfo) -> Platform
-                .runLater(() -> open("/#/tasks/new/" + httpDownInfo.getTaskInfo().getId()))));
+        new HttpDownHandleInterceptFactory(httpDownInfo -> Platform.runLater(() -> {
+          ContentManager.WS
+              .sendMsg(new WsForm(WsDataType.NEW_TASK, httpDownInfo.getTaskInfo().getId()));
+          open();
+        }))
+    );
     int sniffProxyPort = ContentManager.CONFIG.get().getProxyPort();
     if (OsUtil.isBusyPort(sniffProxyPort)) {
       showMsg("端口(" + sniffProxyPort + ")被占用，请关闭占用端口的软件或设置新的端口号");
@@ -135,6 +141,7 @@ public class HttpDownApplication extends Application {
       return;
     }
     if (stage.isShowing()) {
+      stage.setIconified(true);
       stage.setIconified(false);
     } else {
       stage.show();

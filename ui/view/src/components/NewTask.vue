@@ -1,12 +1,5 @@
 <template>
   <el-form ref="form" :rules="rules" :model="form" label-width="80px" size="medium">
-    <el-form-item label="链接" prop="url">
-      <el-input v-model="form.url"></el-input>
-    </el-form-item>
-    <el-form-item label="附加">
-      <el-checkbox v-model="checked">请求头</el-checkbox>
-      <el-checkbox v-model="checked">请求体</el-checkbox>
-    </el-form-item>
     <el-form-item label="文件名" prop="fileName">
       <el-input v-model="form.fileName"></el-input>
     </el-form-item>
@@ -26,8 +19,8 @@
       <file-choose v-model="form.filePath"></file-choose>
     </el-form-item>
     <el-form-item>
-      <el-button type="primary" @click="onSubmit" disabled>创建</el-button>
-      <el-button @click="onCancle">取消</el-button>
+      <el-button type="primary" @click="onSubmit" :loading="load">创建</el-button>
+      <el-button @click="onCancel">取消</el-button>
     </el-form-item>
   </el-form>
 </template>
@@ -41,7 +34,7 @@
       return {
         load: true,
         form: {
-          id: this.$route.params.id,
+          id: this.taskId,
           fileName: '',
           totalSize: 0,
           supportRange: false,
@@ -63,6 +56,9 @@
         },
       }
     },
+    props: [
+      'taskId'
+    ],
     components: {
       FileChoose
     },
@@ -75,38 +71,38 @@
       }
     },
     methods: {
-      onSubmit() {
+      onSubmit(e) {
         this.$refs['form'].validate((valid) => {
           if (valid) {
             this.load = true;
             this.$http.post('api/startTask', this.form)
-            .then((response) => {
-              let result = response.data;
-              if (result.status == 200) {
-                this.$router.push('/')
-              } else {
-                this.load = false;
-                this.$message({showClose: true, message: result.msg});
-              }
+            .then((result) => {
+              this.load = false;
+              this.$emit('onSubmit', result);
+            }).catch(() => {
+              this.load = false;
             });
           }
         });
       },
-      onCancle() {
-        window.history.go(-1);
+      onCancel() {
+        this.$confirm('确定要关闭吗',
+          '提示',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+          }).then(() => {
+          this.$emit('onCancel', arguments[0]);
+        }).catch(() => {
+        });
       }
     },
     created() {
       this.$http.get('api/getTask?id=' + this.form.id)
-      .then((response) => {
-        let result = response.data;
-        if (result.status == 200) {
-          this.form = result.data
-          this.load = false;
-        } else {
-          this.$message({showClose: true, message: result.msg});
-        }
-      }).catch(e => {
+      .then(result => {
+        this.form = result.data
+        this.load = false;
+      }).catch(() => {
       });
     }
   }

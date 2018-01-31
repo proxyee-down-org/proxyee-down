@@ -344,11 +344,21 @@ public class HttpDownController {
       HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo,
           ContentManager.CONFIG.get().getSecProxyConfig());
       ContentManager.DOWN.putBoot(httpDownInfo);
-      resultInfo.setMsg(taskInfo.getId());
+      resultInfo.setData(taskInfo.getId());
     } catch (MalformedURLException e) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("链接格式不正确");
     } catch (Exception e) {
       throw new RuntimeException("buildTask error:" + form.toString());
+    }
+    return resultInfo;
+  }
+
+  @RequestMapping("/getNewTask")
+  public ResultInfo getNewTask() throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    TaskInfo taskInfo = ContentManager.DOWN.getWaitTask();
+    if (taskInfo != null) {
+      resultInfo.setData(taskInfo.getId());
     }
     return resultInfo;
   }

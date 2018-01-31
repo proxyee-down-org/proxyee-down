@@ -5,7 +5,7 @@
         <el-menu
           :default-active="tabs[selectTab].uri"
           class="el-menu-vertical-demo"
-          @select="openTab"
+          @select="openTabHandle"
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
@@ -23,8 +23,8 @@
         <el-header>
           <el-tabs v-model="selectTab"
                    type="card"
-                   @tab-click="toTab"
-                   @tab-remove="delTab"
+                   @tab-click="toTabHandle"
+                   @tab-remove="delTabHandle"
                    closable>
             <el-tab-pane
               v-for="(tab,index) in tabs"
@@ -50,6 +50,7 @@
   import ConfigPage from './components/ConfigPage'
   import AboutPage from './components/AboutPage'
   import SupportPage from './components/SupportPage'
+  import {mapState, mapMutations} from 'vuex'
 
   export default {
     name: 'app',
@@ -58,7 +59,6 @@
     },
     data() {
       return {
-        selectTab: null,
         menus: {
           '/tasks': {
             title: '任务',
@@ -87,11 +87,28 @@
             com: 'SupportPage',
           },
         },
-        tabs: []
       }
     },
+    computed: {
+      selectTab: {
+        get: function () {
+          return this.$store.state.tabs.selectTab;
+        },
+        set: function (newValue) {
+          this.$store.commit("tabs/setSelectTab", newValue)
+        }
+      },
+      ...mapState('tabs', [
+          'tabs',
+        ],
+      ),
+      ...mapState('tasks', [
+          'newTaskId',
+        ],
+      )
+    },
     methods: {
-      openTab(index) {
+      openTabHandle(index) {
         //只能打开一次
         if (!this.menus[index].repeat) {
           let matchIndex = -1;
@@ -102,31 +119,56 @@
             }
           });
           if (matchIndex >= 0) {
-            this.selectTab = matchIndex + "";
+            this.setSelectTab(matchIndex + "");
             return;
           }
         }
-        this.selectTab = this.tabs.length + '';
-        this.tabs.push({uri: index});
+        this.setSelectTab(this.tabs.length + '');
+        this.addTab({uri: index});
       },
-      toTab(tab) {
-        this.selectTab = tab.$data.index;
+      toTabHandle(tab) {
+        this.setSelectTab(tab.$data.index);
       },
-      delTab(index) {
+      delTabHandle(index) {
         if (this.tabs.length > 1) {
-          this.tabs.splice(index, 1);
+          this.delTab(index);
           let selectIndex = parseInt(this.selectTab);
           if (selectIndex + 1 > this.tabs.length) {
-            this.selectTab = (selectIndex - 1) + '';
+            this.setSelectTab((selectIndex - 1) + '');
           }
         }
-      }
+      },
+      ...mapMutations('tabs', [
+        'setSelectTab',
+        'addTab',
+        'delTab',
+      ]),
+      ...mapMutations('tasks', [
+        'setTasks',
+        'setNewTaskStatus',
+        'setNewTaskId',
+      ]),
     },
     created() {
-      this.openTab("/tasks");
+      this.openTabHandle('/tasks');
       const ws = new WebSocket('ws://' + window.location.host + '/ws/onProgress');
       ws.onmessage = e => {
-        this.$store.commit('tasks/setTasks', eval('(' + e.data + ')'))
+        let wsForm = eval('(' + e.data + ')');
+        if (wsForm) {
+          let data = wsForm.data;
+          switch (wsForm.type) {
+            case 1: //刷新任务列表
+              this.setTasks(data);
+              break;
+            case 2: //开始新任务
+              console.log("开始新任务");
+              if (data != this.newTaskId) {
+                this.openTabHandle('/tasks');
+                this.setNewTaskId(data);
+                this.setNewTaskStatus(2);
+              }
+          }
+        }
       }
     }
   }

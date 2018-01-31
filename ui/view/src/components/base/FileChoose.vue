@@ -3,7 +3,11 @@
     <el-button type="primary" class="file-choose-button" @click="visible=true">选择</el-button>
     <el-input class="file-choose-input" :value="value" @input="$emit('input',arguments[0])"
               @dblclick.native="visible = true"></el-input>
-    <el-dialog title="目录浏览" :visible="visible" @close="visible = false">
+    <el-dialog title="目录浏览"
+               :visible="visible"
+               width="30%"
+               :append-to-body="true"
+               @close="visible = false">
       <el-tree :data="files"
                :props="props"
                :load="loadChild"
@@ -42,15 +46,11 @@
             path: node.data.path || '',
             model: this.model || 'dir',
           })
-        .then((response) => {
-          let result = response.data;
-          if (result.status == 200) {
-            if (result.data) {
-              resolve(result.data);
-            }
-          } else {
-            this.$message(result.msg);
+        .then((result) => {
+          if (result.data) {
+            resolve(result.data);
           }
+        }).catch(() => {
         });
       }
     }
@@ -71,6 +71,6 @@
 
   .file-choose-tree {
     overflow-y: auto;
-    height: 250px;
+    height: 300px;
   }
 </style>
