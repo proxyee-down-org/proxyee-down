@@ -10,6 +10,7 @@ import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.TextMessage;
@@ -28,28 +29,6 @@ public class WsContent {
   public void remove(String id) {
     wcContent.remove(id);
   }
-
-  /*public void sendMsg() {
-    try {
-      List<TaskInfo> taskInfos = new LinkedList<>();
-      for (HttpDownInfo httpDownInfo : ContentManager.DOWN.getDownInfos()) {
-        if (httpDownInfo.getTaskInfo().getStatus() != HttpDownStatus.WAIT) {
-          taskInfos.add(httpDownInfo.getTaskInfo());
-        }
-      }
-      TextMessage message = new TextMessage(JSON.toJSONString(taskInfos));
-      for (Entry<String, WebSocketSession> entry : wcContent.entrySet()) {
-        WebSocketSession session = entry.getValue();
-        if (session.isOpen()) {
-          synchronized (session) {
-            session.sendMessage(message);
-          }
-        }
-      }
-    } catch (Exception e) {
-      LOGGER.warn("sendMsg", e);
-    }
-  }*/
 
   public void sendMsg(WsForm wsForm) {
     try {

@@ -15,6 +15,9 @@ import java.net.URLConnection;
 import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker.State;
 import javafx.geometry.HPos;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
@@ -79,7 +82,6 @@ public class HttpDownApplication extends Application {
     initConfig();
     ContentManager.init();
     this.stage = stage;
-    this.browser = new Browser();
 
     Platform.setImplicitExit(false);
     SwingUtilities.invokeLater(this::addTray);
@@ -104,15 +106,21 @@ public class HttpDownApplication extends Application {
         .run(args.toArray(new String[args.size()]));
 
     //webview加载
-    stage.setScene(new Scene(browser));
-    browser.load(this.url);
-
+    if (Boolean.valueOf(ConfigUtil.getValue("javafx.model"))) {
+      this.browser = new Browser();
+      stage.setScene(new Scene(browser));
+      browser.load(this.url);
+    }
     //嗅探代理服务器启动
     proxyServer = new HttpDownProxyServer(
         ContentManager.CONFIG.get().getSecProxyConfig(),
         new HttpDownHandleInterceptFactory(httpDownInfo -> Platform.runLater(() -> {
-          ContentManager.WS
-              .sendMsg(new WsForm(WsDataType.NEW_TASK, httpDownInfo.getTaskInfo().getId()));
+          if (browser != null) {
+            String taskId = httpDownInfo.getTaskInfo().getId();
+            browser.webEngine.executeScript("vue.$children[0].openTabHandle('/tasks');"
+                + "vue.$store.commit('tasks/setNewTaskId','" + taskId + "');"
+                + "vue.$store.commit('tasks/setNewTaskStatus',2);");
+          }
           open();
         }))
     );
@@ -132,7 +140,7 @@ public class HttpDownApplication extends Application {
   }
 
   public void open() {
-    if ("dev".equalsIgnoreCase(ConfigUtil.getValue("spring.profiles.active"))) {
+    if (browser == null) {
       try {
         OsUtil.openBrowse(url);
       } catch (Exception e) {
@@ -147,11 +155,6 @@ public class HttpDownApplication extends Application {
       stage.show();
       stage.toFront();
     }
-  }
-
-  public void open(String uri) {
-    browser.load(this.url + uri);
-    open();
   }
 
   public void close() {
@@ -231,7 +234,7 @@ public class HttpDownApplication extends Application {
         }
 
         MenuItem aboutItem = new MenuItem("关于");
-        aboutItem.addActionListener(event -> Platform.runLater(() -> open("/#/about")));
+        aboutItem.addActionListener(event -> Platform.runLater(() -> open()));
 
         MenuItem closeItem = new MenuItem("退出");
         closeItem.addActionListener(event -> {

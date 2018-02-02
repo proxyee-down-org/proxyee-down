@@ -20,10 +20,10 @@ public class BdyZip {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BdyZip.class);
 
-  private static final byte[] ZIP_ENTRY_FILE_HEARD = new byte[]{0x50, 0x4B, 0x03, 0x04, 0x0A, 0x00,
-      0x00, 0x00, 0x00, 0x00};
-  private static final byte[] ZIP_ENTRY_DIR_HEARD = new byte[]{0x50, 0x4B, 0x01, 0x02, 0x00, 0x00,
-      0x0A, 0x00, 0x00, 0x00};
+  private static final byte[] ZIP_ENTRY_FILE_HEARD = new byte[]{0x50, 0x4B, 0x03, 0x04, 0x0A,
+      0x00, 0x00, 0x00, 0x00, 0x00};
+  private static final byte[] ZIP_ENTRY_DIR_HEARD = new byte[]{0x50, 0x4B, 0x01, 0x02, 0x00,
+      0x00, 0x0A, 0x00, 0x00, 0x00};
 
   @Data
   @AllArgsConstructor
@@ -44,7 +44,7 @@ public class BdyZip {
     private long extraFieldLength;
     private String fileName;
     private byte[] extraField;
-    private boolean isRepair;
+    private boolean isDir;
   }
 
   public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel) throws IOException {
@@ -80,60 +80,100 @@ public class BdyZip {
       fileChannel.read(extraFieldBuffer);
       zipEntry.setExtraField(extraFieldBuffer.array());
     }
+    if (zipEntry.getCompressedSize() == 0
+        && (zipEntry.getFileName().length() == 0
+        || "/".equals(zipEntry.getFileName().substring(zipEntry.getFileName().length() - 1)))) {
+      zipEntry.setDir(true);
+    }
     return zipEntry;
   }
 
   private static final long _4G = 1024 * 1024 * 1024 * 4L - 1;
+  private static final long _128M = 1024 * 1024 * 128L;
 
-  public static void unzip(String path, String toPath) throws IOException {
-    File zipFile = new File(path);
-    File toDir = FileUtil.createDirSmart(toPath);
-    try (
-        FileChannel fileChannel = new RandomAccessFile(zipFile, "rw").getChannel()
-    ) {
-      boolean isEnd = false;
-      while (!isEnd) {
-        BdyZipEntry bdyZipEntry = getNextBdyZipEntry(fileChannel);
-        long fileSize = bdyZipEntry.getCompressedSize();
-        if (ByteUtil
-            .matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
-          isEnd = true;
-        } else if (!ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize,
-            ZIP_ENTRY_FILE_HEARD)) {
-          //找到真实文件长度 大于4G找4G之后的标识
-          fileSize = ByteUtil
-              .getNextTokenSize(fileChannel, fileChannel.position() + _4G,
-                  ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
-          System.out.println(fileSize);
+  public static void unzip(String path, String toPath, BdyUnzipCallback callback)
+      throws IOException {
+    try {
+      File zipFile = new File(path);
+      if (callback != null) {
+        callback.onStart(zipFile, toPath);
+      }
+      File toDir = FileUtil.createDirSmart(toPath);
+      try (
+          FileChannel fileChannel = new RandomAccessFile(zipFile, "rw").getChannel()
+      ) {
+        boolean isEnd = false;
+        while (!isEnd) {
+          BdyZipEntry bdyZipEntry = getNextBdyZipEntry(fileChannel);
+          if (callback != null) {
+            callback.onEntry(bdyZipEntry);
+          }
+          long fileSize = bdyZipEntry.getCompressedSize();
           if (ByteUtil
-              .matchToken(fileChannel, fileChannel.position() + fileSize, ZIP_ENTRY_DIR_HEARD)) {
+              .matchToken(fileChannel, fileChannel.position() + fileSize,
+                  ZIP_ENTRY_DIR_HEARD)) {
+            isEnd = true;
+          } else if (!ByteUtil.matchToken(fileChannel, fileChannel.position() + fileSize,
+              ZIP_ENTRY_FILE_HEARD)) {
+            if (callback != null) {
+              callback.onErrorSize(fileSize);
+            }
+            //找到真实文件长度 大于4G找4G之后的标识
+            fileSize = ByteUtil
+                .getNextTokenSize(fileChannel, fileChannel.position() + _4G,
+                    ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
+            if (callback != null) {
+              callback.onFixedSize(fileSize);
+            }
+            if (ByteUtil
+                .matchToken(fileChannel, fileChannel.position() + fileSize,
+                    ZIP_ENTRY_DIR_HEARD)) {
+              isEnd = true;
+            }
+          }
+          LOGGER.debug("bdyUnzip:" + bdyZipEntry.getFileName() + "\t" + fileSize + "\t" + isEnd);
+          if (callback != null) {
+            callback.onEntryBegin();
+          }
+          if (bdyZipEntry.isDir()) {
+            FileUtil.createDirSmart(toDir.getPath() + File.separator + bdyZipEntry.getFileName());
+            if (callback != null) {
+              callback.onEntryWrite(fileSize, 0);
+            }
+          } else {
+            File unzipFile = FileUtil
+                .createFileSmart(toDir.getPath() + File.separator + bdyZipEntry.getFileName());
+            FileChannel unzipChannel = new RandomAccessFile(unzipFile, "rw").getChannel();
+            long position = fileChannel.position();
+            long remaining = fileSize;
+            while (remaining > 0) {
+              long size = remaining > _128M ? _128M : remaining;
+              long transferred = fileChannel.transferTo(position, size, unzipChannel);
+              remaining -= transferred;
+              position += transferred;
+              if (callback != null) {
+                callback.onEntryWrite(fileSize, transferred);
+              }
+            }
+            unzipChannel.close();
+            callback.onEntryEnd();
+            fileChannel.position(fileChannel.position() + fileSize);
+          }
+          if (fileChannel.position() == fileChannel.size()) {
             isEnd = true;
           }
         }
-        LOGGER.debug("bdyUnzip:" + bdyZipEntry.getFileName() + "\t" + fileSize + "\t" + isEnd);
-        if (fileSize == 0
-            && bdyZipEntry.getFileName().lastIndexOf("/")
-            == bdyZipEntry.getFileName().length() - 1) {
-          FileUtil.createDirSmart(toDir.getPath() + File.separator + bdyZipEntry.getFileName());
-        } else {
-          File unzipFile = FileUtil
-              .createFileSmart(toDir.getPath() + File.separator + bdyZipEntry.getFileName());
-          FileChannel unzipChannel = new RandomAccessFile(unzipFile, "rw").getChannel();
-          long position = fileChannel.position();
-          long remaining = fileSize;
-          while (remaining > 0) {
-            long transferred = fileChannel.transferTo(position, remaining, unzipChannel);
-            remaining -= transferred;
-            position += transferred;
-          }
-          unzipChannel.close();
-          fileChannel.position(fileChannel.position() + fileSize);
-        }
-        if (fileChannel.position() == fileChannel.size()) {
-          isEnd = true;
-        }
+        callback.onDone();
       }
+    } catch (IOException e) {
+      callback.onError();
+      throw e;
     }
+  }
+
+  public static void unzip(String path, String toPath)
+      throws IOException {
+    unzip(path, toPath, null);
   }
 
   /**
@@ -152,4 +192,36 @@ public class BdyZip {
     }
     return false;
   }
+
+  public final static String ON_START = "onStart";
+  public final static String ON_ENTRY = "onEntry";
+  public final static String ON_ERROR_SIZE = "onErrorSize";
+  public final static String ON_FIXED_SIZE = "onFixedSize";
+  public final static String ON_ENTRY_BEGIN = "onEntryBegin";
+  public final static String ON_ENTRY_WRITE = "onEntryWrite";
+  public final static String ON_ENTRY_END = "onEntryEnd";
+  public final static String ON_DONE = "onDone";
+  public final static String ON_ERROR = "onError";
+
+  public interface BdyUnzipCallback {
+
+    void onStart(File file, String toPath);
+
+    void onEntry(BdyZipEntry entry);
+
+    void onErrorSize(long size);
+
+    void onFixedSize(long size);
+
+    void onEntryBegin();
+
+    void onEntryWrite(long totalSize, long writeSize);
+
+    void onEntryEnd();
+
+    void onDone();
+
+    void onError();
+  }
+
 }

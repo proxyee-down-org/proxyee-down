@@ -1,9 +1,13 @@
 package lee.study.down.dispatch;
 
+import java.util.HashMap;
 import lee.study.down.content.ContentManager;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.form.NewTaskForm;
+import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.util.FileUtil;
 
 public class HttpDownHandleCallback implements HttpDownCallback {
@@ -62,5 +66,15 @@ public class HttpDownHandleCallback implements HttpDownCallback {
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
     }
     ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    NewTaskForm taskForm = NewTaskForm.parse(httpDownInfo);
+    if (taskForm.isUnzip()) {
+      WsForm wsForm = new WsForm(WsDataType.UNZIP_NEW, new HashMap<String, String>() {
+        {
+          put("unzipFile", taskInfo.buildTaskFilePath());
+          put("unzipPath", taskForm.getUnzipPath());
+        }
+      });
+      ContentManager.WS.sendMsg(wsForm);
+    }
   }
 }

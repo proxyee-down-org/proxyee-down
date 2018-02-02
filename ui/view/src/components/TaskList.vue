@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-tooltip content="创建任务" placement="right">
+    <el-tooltip v-if="!initFlag" content="创建任务" placement="right">
       <el-button class="el-icon-plus" @click="setNewTaskStatus(1)"></el-button>
     </el-tooltip>
     <el-dialog
@@ -19,7 +19,9 @@
                 @onSubmit="dialogCloseHandle"
                 @onCancel="dialogCloseHandle"></new-task>
     </el-dialog>
-    <div v-if="initFlag" v-loading="initFlag" style="height: 500px"
+    <div v-if="initFlag"
+         v-loading="initFlag"
+         style="height: 500px"
          element-loading-background="rgba(0, 0, 0, 0)">
     </div>
     <div v-else-if="tasks.length>0">
@@ -102,20 +104,18 @@
   import NewTask from './NewTask'
   import TaskProgress from './base/TaskProgress'
   import {mapState, mapMutations} from 'vuex'
-  import ElButton from "../../node_modules/element-ui/packages/button/src/button.vue";
 
   export default {
     components: {
-      ElButton,
       BuildTask,
       NewTask,
       TaskProgress
     },
     computed: {
-      newTaskTitle(){
-        if(this.newTaskStatus==1){
+      newTaskTitle() {
+        if (this.newTaskStatus == 1) {
           return '创建任务';
-        }else if(this.newTaskStatus==2){
+        } else if (this.newTaskStatus == 2) {
           return '开始任务';
         }
         return null;
@@ -128,6 +128,15 @@
           'newTaskId',
         ],
       )
+    },
+    watch: {
+      newTaskId() {
+        this.setNewTaskStatus(0);
+        //强制渲染
+        this.$nextTick(()=>{
+          this.setNewTaskStatus(2);
+        });
+      }
     },
     methods: {
       rowTasks(row) {
@@ -338,7 +347,7 @@
 
   @import "../assets/icon/iconfont.css";
   .task-progress-icon {
-    height: 60px;
+    height: 40px;
   }
 
   .task-progress-icon i {

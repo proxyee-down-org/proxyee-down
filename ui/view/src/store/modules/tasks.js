@@ -3,11 +3,14 @@ export default {
   state: {
     tasks: [],
     newTaskStatus: 0, //0.无 1.创建任务 2.开始任务
-    cellSize: 4,
+    cellSize: 3,
     initFlag: true,
     newTaskId: null,
   },
   mutations: {
+    setInitFlag(state, initFlag) {
+      state.initFlag = initFlag;
+    },
     setNewTaskStatus(state, newTaskStatus) {
       state.newTaskStatus = newTaskStatus;
     },
@@ -19,8 +22,8 @@ export default {
         state.initFlag = false;
       }
       if (tasks) {
-        state.tasks = tasks.map((task1) => {
-          state.tasks.forEach((task2) => {
+        state.tasks = tasks.map(task1 => {
+          state.tasks.forEach(task2 => {
             if (task2.id == task1.id) {
               task1.chunkInfoList.forEach((chunk, index) => {
                 chunk.intervalTime = chunk.lastTime

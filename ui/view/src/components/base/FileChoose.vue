@@ -1,7 +1,13 @@
 <template>
   <div>
-    <el-button type="primary" class="file-choose-button" @click="visible=true">选择</el-button>
-    <el-input class="file-choose-input" :value="value" @input="$emit('input',arguments[0])"
+    <el-button type="primary"
+               class="file-choose-button"
+               :disabled="disabled"
+               @click="visible=true">选择</el-button>
+    <el-input class="file-choose-input"
+              :value="value"
+              :disabled="disabled"
+              @input="$emit('input',arguments[0])"
               @dblclick.native="visible = true"></el-input>
     <el-dialog title="目录浏览"
                :visible="visible"
@@ -38,7 +44,7 @@
         }
       }
     },
-    props: ['value', 'model'],
+    props: ['value', 'model', 'disabled'],
     methods: {
       loadChild(node, resolve) {
         this.$http.post('api/getChildDirList',

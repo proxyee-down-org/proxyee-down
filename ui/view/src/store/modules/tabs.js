@@ -13,7 +13,10 @@ export default {
     },
     delTab(state, index) {
       state.tabs.splice(index, 1);
-    }
+    },
+    setSecTitle(state, title) {
+      state.tabs[state.selectTab].secTitle = title;
+    },
   }
 }
 

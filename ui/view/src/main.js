@@ -27,7 +27,7 @@ Vue.prototype.$http.interceptors.response.use(
     return Promise.reject(error)
   });
 
-new Vue({
+window.vue = new Vue({
   el: '#app',
   store,
   router,

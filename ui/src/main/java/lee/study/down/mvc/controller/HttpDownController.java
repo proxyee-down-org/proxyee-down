@@ -4,37 +4,45 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
 import lee.study.down.gui.HttpDownApplication;
 import lee.study.down.io.BdyZip;
+import lee.study.down.io.BdyZip.BdyUnzipCallback;
+import lee.study.down.io.BdyZip.BdyZipEntry;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.model.DirInfo;
 import lee.study.down.model.HttpDownInfo;
-import lee.study.down.model.HttpHeadsInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.ResultInfo;
 import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.model.UnzipInfo;
 import lee.study.down.model.UpdateInfo;
 import lee.study.down.mvc.form.BuildTaskForm;
 import lee.study.down.mvc.form.ConfigForm;
 import lee.study.down.mvc.form.DirForm;
+import lee.study.down.mvc.form.NewTaskForm;
 import lee.study.down.mvc.form.UnzipForm;
+import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.update.GithubUpdateService;
 import lee.study.down.update.UpdateService;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
 import lee.study.proxyee.proxy.ProxyConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,73 +54,113 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class HttpDownController {
 
+  private final static Logger LOGGER = LoggerFactory.getLogger(HttpDownController.class);
+
   @Value("${app.version}")
   private float version;
 
   @RequestMapping("/getTask")
   public ResultInfo getTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    TaskInfo taskInfo = ContentManager.DOWN.getTaskInfo(id);
-    if (taskInfo == null) {
-      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
-    } else {
+    HttpDownInfo httpDownInfo = ContentManager.DOWN.getDownInfo(id);
+    if (httpDownInfo != null) {
+      TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+      Map<String, Object> data = new HashMap<>();
       if (taskInfo.isSupportRange()) {
         taskInfo.setConnections(ContentManager.CONFIG.get().getConnections());
       }
       taskInfo.setFilePath(ContentManager.CONFIG.get().getLastPath());
-      resultInfo.setData(taskInfo);
+      data.put("task", NewTaskForm.parse(httpDownInfo));
+      //检查是否有相同大小的文件
+      List<HttpDownInfo> sameTasks = ContentManager.DOWN.getDownInfos().stream()
+          .filter(downInfo -> HttpDownStatus.WAIT != downInfo.getTaskInfo().getStatus()
+              && HttpDownStatus.DONE != downInfo.getTaskInfo().getStatus()
+              && HttpDownStatus.MERGE != downInfo.getTaskInfo().getStatus()
+              && HttpDownStatus.MERGE_CANCEL != downInfo.getTaskInfo().getStatus()
+              && downInfo.getTaskInfo().getTotalSize() == taskInfo.getTotalSize()
+          ).collect(Collectors.toList());
+      data.put("sameTasks", NewTaskForm.parse(sameTasks));
+      resultInfo.setData(data);
     }
-    return resultInfo;
-  }
-
-  @RequestMapping("/getTaskList")
-  public ResultInfo getTaskList() {
-    ResultInfo resultInfo = new ResultInfo();
-    resultInfo.setData(ContentManager.DOWN.getStartTasks());
     return resultInfo;
   }
 
   @RequestMapping("/startTask")
-  public ResultInfo startTask(@RequestBody TaskInfo taskForm) throws Exception {
+  public ResultInfo startTask(@RequestBody NewTaskForm taskForm) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    if (StringUtils.isEmpty(taskForm.getFileName())) {
-      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名不能为空");
-      return resultInfo;
-    }
-    if (StringUtils.isEmpty(taskForm.getFilePath())) {
-      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
-      return resultInfo;
-    }
     AbstractHttpDownBootstrap bootstrap = ContentManager.DOWN.getBoot(taskForm.getId());
     HttpDownInfo httpDownInfo = bootstrap.getHttpDownInfo();
-    TaskInfo taskInfo = httpDownInfo.getTaskInfo();
-    synchronized (taskInfo) {
-      if (taskInfo.getStatus() != HttpDownStatus.WAIT) {
-        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务已添加至下载列表");
-      }
-      taskInfo.setFileName(taskForm.getFileName());
-      taskInfo.setFilePath(taskForm.getFilePath());
-      //有文件同名
-      if (new File(taskInfo.buildTaskFilePath()).exists()) {
-        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
+    //覆盖下载
+    if (!StringUtils.isEmpty(taskForm.getOldId())) {
+      AbstractHttpDownBootstrap oldBootstrap = ContentManager.DOWN.getBoot(taskForm.getOldId());
+      if (oldBootstrap == null) {
+        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
         return resultInfo;
-      }
-      if (taskInfo.isSupportRange()) {
-        taskInfo.setConnections(taskForm.getConnections());
       } else {
-        taskInfo.setConnections(1);
+        //暂停之前的下载任务
+        oldBootstrap.pauseDown();
+        //修改request
+        oldBootstrap.getHttpDownInfo().setRequest(httpDownInfo.getRequest());
+        oldBootstrap.getHttpDownInfo().setProxyConfig(httpDownInfo.getProxyConfig());
+        Map<String, Object> attr = oldBootstrap.getHttpDownInfo().getAttrs();
+        if (attr == null) {
+          attr = new HashMap<>();
+          oldBootstrap.getHttpDownInfo().setAttrs(attr);
+        }
+        attr.put(NewTaskForm.KEY_UNZIP_FLAG, taskForm.isUnzip());
+        attr.put(NewTaskForm.KEY_UNZIP_PATH, taskForm.getFilePath());
+        //移除新的下载任务
+        ContentManager.DOWN.removeBoot(taskForm.getId());
+        //持久化
+        ContentManager.DOWN.save();
+        //用新链接继续下载
+        oldBootstrap.continueDown();
       }
-      try {
-        bootstrap.startDown();
-      } catch (FileNotFoundException e) {
-        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问下载路径，请修改或使用管理员身份运行");
+    } else {
+      if (StringUtils.isEmpty(taskForm.getFileName())) {
+        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名不能为空");
         return resultInfo;
       }
-      //记录存储路径
-      String lastPath = ContentManager.CONFIG.get().getLastPath();
-      if (!taskForm.getFilePath().equalsIgnoreCase(lastPath)) {
-        ContentManager.CONFIG.get().setLastPath(taskForm.getFilePath());
-        ContentManager.CONFIG.save();
+      if (StringUtils.isEmpty(taskForm.getFilePath())) {
+        resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
+        return resultInfo;
+      }
+      TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+      synchronized (taskInfo) {
+        if (taskInfo.getStatus() != HttpDownStatus.WAIT) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务已添加至下载列表");
+        }
+        taskInfo.setFileName(taskForm.getFileName());
+        taskInfo.setFilePath(taskForm.getFilePath());
+        //有文件同名
+        if (new File(taskInfo.buildTaskFilePath()).exists()) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
+          return resultInfo;
+        }
+        Map<String, Object> attr = httpDownInfo.getAttrs();
+        if (attr == null) {
+          attr = new HashMap<>();
+          httpDownInfo.setAttrs(attr);
+        }
+        attr.put(NewTaskForm.KEY_UNZIP_FLAG, taskForm.isUnzip());
+        attr.put(NewTaskForm.KEY_UNZIP_PATH, taskForm.getFilePath());
+        if (taskInfo.isSupportRange()) {
+          taskInfo.setConnections(taskForm.getConnections());
+        } else {
+          taskInfo.setConnections(1);
+        }
+        try {
+          bootstrap.startDown();
+        } catch (FileNotFoundException e) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问下载路径，请修改或使用管理员身份运行");
+          return resultInfo;
+        }
+        //记录存储路径
+        String lastPath = ContentManager.CONFIG.get().getLastPath();
+        if (!taskForm.getFilePath().equalsIgnoreCase(lastPath)) {
+          ContentManager.CONFIG.get().setLastPath(taskForm.getFilePath());
+          ContentManager.CONFIG.save();
+        }
       }
     }
     return resultInfo;
@@ -209,12 +257,84 @@ public class HttpDownController {
   }
 
   @RequestMapping("/bdyUnzip")
-  public ResultInfo bdyUnzip(@RequestBody UnzipForm unzipForm) throws IOException {
+  public ResultInfo bdyUnzip(@RequestParam String id, @RequestBody UnzipForm unzipForm)
+      throws IOException {
     ResultInfo resultInfo = new ResultInfo();
     File file = new File(unzipForm.getFilePath());
     if (file.exists() && file.isFile()) {
       if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
-        BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath());
+        UnzipInfo unzipInfo = new UnzipInfo().setId(id);
+        new Thread(() -> {
+          try {
+            BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath(), new BdyUnzipCallback() {
+
+              @Override
+              public void onStart(File file, String toPath) {
+                unzipInfo.setType(BdyZip.ON_START)
+                    .setStartTime(System.currentTimeMillis())
+                    .setTotalFileSize(file.length());
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onEntry(BdyZipEntry entry) {
+                unzipInfo.setType(BdyZip.ON_ENTRY)
+                    .setEntry(entry)
+                    .setCurrFileSize(entry.getCompressedSize())
+                    .setCurrWriteSize(0);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onErrorSize(long size) {
+                unzipInfo.setType(BdyZip.ON_ERROR_SIZE);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onFixedSize(long size) {
+                unzipInfo.setType(BdyZip.ON_FIXED_SIZE)
+                    .setCurrFileSize(size);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onEntryBegin() {
+                unzipInfo.setType(BdyZip.ON_ENTRY_BEGIN);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onEntryWrite(long totalSize, long writeSize) {
+                unzipInfo.setType(BdyZip.ON_ENTRY_WRITE)
+                    .setCurrWriteSize(unzipInfo.getCurrWriteSize() + writeSize)
+                    .setTotalWriteSize(unzipInfo.getTotalWriteSize() + writeSize);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onEntryEnd() {
+                unzipInfo.setType(BdyZip.ON_ENTRY_END);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onDone() {
+                unzipInfo.setType(BdyZip.ON_DONE)
+                    .setEndTime(System.currentTimeMillis());
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
+              public void onError() {
+                unzipInfo.setType(BdyZip.ON_ERROR);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+            });
+          } catch (IOException e) {
+            LOGGER.error("unzip error:", e);
+          }
+        }).start();
       } else {
         resultInfo.setStatus(ResultStatus.BAD.getCode());
         resultInfo.setMsg("解压失败，请确认是否为百度云合并下载zip文件");
@@ -360,6 +480,13 @@ public class HttpDownController {
     if (taskInfo != null) {
       resultInfo.setData(taskInfo.getId());
     }
+    return resultInfo;
+  }
+
+  @RequestMapping("/delNewTask")
+  public ResultInfo delNewTask(@RequestParam String id) throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    ContentManager.DOWN.removeBoot(id);
     return resultInfo;
   }
 

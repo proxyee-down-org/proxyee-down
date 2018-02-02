@@ -1,9 +1,9 @@
 export default {
-  sizeFmt(size,def) {
+  sizeFmt(size, def) {
     if (size <= 0) {
-      if(def){
+      if (def) {
         return def;
-      }else{
+      } else {
         size = 0;
       }
     }
@@ -18,7 +18,7 @@ export default {
     return parseFloat((size / Math.pow(1024, pow)).toFixed(2)) + fmt;
   },
   timeFmt(sec) {
-    if(sec<0){
+    if (sec < 0) {
       sec = 1;
     }
     let ret = '';
@@ -32,4 +32,44 @@ export default {
     ret += sec % 60 + '秒';
     return ret;
   },
+  uuid() {
+    var d = new Date().getTime();
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,
+      function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    return uuid;
+  },
+  inArray(array, obj, equals) {
+    if (array) {
+      for (let i = 0; i < array.length; i++) {
+        if (equals) {
+          if (equals(array[i], obj)) {
+            return i;
+          }
+        } else if (array[i] == obj) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  },
+  clone(obj, ignores) {
+    let newObj = {};
+    for (let name in obj) {
+      if (!ignores || this.inArray(ignores, name) == -1) {
+        newObj[name] = obj[name];
+      }
+    }
+    return newObj;
+  },
+  copy(fromObj, toObj, ignores) {
+    for (let name in fromObj) {
+      if (!ignores || this.inArray(ignores, name) == -1) {
+        toObj[name] = fromObj[name];
+      }
+    }
+  }
 }

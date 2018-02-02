@@ -1,35 +1,45 @@
 <template>
-  <el-row v-if="listView" type="flex" justify="center">
+  <el-row v-if="!selectTool" type="flex" justify="center">
     <el-col :span="20">
       <el-row>
-        <el-col :span="8">
-          <el-tooltip class="item" content="用于百度合并下载的zip文件解压" placement="right">
-            <el-button type="success" round @click="$router.push('/tools/bdyUnzip')">百度云解压
+        <el-col v-for="(tool,index) in tools" :key="index" :span="8">
+          <el-tooltip class="item"
+                      :content="tool.desc"
+                      placement="right">
+            <el-button type="success" round
+                       @click="selectTool=tool.name;$store.commit('tabs/setSecTitle',tool.title);">
+              {{tool.title}}
             </el-button>
           </el-tooltip>
         </el-col>
       </el-row>
     </el-col>
   </el-row>
-  <div v-else>
-
-  </div>
+  <div v-else :is="selectTool"></div>
 </template>
 
 <script>
+  import BdyUnzip from './tools/BdyUnzip'
+
   export default {
+    components: {
+      BdyUnzip
+    },
     data() {
       return {
-        listView: true,
+        tools: [
+          {name: 'BdyUnzip', title: '百度云解压', desc: '用于百度批量下载的zip文件解压'},
+        ],
       }
-    }
+    },
+    props:['selectTool'],
   }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   .el-button {
-    width: 80%;
+    width: 50%;
     height: 200px;
     font-size: 24px;
   }

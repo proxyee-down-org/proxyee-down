@@ -50,7 +50,7 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
                 + "<head>"
                 + "<script type=\"text/javascript\">window.history.back();</script>"
                 + "</head>"
-          + "</html>")
+                + "</html>")
             .getBytes("utf-8");
         httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.length);
         clientChannel.writeAndFlush(httpResponse);

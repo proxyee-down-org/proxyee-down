@@ -5,7 +5,7 @@
         <el-menu
           :default-active="tabs[selectTab].uri"
           class="el-menu-vertical-demo"
-          @select="openTabHandle"
+          @select="openTabHandle(arguments[0])"
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
@@ -30,14 +30,16 @@
               v-for="(tab,index) in tabs"
               :key="index"
               :name="index+''"
-              :label="menus[tab.uri].title"
+              :label="menus[tab.uri].title+(tab.secTitle?'-'+tab.secTitle:'')"
             ></el-tab-pane>
           </el-tabs>
         </el-header>
         <el-main>
-          <div v-for="(tab,index) in tabs"
-               :is="menus[tab.uri].com"
-               v-show="index==selectTab"></div>
+          <component v-for="(tab,index) in tabs"
+                     :key="index"
+                     :is="menus[tab.uri].com"
+                     v-bind="tab.args"
+                     v-show="index==selectTab"></component>
         </el-main>
       </el-container>
     </el-container>
@@ -108,7 +110,7 @@
       )
     },
     methods: {
-      openTabHandle(index) {
+      openTabHandle(index, args) {
         //只能打开一次
         if (!this.menus[index].repeat) {
           let matchIndex = -1;
@@ -124,7 +126,7 @@
           }
         }
         this.setSelectTab(this.tabs.length + '');
-        this.addTab({uri: index});
+        this.addTab({uri: index, args: args ? args : null, secTitle: ''});
       },
       toTabHandle(tab) {
         this.setSelectTab(tab.$data.index);
@@ -148,6 +150,9 @@
         'setNewTaskStatus',
         'setNewTaskId',
       ]),
+      ...mapMutations('unzips', [
+        'setUnzipTask',
+      ]),
     },
     created() {
       this.openTabHandle('/tasks');
@@ -160,13 +165,14 @@
             case 1: //刷新任务列表
               this.setTasks(data);
               break;
-            case 2: //开始新任务
-              console.log("开始新任务");
-              if (data != this.newTaskId) {
-                this.openTabHandle('/tasks');
-                this.setNewTaskId(data);
-                this.setNewTaskStatus(2);
-              }
+            case 2: //解压进度
+              this.setUnzipTask(data);
+              break;
+            case 3: //创建解压任务
+              this.openTabHandle('/tools', {
+                selectTool: 'BdyUnzip'
+              });
+              break;
           }
         }
       }
