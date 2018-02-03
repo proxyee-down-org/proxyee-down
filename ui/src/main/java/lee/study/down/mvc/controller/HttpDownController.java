@@ -285,6 +285,14 @@ public class HttpDownController {
               }
 
               @Override
+              public void onFix(long totalSize, long fixSize) {
+                unzipInfo.setType(BdyZip.ON_FIX)
+                    .setTotalFixSize(totalSize)
+                    .setFixSize(fixSize);
+                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+              }
+
+              @Override
               public void onFixDone(List<BdyZipEntry> list) {
                 unzipInfo.setType(BdyZip.ON_FIX_DONE)
                     .setTotalFileSize(list.stream().map(entry -> entry.getCompressedSize())

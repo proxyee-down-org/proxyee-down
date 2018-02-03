@@ -54,10 +54,11 @@ public class BdyZip {
     }
   }
 
-  public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel) throws IOException {
+  public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
+      BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
     while (true) {
-      BdyZipEntry entry = getNextBdyZipEntry(fileChannel, list, null, 0);
+      BdyZipEntry entry = getNextBdyZipEntry(fileChannel, list, null, 0, callback);
       if (entry.isEnd()) {
         return list;
       }
@@ -65,7 +66,7 @@ public class BdyZip {
   }
 
   public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel, List<BdyZipEntry> entryList,
-      BdyZipEntry fixEntry, long skipSize)
+      BdyZipEntry fixEntry, long skipSize, BdyUnzipCallback callback)
       throws IOException {
     BdyZipEntry zipEntry;
     if (fixEntry == null) {
@@ -111,6 +112,9 @@ public class BdyZip {
     } else {
       zipEntry = fixEntry;
     }
+    if (callback != null) {
+      callback.onFix(fileChannel.size(), fileChannel.position());
+    }
     if (ByteUtil
         .matchToken(fileChannel,
             zipEntry.getFileStartPosition(),
@@ -152,7 +156,7 @@ public class BdyZip {
           }
         }
         BdyZipEntry needFixEntry = entryList.get(index);
-        getNextBdyZipEntry(fileChannel, entryList, needFixEntry, needSkipSize);
+        getNextBdyZipEntry(fileChannel, entryList, needFixEntry, needSkipSize, callback);
         if (fileChannel.position() >= fileChannel.size()) {
           zipEntry.setEnd(true);
         }
@@ -177,7 +181,7 @@ public class BdyZip {
       try (
           FileChannel fileChannel = new RandomAccessFile(zipFile, "rw").getChannel()
       ) {
-        List<BdyZipEntry> list = getFixedEntryList(fileChannel);
+        List<BdyZipEntry> list = getFixedEntryList(fileChannel, callback);
         if (callback != null) {
           callback.onFixDone(list);
         }
@@ -245,6 +249,7 @@ public class BdyZip {
   }
 
   public final static String ON_START = "onStart";
+  public final static String ON_FIX = "onFix";
   public final static String ON_FIX_DONE = "onFixDone";
   public final static String ON_ENTRY_START = "onEntryStart";
   public final static String ON_ENTRY_WRITE = "onEntryWrite";
@@ -254,6 +259,8 @@ public class BdyZip {
   public interface BdyUnzipCallback {
 
     void onStart();
+
+    void onFix(long totalSize, long fixSize);
 
     void onFixDone(List<BdyZipEntry> list);
 
@@ -273,7 +280,7 @@ public class BdyZip {
 //    unzipTest("f:/down/【批量下载】test2ddd测试等.zip", "f:/down");
     FileChannel fileChannel = new RandomAccessFile("f:/down/【批量下载】英语国家社会与文化-uni等.zip", "rw")
         .getChannel();
-    List<BdyZipEntry> list = getFixedEntryList(fileChannel);
+    List<BdyZipEntry> list = getFixedEntryList(fileChannel, null);
     //4,658,989,306
     //4,658,989,306
 //    unzip("f:/down/【批量下载】新建文本文档等.zip", "f:/down");

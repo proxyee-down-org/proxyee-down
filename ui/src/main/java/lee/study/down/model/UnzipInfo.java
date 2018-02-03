@@ -17,6 +17,8 @@ public class UnzipInfo {
   private BdyZipEntry entry;
   private long totalFileSize;
   private long totalWriteSize;
+  private long totalFixSize;
+  private long fixSize;
   private long currFileSize;
   private long currWriteSize;
   private long startTime;

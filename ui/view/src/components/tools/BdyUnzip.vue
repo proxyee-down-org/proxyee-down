@@ -121,7 +121,13 @@
         if (task) {
           if (task.type == 'onStart') {
             this.unzip = true;
-            return '<b>状态：</b><span>扫描和修复中</span>';
+            return;
+          }
+          if (task.type == 'onFix') {
+            this.unzip = true;
+            return '<b>状态：</b><span>' +
+              '扫描和修复中(' + Math.floor(task.fixSize * 100 / task.totalFixSize) + '%)' +
+              '</span>';
           }
           let msg = '';
           if (task.entry.dir) {
