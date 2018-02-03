@@ -218,9 +218,20 @@ public class ByteUtil {
 
   public static long getNextTokenSize(FileChannel fileChannel, long position, byte[]... btsArr)
       throws IOException {
+    return getNextTokenSize(fileChannel, -1, position, btsArr);
+  }
+
+  public static long getNextTokenSize(FileChannel fileChannel, long start, long position,
+      byte[]... btsArr)
+      throws IOException {
     long ret = -1;
     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
-    long startPosition = fileChannel.position();
+    long startPosition;
+    if (start >= 0) {
+      startPosition = start;
+    } else {
+      startPosition = fileChannel.position();
+    }
     if (position >= 0) {
       fileChannel.position(position);
     }
@@ -240,9 +251,19 @@ public class ByteUtil {
 
   public static boolean matchToken(FileChannel fileChannel, long position, byte[] bts)
       throws IOException {
+    return matchToken(fileChannel, -1, position, bts);
+  }
+
+  public static boolean matchToken(FileChannel fileChannel, long start, long position, byte[] bts)
+      throws IOException {
     boolean ret;
     ByteBuffer buffer = ByteBuffer.allocate(bts.length);
-    long rawPosition = fileChannel.position();
+    long rawPosition;
+    if (start >= 0) {
+      rawPosition = start;
+    } else {
+      rawPosition = fileChannel.position();
+    }
     if (position >= 0) {
       fileChannel.position(position);
     }

@@ -168,9 +168,10 @@
             case 2: //解压进度
               this.setUnzipTask(data);
               break;
-            case 3: //创建解压任务
+            case 3: //创建自动解压任务
               this.openTabHandle('/tools', {
-                selectTool: 'BdyUnzip'
+                selectTool: 'BdyUnzip',
+                args: {filePath: data.filePath, toPath: data.toPath}
               });
               break;
           }

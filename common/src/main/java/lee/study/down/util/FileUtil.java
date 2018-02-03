@@ -156,6 +156,20 @@ public class FileUtil {
     }
   }
 
+  /**
+   * 获取目录所属磁盘剩余容量
+   */
+  public static long getDiskFreeSize(String path) {
+    File file = new File(path);
+    while (true) {
+      if (file.getParent() == null) {
+        return file.getFreeSpace();
+      } else {
+        file = file.getParentFile();
+      }
+    }
+  }
+
   public static void unmap(MappedByteBuffer mappedBuffer) throws IOException {
     try {
       Class<?> clazz = Class.forName("sun.nio.ch.FileChannelImpl");
@@ -167,20 +181,14 @@ public class FileUtil {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    String path = "F:\\百度云合并下载研究\\test.txt";
-    RandomAccessFile raf2 = new RandomAccessFile(path, "rw");
-    raf2.setLength(1024);
-    raf2.close();
-    RandomAccessFile raf3 = new RandomAccessFile(path, "rw");
-    raf3.setLength(0);
-    raf3.close();
-    /*FileChannel fileChannel = new RandomAccessFile(path, "rw").getChannel();
-    MappedByteBuf byteBuffer1 = fileChannel.map(MapMode.READ_WRITE,0,1000);
-    byteBuffer1.put(new byte[]{1,2,3,4,5});
-    byte[] bytes = new byte[5];
-    byteBuffer1.flip();
-    byteBuffer1.get(bytes);
-    System.out.println(Arrays.toString(bytes));*/
+  /**
+   * 去掉后缀名
+   */
+  public static String getFileNameNoSuffix(String fileName) {
+    int index = fileName.lastIndexOf(".");
+    if (index != -1) {
+      return fileName.substring(0, index);
+    }
+    return fileName;
   }
 }

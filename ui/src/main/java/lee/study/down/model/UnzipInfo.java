@@ -21,4 +21,5 @@ public class UnzipInfo {
   private long currWriteSize;
   private long startTime;
   private long endTime;
+  private String errorMsg;
 }

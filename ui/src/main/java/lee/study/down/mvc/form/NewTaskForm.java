@@ -1,8 +1,10 @@
 package lee.study.down.mvc.form;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import lee.study.down.model.HttpDownInfo;
+import lee.study.down.util.FileUtil;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
 
@@ -29,7 +31,10 @@ public class NewTaskForm {
       BeanUtils.copyProperties(httpDownInfo.getTaskInfo(), form,
           new String[]{"startTime", "pauseTime", "status", "chunkInfoList"});
       boolean unzipFlag = true;
-      String unzipPath = httpDownInfo.getTaskInfo().getFilePath();
+      String unzipPath =
+          httpDownInfo.getTaskInfo().getFilePath() + File.separator + FileUtil
+              .getFileNameNoSuffix(httpDownInfo.getTaskInfo()
+                  .getFileName());
       if (httpDownInfo.getAttrs() != null) {
         if (httpDownInfo.getAttrs().get(KEY_UNZIP_FLAG) != null) {
           unzipFlag = (boolean) httpDownInfo.getAttrs().get(KEY_UNZIP_FLAG);

@@ -86,13 +86,35 @@
           filePath: [
             {required: true, message: '不能为空'},
             {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
-          ]
+          ],
+          unzipPath: [
+            {required: true, message: '不能为空'},
+            {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
+          ],
         },
       }
     },
     props: [
       'taskId'
     ],
+    watch: {
+      'form.filePath': function (filePath) {
+        this.form.unzipPath = filePath + '\\' + Util.getFileNameNoSuffix(this.form.fileName);
+      },
+      'form.fileName': function (fileName) {
+        this.form.unzipPath = this.form.filePath + '\\' + Util.getFileNameNoSuffix(fileName);
+      },
+      'form.unzip': function (val) {
+        if (val) {
+          this.rules['unzipPath'] = [
+            {required: true, message: '不能为空'},
+            {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
+          ];
+        } else {
+          this.rules['unzipPath'] = null;
+        }
+      }
+    },
     components: {
       FileChoose
     },

@@ -1,7 +1,15 @@
 package lee.study.down.dispatch;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.util.ReferenceCountUtil;
+import java.io.File;
+import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import lee.study.down.content.ContentManager;
+import lee.study.down.io.BdyZip;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
@@ -68,13 +76,33 @@ public class HttpDownHandleCallback implements HttpDownCallback {
     ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
     NewTaskForm taskForm = NewTaskForm.parse(httpDownInfo);
     if (taskForm.isUnzip()) {
-      WsForm wsForm = new WsForm(WsDataType.UNZIP_NEW, new HashMap<String, String>() {
-        {
-          put("unzipFile", taskInfo.buildTaskFilePath());
-          put("unzipPath", taskForm.getUnzipPath());
-        }
-      });
-      ContentManager.WS.sendMsg(wsForm);
+      if (BdyZip.isBdyZip(taskInfo.buildTaskFilePath())) {
+        WsForm wsForm = new WsForm(WsDataType.UNZIP_NEW, new HashMap<String, String>() {
+          {
+            put("filePath", taskInfo.buildTaskFilePath());
+            put("toPath", taskForm.getUnzipPath());
+          }
+        });
+        ContentManager.WS.sendMsg(wsForm);
+      }
     }
+  }
+
+  public static void main(String[] args) throws IOException {
+//  System.setProperty("io.netty.noPreferDirect","true");
+//    System.setProperty("io.netty.allocator.numDirectArenas","0");
+   /* while (true){
+      ByteBuf byteBuf = PooledByteBufAllocator.DEFAULT.buffer(1024*1024*128);
+      byteBuf.release();
+    }*/
+    File file = new File("c:/test.txt");
+    try {
+      file.createNewFile();
+    } catch (IOException e) {
+      System.out.println(e.getStackTrace()[0].getMethodName());
+      e.printStackTrace();
+    }
+
+//      System.out.println(byteBuf.getClass());
   }
 }

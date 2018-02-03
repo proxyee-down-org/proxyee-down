@@ -1,9 +1,10 @@
 package lee.study.down.mvc.controller;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -132,9 +133,18 @@ public class HttpDownController {
         }
         taskInfo.setFileName(taskForm.getFileName());
         taskInfo.setFilePath(taskForm.getFilePath());
+        if (!Files.isWritable(Paths.get(taskForm.getFilePath()))) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问下载路径，请修改路径或开放目录写入权限");
+          return resultInfo;
+        }
+        //磁盘空间不足
+        if (taskInfo.getTotalSize() > FileUtil.getDiskFreeSize(taskForm.getFilePath())) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("磁盘空间不足，请修改路径");
+          return resultInfo;
+        }
         //有文件同名
         if (new File(taskInfo.buildTaskFilePath()).exists()) {
-          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改");
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改文件名");
           return resultInfo;
         }
         Map<String, Object> attr = httpDownInfo.getAttrs();
@@ -143,18 +153,13 @@ public class HttpDownController {
           httpDownInfo.setAttrs(attr);
         }
         attr.put(NewTaskForm.KEY_UNZIP_FLAG, taskForm.isUnzip());
-        attr.put(NewTaskForm.KEY_UNZIP_PATH, taskForm.getFilePath());
+        attr.put(NewTaskForm.KEY_UNZIP_PATH, taskForm.getUnzipPath());
         if (taskInfo.isSupportRange()) {
           taskInfo.setConnections(taskForm.getConnections());
         } else {
           taskInfo.setConnections(1);
         }
-        try {
-          bootstrap.startDown();
-        } catch (FileNotFoundException e) {
-          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问下载路径，请修改或使用管理员身份运行");
-          return resultInfo;
-        }
+        bootstrap.startDown();
         //记录存储路径
         String lastPath = ContentManager.CONFIG.get().getLastPath();
         if (!taskForm.getFilePath().equalsIgnoreCase(lastPath)) {
@@ -264,43 +269,34 @@ public class HttpDownController {
     if (file.exists() && file.isFile()) {
       if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
         UnzipInfo unzipInfo = new UnzipInfo().setId(id);
+        if (!Files.isWritable(Paths.get(unzipForm.getFilePath()))) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问解压路径，请修改路径或开放目录写入权限");
+          return resultInfo;
+        }
         new Thread(() -> {
           try {
             BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath(), new BdyUnzipCallback() {
 
               @Override
-              public void onStart(File file, String toPath) {
+              public void onStart() {
                 unzipInfo.setType(BdyZip.ON_START)
-                    .setStartTime(System.currentTimeMillis())
-                    .setTotalFileSize(file.length());
+                    .setStartTime(System.currentTimeMillis());
                 ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
               }
 
               @Override
-              public void onEntry(BdyZipEntry entry) {
-                unzipInfo.setType(BdyZip.ON_ENTRY)
+              public void onFixDone(List<BdyZipEntry> list) {
+                unzipInfo.setType(BdyZip.ON_FIX_DONE)
+                    .setTotalFileSize(list.stream().map(entry -> entry.getCompressedSize())
+                        .reduce((s1, s2) -> s1 + s2).get());
+              }
+
+              @Override
+              public void onEntryStart(BdyZipEntry entry) {
+                unzipInfo.setType(BdyZip.ON_ENTRY_START)
                     .setEntry(entry)
                     .setCurrFileSize(entry.getCompressedSize())
                     .setCurrWriteSize(0);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onErrorSize(long size) {
-                unzipInfo.setType(BdyZip.ON_ERROR_SIZE);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onFixedSize(long size) {
-                unzipInfo.setType(BdyZip.ON_FIXED_SIZE)
-                    .setCurrFileSize(size);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onEntryBegin() {
-                unzipInfo.setType(BdyZip.ON_ENTRY_BEGIN);
                 ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
               }
 
@@ -313,12 +309,6 @@ public class HttpDownController {
               }
 
               @Override
-              public void onEntryEnd() {
-                unzipInfo.setType(BdyZip.ON_ENTRY_END);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
               public void onDone() {
                 unzipInfo.setType(BdyZip.ON_DONE)
                     .setEndTime(System.currentTimeMillis());
@@ -326,8 +316,9 @@ public class HttpDownController {
               }
 
               @Override
-              public void onError() {
-                unzipInfo.setType(BdyZip.ON_ERROR);
+              public void onError(Exception e) {
+                unzipInfo.setType(BdyZip.ON_ERROR)
+                    .setErrorMsg(e.getMessage());
                 ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
               }
             });

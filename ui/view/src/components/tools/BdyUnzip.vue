@@ -15,7 +15,7 @@
           :status="status"></el-progress>
       </el-form-item>
       <el-form-item prop="toPath">
-        <span>{{msg}}</span>
+        <div v-html="msg"></div>
       </el-form-item>
     </div>
     <el-form-item>
@@ -36,8 +36,8 @@
         unzip: false,
         taskId: '',
         form: {
-          filePath: 'F:\\down\\test2测试.zip',
-          toPath: 'F:\\down',
+          filePath: '',
+          toPath: '',
         },
         rules: {
           filePath: [
@@ -54,7 +54,7 @@
         msg: ''
       }
     },
-    props:['test'],
+    props: ['filePath', 'toPath'],
     computed: {
       ...mapState('unzips', [
           'unzipTasks',
@@ -74,6 +74,9 @@
             }
           });
         }
+      },
+      'form.filePath': function () {
+        this.form.toPath = Util.getFileNameNoSuffix(this.form.filePath);
       }
     },
     components: {
@@ -85,7 +88,7 @@
           if (valid) {
             this.load = true;
             this.taskId = Util.uuid();
-            this.$http.post('api/bdyUnzip?id='+this.taskId, this.form)
+            this.$http.post('api/bdyUnzip?id=' + this.taskId, this.form)
             .then(result => {
             }).catch(() => {
               this.load = false
@@ -118,44 +121,35 @@
         if (task) {
           if (task.type == 'onStart') {
             this.unzip = true;
-            return '';
+            return '<b>状态：</b><span>扫描和修复中</span>';
           }
           let msg = '';
           if (task.entry.dir) {
-            msg = '文件夹：' + task.entry.fileName
+            msg = '<b>文件夹：</b><span>' + task.entry.fileName + '</span>'
           } else {
-            msg = '文件：' + task.entry.fileName;
+            msg = '<b>文件：</b><span>' + task.entry.fileName + '</span>';
           }
+          msg = msg + '<br><b>状态：</b>';
           switch (task.type) {
-            case 'onErrorSize':
-              msg = msg + ' 修复中';
-              break;
-            case 'onFixedSize':
-              msg = msg + ' 修复成功';
-              break;
-            case 'onEntryBegin':
-              msg = msg + ' 开始解压';
-              break;
+            case 'onEntryStart':
             case 'onEntryWrite':
               if (task.entry.dir) {
-                msg = msg + ' 解压中';
+                msg = msg + '<span>解压中(100%)</span>';
               } else {
-                msg = msg + ' 解压中：(' + task.currWriteSize + '/' + task.currFileSize + ')';
-              }
-              break;
-            case 'onEntryEnd':
-              if (task.entry.dir) {
-                msg = msg + ' 解压完成';
-              } else {
-                msg = msg + ' 解压完成：(' + task.currWriteSize + '/' + task.currFileSize + ')';
+                msg = msg + '<span>' +
+                  '解压中(' + Math.floor(task.currWriteSize * 100 / task.currFileSize) + '%)' +
+                  '</span>';
               }
               break;
             case 'onDone':
-              msg = '解压完成，耗时：' + Util.timeFmt((task.endTime - task.startTime) / 1000);
+              msg = '<b>状态：</b>' +
+                '<span>' +
+                '解压完成，耗时(' + Util.timeFmt((task.endTime - task.startTime) / 1000) + ')' +
+                '</span>';
               this.load = false;
               break;
             case 'onError':
-              msg = '解压失败';
+              msg = '<b>状态：</b><span>解压失败(' + task.errorMsg + ')</span>';
               this.load = false;
               break;
           }
@@ -163,7 +157,14 @@
         }
         return '';
       },
-    }
+    },
+    mounted() {
+      if (this.filePath && this.toPath) {
+        this.form.filePath = this.filePath;
+        this.form.toPath = this.toPath;
+        this.onSubmit();
+      }
+    },
   }
 </script>
 

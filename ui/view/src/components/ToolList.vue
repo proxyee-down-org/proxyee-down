@@ -1,5 +1,5 @@
 <template>
-  <el-row v-if="!selectTool" type="flex" justify="center">
+  <el-row v-if="!selected" type="flex" justify="center">
     <el-col :span="20">
       <el-row>
         <el-col v-for="(tool,index) in tools" :key="index" :span="8">
@@ -7,7 +7,7 @@
                       :content="tool.desc"
                       placement="right">
             <el-button type="success" round
-                       @click="selectTool=tool.name;$store.commit('tabs/setSecTitle',tool.title);">
+                       @click="selected=tool.name">
               {{tool.title}}
             </el-button>
           </el-tooltip>
@@ -15,11 +15,12 @@
       </el-row>
     </el-col>
   </el-row>
-  <div v-else :is="selectTool"></div>
+  <div v-else :is="selected" v-bind="args"></div>
 </template>
 
 <script>
   import BdyUnzip from './tools/BdyUnzip'
+  import Util from '../common/util'
 
   export default {
     components: {
@@ -30,9 +31,23 @@
         tools: [
           {name: 'BdyUnzip', title: '百度云解压', desc: '用于百度批量下载的zip文件解压'},
         ],
+        selected: '',
       }
     },
-    props:['selectTool'],
+    props: ['selectTool', 'args'],
+    watch: {
+      selected(name) {
+        let tool = this.tools[Util.inArray(this.tools, name, (tool, name) => {
+          return tool.name == name;
+        })];
+        this.$store.commit('tabs/setSecTitle', tool.title)
+      }
+    },
+    created() {
+      if (this.selectTool) {
+        this.selected = this.selectTool;
+      }
+    },
   }
 </script>
 

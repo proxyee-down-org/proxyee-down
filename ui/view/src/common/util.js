@@ -71,5 +71,12 @@ export default {
         toObj[name] = fromObj[name];
       }
     }
-  }
+  },
+  getFileNameNoSuffix(fileName){
+    let index = fileName.lastIndexOf(".");
+    if (index != -1) {
+      return fileName.substring(0, index);
+    }
+    return fileName;
+  },
 }
