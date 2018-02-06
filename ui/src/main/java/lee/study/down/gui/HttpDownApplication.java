@@ -287,7 +287,7 @@ public class HttpDownApplication extends Application {
         popupMenu.add(closeItem);
         // 为托盘图标加弹出菜弹
         trayIcon.setPopupMenu(popupMenu);
-        trayIcon.displayMessage("提示", "软件启动成功", TrayIcon.MessageType.INFO);
+        trayIcon.displayMessage("提示", "proxyee-down启动成功", TrayIcon.MessageType.INFO);
       }
     } catch (Exception e) {
       LOGGER.error("addTray error:", e);
