@@ -2,10 +2,12 @@ package lee.study.down.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Stack;
 
 public class FileUtil {
@@ -15,6 +17,13 @@ public class FileUtil {
    */
   public static boolean exists(String path) {
     return new File(path).exists();
+  }
+
+  /**
+   * 文件或目录是否存在
+   */
+  public static boolean existsAny(String... paths) {
+    return Arrays.stream(paths).anyMatch(path -> new File(path).exists());
   }
 
   /**
@@ -190,5 +199,34 @@ public class FileUtil {
       return fileName.substring(0, index);
     }
     return fileName;
+  }
+
+  public static void initFile(String path, boolean isHidden) throws IOException {
+    initFile(path, null, isHidden);
+  }
+
+  public static void initFile(String path, InputStream input, boolean isHidden) throws IOException {
+    if (exists(path)) {
+      try (
+          RandomAccessFile raf = new RandomAccessFile(path, "rw")
+      ) {
+        raf.setLength(0);
+      }
+    } else {
+      FileUtil.createFile(path, isHidden);
+    }
+    if (input != null) {
+      try (
+          RandomAccessFile raf = new RandomAccessFile(path, "rw")
+      ) {
+        byte[] bts = new byte[8192];
+        int len;
+        while ((len = input.read(bts)) != -1) {
+          raf.write(bts, 0, len);
+        }
+      } finally {
+        input.close();
+      }
+    }
   }
 }

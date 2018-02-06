@@ -8,12 +8,10 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
@@ -80,7 +78,8 @@ public class HttpDownInitializer extends ChannelInitializer {
                 return;
               }
             }
-            if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()) {
+            if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()
+                || (!taskInfo.isSupportRange() && msg instanceof LastHttpContent)) {
               LOGGER.debug("分段下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
               bootstrap.close(chunkInfo);
               //分段下载完成回调
@@ -93,7 +92,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                 if (taskInfo.getStatus() == HttpDownStatus.RUNNING
                     && taskInfo.getChunkInfoList().stream()
                     .allMatch((chunk) -> chunk.getStatus() == HttpDownStatus.DONE)) {
-                  if (taskInfo.getTotalSize() <= 0) {  //chunked编码最后更新文件大小
+                  if (!taskInfo.isSupportRange()) {  //chunked编码最后更新文件大小
                     taskInfo.setTotalSize(taskInfo.getDownSize());
                     taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
                   }
@@ -131,7 +130,8 @@ public class HttpDownInitializer extends ChannelInitializer {
                 LOGGER.debug(
                     "下载响应：channelId[" + ctx.channel().id() + "]\t contentSize[" + realContentSize
                         + "]" + chunkInfo);
-                chunkInfo.setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
+                chunkInfo
+                    .setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
                 fileChannels = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
                 if (callback != null) {
@@ -187,52 +187,6 @@ public class HttpDownInitializer extends ChannelInitializer {
   }
 
   public static void main(String[] args) throws Exception {
-    /*FileChannel fileChannel = new RandomAccessFile("f:/down/【批量下载】新建文本文档等22.zip","rw").getChannel();
-    ByteBuffer byteBuffer = ByteBuffer.allocate(130556);
-    fileChannel.position(3821941867L);
-    fileChannel.read(byteBuffer);
-    byteBuffer.flip();
-    FileChannel fileChannel2 = new RandomAccessFile("f:/down/1.txt","rw").getChannel();
-    fileChannel2.write(byteBuffer);*/
-    FileChannel fileChannel = new RandomAccessFile("f:/idm/【批量下载】新建文本文档等.zip", "rw").getChannel();
-    ByteBuffer byteBuffer = ByteBuffer.allocate(130556);
-    fileChannel.position(3821941867L);
-    fileChannel.read(byteBuffer);
-    byteBuffer.flip();
-    FileChannel fileChannel2 = new RandomAccessFile("f:/down/2.txt", "rw").getChannel();
-    fileChannel2.write(byteBuffer);
-    //3821941867
-    //3821941867-3858226053
-    /*System.out.println((1674458220L+Integer.MAX_VALUE)/(4658990011L/128));
-    System.out.println(1674458220L+Integer.MAX_VALUE);*/
-    /*long size = 4658990011L;
-    MappedByteBuffer input1 = new RandomAccessFile("f:/down/【批量下载】新建文本文档等22.zip","rw").getChannel().map(MapMode.READ_WRITE,0,Integer.MAX_VALUE);
-    MappedByteBuffer input2 = new RandomAccessFile("f:/idm/【批量下载】新建文本文档等.zip","rw").getChannel().map(MapMode.READ_WRITE,0,Integer.MAX_VALUE);
-    for (long i = 0; i < Integer.MAX_VALUE; i++) {
-      if (input1.get() != input2.get()) {
-        System.out.println("1:"+i);
-        return;
-      }
-    }
-    FileUtil.unmap(input1);
-    FileUtil.unmap(input2);
-    input1 = new RandomAccessFile("f:/down/【批量下载】新建文本文档等22.zip","rw").getChannel().map(MapMode.READ_WRITE,Integer.MAX_VALUE,Integer.MAX_VALUE);
-    input2 = new RandomAccessFile("f:/idm/【批量下载】新建文本文档等.zip","rw").getChannel().map(MapMode.READ_WRITE,Integer.MAX_VALUE,Integer.MAX_VALUE);
-    for (long i = 0; i < Integer.MAX_VALUE; i++) {
-      if (input1.get() != input2.get()) {
-        System.out.println("2:"+i);
-        return;
-      }
-    }
-    FileUtil.unmap(input1);
-    FileUtil.unmap(input2);
-    input1 = new RandomAccessFile("f:/down/【批量下载】新建文本文档等22.zip","rw").getChannel().map(MapMode.READ_WRITE,Integer.MAX_VALUE*2L,size-Integer.MAX_VALUE*2L);
-    input2 = new RandomAccessFile("f:/idm/【批量下载】新建文本文档等.zip","rw").getChannel().map(MapMode.READ_WRITE,Integer.MAX_VALUE*2L,size-Integer.MAX_VALUE*2L);
-    for (long i = 0; i < Integer.MAX_VALUE; i++) {
-      if (input1.get() != input2.get()) {
-        System.out.println("3:"+i);
-        return;
-      }
-    }*/
+    System.out.println(System.getProperty("java.home"));
   }
 }

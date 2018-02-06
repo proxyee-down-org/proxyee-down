@@ -5,7 +5,6 @@ import ElementUI from 'element-ui'
 import axios from 'axios'
 import 'element-ui/lib/theme-chalk/index.css'
 import App from './App'
-import router from './router'
 import store from './store'
 
 Vue.use(ElementUI, {size: 'medium'})
@@ -30,7 +29,6 @@ Vue.prototype.$http.interceptors.response.use(
 window.vue = new Vue({
   el: '#app',
   store,
-  router,
   template: '<App/>',
   components: {App}
 })

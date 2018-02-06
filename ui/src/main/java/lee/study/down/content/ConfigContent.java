@@ -1,16 +1,13 @@
 package lee.study.down.content;
 
 import java.io.IOException;
-import java.io.Serializable;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
-import lee.study.proxyee.proxy.ProxyConfig;
-import lee.study.proxyee.proxy.ProxyType;
+import lee.study.down.util.WindowsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 
 public class ConfigContent {
 
@@ -32,7 +29,7 @@ public class ConfigContent {
       try {
         ByteUtil.serialize(configContent, HttpDownConstant.CONFIG_PATH);
       } catch (IOException e) {
-        LOGGER.error("写入配置文件失败：", e);
+        LOGGER.warn("写入配置文件失败：", e);
       }
     }
   }
@@ -42,7 +39,7 @@ public class ConfigContent {
       try {
         configContent = (ConfigInfo) ByteUtil.deserialize(HttpDownConstant.CONFIG_PATH);
       } catch (Exception e) {
-        LOGGER.error("加载配置文件失败：", e);
+        LOGGER.warn("加载配置文件失败：", e);
       }
     }
     if (configContent == null) {
@@ -50,11 +47,18 @@ public class ConfigContent {
       //默认代理端口
       configContent.setProxyPort(9999);
       //默认分段数
-      configContent.setConnections(16);
+      configContent.setConnections(32);
       //默认30秒无响应重试
       configContent.setTimeout(30);
-      //默认全局代理
-      configContent.setProxyModel(1);
+      //默认百度云嗅探模式
+      configContent.setSniffModel(2);
+      //安装证书
+      try {
+        WindowsUtil.installCert(
+            Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
+      } catch (IOException e) {
+        LOGGER.error("install cert error：", e);
+      }
       save();
     }
   }

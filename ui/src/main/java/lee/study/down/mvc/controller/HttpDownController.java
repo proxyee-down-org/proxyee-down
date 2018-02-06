@@ -326,7 +326,7 @@ public class HttpDownController {
               @Override
               public void onError(Exception e) {
                 unzipInfo.setType(BdyZip.ON_ERROR)
-                    .setErrorMsg(e.getMessage());
+                    .setErrorMsg(e.toString());
                 ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
               }
             });

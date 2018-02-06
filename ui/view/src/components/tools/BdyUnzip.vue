@@ -75,8 +75,8 @@
           });
         }
       },
-      'form.filePath': function () {
-        this.form.toPath = Util.getFileNameNoSuffix(this.form.filePath);
+      'form.filePath': function (filePath) {
+        this.form.toPath = Util.getFileNameNoSuffix(filePath);
       }
     },
     components: {
@@ -124,10 +124,13 @@
             return;
           }
           if (task.type == 'onFix') {
-            this.unzip = true;
             return '<b>状态：</b><span>' +
               '扫描和修复中(' + Math.floor(task.fixSize * 100 / task.totalFixSize) + '%)' +
               '</span>';
+          }
+          if (task.type == 'onError') {
+            return '<b>状态：</b><span>解压失败(' + task.errorMsg + ')</span>';
+            this.load = false;
           }
           let msg = '';
           if (task.entry.dir) {
@@ -152,10 +155,6 @@
                 '<span>' +
                 '解压完成，耗时(' + Util.timeFmt((task.endTime - task.startTime) / 1000) + ')' +
                 '</span>';
-              this.load = false;
-              break;
-            case 'onError':
-              msg = '<b>状态：</b><span>解压失败(' + task.errorMsg + ')</span>';
               this.load = false;
               break;
           }

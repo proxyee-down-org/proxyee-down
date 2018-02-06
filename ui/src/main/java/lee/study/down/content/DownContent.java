@@ -2,6 +2,8 @@ package lee.study.down.content;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +81,7 @@ public class DownContent {
     synchronized (downContent) {
       if (bootstrap.getHttpDownInfo().getTaskInfo().getStatus() == HttpDownStatus.WAIT) {
         TaskInfo taskInfo = getWaitTask();
-        if(taskInfo!=null){
+        if (taskInfo != null) {
           downContent.remove(taskInfo.getId());
         }
       }
@@ -125,11 +127,12 @@ public class DownContent {
       TaskInfo taskInfo = getTaskInfo(id);
       if (taskInfo != null) {
         synchronized (taskInfo) {
-          ByteUtil.serialize(taskInfo, taskInfo.buildTaskRecordFilePath());
+          ByteUtil.serialize(taskInfo, taskInfo.buildTaskRecordFilePath(),
+              taskInfo.buildTaskRecordBakFilePath());
         }
       }
     } catch (IOException e) {
-      LOGGER.error("写入配置文件失败：", e);
+      LOGGER.warn("写入配置文件失败：", e);
     }
   }
 
@@ -154,9 +157,10 @@ public class DownContent {
           //下载未完成
           if (taskInfo.getStatus() != HttpDownStatus.DONE) {
             String taskDetailPath = taskInfo.buildTaskRecordFilePath();
+            String taskDetailBakPath = taskInfo.buildTaskRecordBakFilePath();
             //存在下载进度信息则更新,否则重新下载
-            if (FileUtil.exists(taskDetailPath)) {
-              taskInfo = (TaskInfo) ByteUtil.deserialize(taskDetailPath);
+            if (FileUtil.existsAny(taskDetailPath, taskDetailBakPath)) {
+              taskInfo = (TaskInfo) ByteUtil.deserialize(taskDetailPath, taskDetailBakPath);
               httpDownInfo.setTaskInfo(taskInfo);
             } else {
               taskInfo.reset();
@@ -173,7 +177,7 @@ public class DownContent {
           putBoot(bootstrap);
         }
       } catch (Exception e) {
-        LOGGER.error("加载配置文件失败：", e);
+        LOGGER.warn("加载配置文件失败：", e);
       }
     }
   }

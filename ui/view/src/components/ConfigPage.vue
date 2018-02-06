@@ -10,7 +10,7 @@
       <el-slider
         v-model="form.connections"
         :min="2"
-        :max="128"
+        :max="256"
         :step="2"
         show-input>
       </el-slider>

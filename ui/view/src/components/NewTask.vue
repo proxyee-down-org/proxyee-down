@@ -27,7 +27,7 @@
       <el-slider
         v-model="form.connections"
         :min="2"
-        :max="128"
+        :max="256"
         :step="2"
         :disabled="!form.supportRange||!!form.oldId"
         show-input>
@@ -99,10 +99,18 @@
     ],
     watch: {
       'form.filePath': function (filePath) {
-        this.form.unzipPath = filePath + '\\' + Util.getFileNameNoSuffix(this.form.fileName);
+        if (filePath) {
+          this.form.unzipPath = filePath + '\\' + Util.getFileNameNoSuffix(this.form.fileName);
+        } else {
+          this.form.unzipPath = '';
+        }
       },
       'form.fileName': function (fileName) {
-        this.form.unzipPath = this.form.filePath + '\\' + Util.getFileNameNoSuffix(fileName);
+        if (this.form.filePath) {
+          this.form.unzipPath = this.form.filePath + '\\' + Util.getFileNameNoSuffix(fileName);
+        } else {
+          this.form.unzipPath = '';
+        }
       },
       'form.unzip': function (val) {
         if (val) {

@@ -217,7 +217,7 @@ public class BdyZip {
           callback.onDone();
         }
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       if (callback != null) {
         callback.onError(e);
       }
@@ -272,19 +272,4 @@ public class BdyZip {
 
     void onError(Exception e);
   }
-
-
-  public static void main(String[] args) throws IOException {
-//    unzipTest("f:/down/【批量下载】新建文本文档等.zip", "f:/down");
-//    unzipTest("f:/down/【批量下载】英语国家社会与文化-uni等.zip", "f:/down");
-//    unzipTest("f:/down/【批量下载】test2ddd测试等.zip", "f:/down");
-    FileChannel fileChannel = new RandomAccessFile("f:/down/【批量下载】英语国家社会与文化-uni等.zip", "rw")
-        .getChannel();
-    List<BdyZipEntry> list = getFixedEntryList(fileChannel, null);
-    //4,658,989,306
-    //4,658,989,306
-//    unzip("f:/down/【批量下载】新建文本文档等.zip", "f:/down");
-
-  }
-
 }

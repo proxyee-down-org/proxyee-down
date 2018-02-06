@@ -190,8 +190,5 @@
     padding: 0;
   }
 
-  .el-main {
-  }
-
   @import "./assets/icon/iconfont.css";
 </style>
