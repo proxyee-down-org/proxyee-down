@@ -23,16 +23,19 @@ public class CheckboxMenuItemGroup implements ItemListener {
 
   @Override
   public void itemStateChanged(ItemEvent e) {
+    CheckboxMenuItem checkedItem = ((CheckboxMenuItem) e.getSource());
     if (e.getStateChange() == ItemEvent.SELECTED) {
-      String itemAffected = (String) e.getItem();
+      String selectedItemName = checkedItem.getName();
       for (CheckboxMenuItem item : items) {
-        if (!item.getLabel().equals(itemAffected)) {
+        if (!item.getName().equals(selectedItemName)) {
           item.setState(false);
         }
       }
       if (itemListener != null) {
         itemListener.itemStateChanged(e);
       }
+    } else {
+      checkedItem.setState(true);
     }
   }
 

@@ -72,6 +72,7 @@ public class HttpDownHandleCallback implements HttpDownCallback {
     //删除任务进度记录文件
     synchronized (taskInfo) {
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
+      FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
     }
     ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
     NewTaskForm taskForm = NewTaskForm.parse(httpDownInfo);

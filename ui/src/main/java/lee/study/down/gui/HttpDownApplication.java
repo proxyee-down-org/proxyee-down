@@ -112,17 +112,6 @@ public class HttpDownApplication extends Application {
     } else {
       new Thread(() -> proxyServer.start(ContentManager.CONFIG.get().getProxyPort())).start();
     }
-    //windows自动安装证书
-    if (OsUtil.isWindows()) {
-      try {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
-          WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
-        }
-      } catch (Exception e) {
-        LOGGER.error("install cert error:", e);
-      }
-    }
   }
 
   private void afterOpen() {
@@ -199,15 +188,33 @@ public class HttpDownApplication extends Application {
         MenuItem tasksItem = new MenuItem("显示");
         tasksItem.addActionListener(event -> Platform.runLater(() -> open()));
 
-        MenuItem crtItem = new MenuItem("下载证书");
-        crtItem.addActionListener(event -> {
-          try {
-            OsUtil
-                .openBrowse("http://127.0.0.1:" + ContentManager.CONFIG.get().getProxyPort());
-          } catch (Exception e) {
-            LOGGER.error("down cert error", e);
-          }
-        });
+        MenuItem crtItem;
+        if (OsUtil.isWindows()) {
+          crtItem = new MenuItem("安装证书");
+          crtItem.addActionListener(event -> {
+            try {
+              ClassLoader loader = Thread.currentThread().getContextClassLoader();
+              if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
+                WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+                trayIcon.displayMessage("提示", "证书安装成功", TrayIcon.MessageType.INFO);
+              } else {
+                trayIcon.displayMessage("提示", "证书已安装", TrayIcon.MessageType.INFO);
+              }
+            } catch (Exception e) {
+              LOGGER.error("down cert error", e);
+            }
+          });
+        } else {
+          crtItem = new MenuItem("下载证书");
+          crtItem.addActionListener(event -> {
+            try {
+              OsUtil
+                  .openBrowse("http://127.0.0.1:" + ContentManager.CONFIG.get().getProxyPort());
+            } catch (Exception e) {
+              LOGGER.error("down cert error", e);
+            }
+          });
+        }
 
         Menu proxyMenu = new Menu("嗅探模式");
         if (!OsUtil.isWindows()) {
@@ -215,8 +222,11 @@ public class HttpDownApplication extends Application {
         } else {
           CheckboxMenuItemGroup mig = new CheckboxMenuItemGroup();
           CheckboxMenuItem globalProxyItem = new CheckboxMenuItem("全局");
+          globalProxyItem.setName("1");
           CheckboxMenuItem bdyProxyItem = new CheckboxMenuItem("百度云");
+          bdyProxyItem.setName("2");
           CheckboxMenuItem disableProxyItem = new CheckboxMenuItem("关闭");
+          disableProxyItem.setName("3");
           proxyMenu.add(globalProxyItem);
           proxyMenu.add(bdyProxyItem);
           proxyMenu.add(disableProxyItem);
@@ -239,11 +249,12 @@ public class HttpDownApplication extends Application {
           mig.addActionListener(event -> {
             try {
               boolean ret;
-              if ("全局".equals(event.getItem())) {
+              String selectedItemName = ((CheckboxMenuItem) event.getSource()).getName();
+              if ("1".equals(selectedItemName)) {
                 ContentManager.CONFIG.get().setSniffModel(1);
                 ret = WindowsUtil
                     .enabledIEProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
-              } else if ("百度云".equals(event.getItem())) {
+              } else if ("2".equals(selectedItemName)) {
                 ContentManager.CONFIG.get().setSniffModel(2);
                 ret = WindowsUtil.enabledPACProxy(
                     "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")

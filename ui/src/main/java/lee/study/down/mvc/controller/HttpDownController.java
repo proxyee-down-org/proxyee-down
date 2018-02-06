@@ -252,6 +252,7 @@ public class HttpDownController {
         ContentManager.DOWN.removeBoot(id);
         ContentManager.DOWN.save();
         FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
+        FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
         if (delFile) {
           FileUtil.deleteIfExists(taskInfo.buildChunksPath());
           FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());

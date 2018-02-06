@@ -2,6 +2,7 @@ package lee.study.down.util;
 
 import com.sun.jna.Pointer;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -125,8 +126,18 @@ public class WindowsUtil {
     if (ret.indexOf("======") != -1) {
       return true;
     } else {
-      return false;
+      process = Runtime.getRuntime().exec("certutil "
+          + "-store "
+          + "-user "
+          + "root "
+          + certId
+      );
+      ret = getProcessPrint(process);
+      if (ret.indexOf("======") != -1) {
+        return true;
+      }
     }
+    return false;
   }
 
   /**
@@ -135,28 +146,9 @@ public class WindowsUtil {
   public static void installCert(InputStream input) throws IOException {
     String caPath = PathUtil.ROOT_PATH + "/ca.crt";
     FileUtil.initFile(caPath, input, false);
-    //certmgr.exe -add -c ca.crt -s -r localMachine root
-   /* Process process = Runtime.getRuntime().exec("\""+PathUtil.ROOT_PATH+"certmgr.exe\" "
-        + "-add "
-        + "-c "
-        + "\"" + caPath + "\" "
-        + "-s "
-        + "-r "
-        + "localMachine "
-        + "root"
-    );
-     try (
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
-    ) {
-      StringBuilder sb = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        sb.append(line);
-      }
-    }
-    */
     getProcessPrint(Runtime.getRuntime().exec("certutil "
         + "-addstore "
+        + (isAdmin() ? "" : "-user ")
         + "root "
         + "\"" + caPath + "\""
     ));
@@ -193,6 +185,24 @@ public class WindowsUtil {
     return sb.toString();
   }
 
+  public static boolean isAdmin() {
+    try {
+      String programFiles = System.getenv("ProgramFiles");
+      if (programFiles == null) {
+        programFiles = "C:\\Program Files";
+      }
+      File temp = new File(programFiles, "test.txt");
+      if (temp.createNewFile()) {
+        temp.delete();
+        return true;
+      } else {
+        return false;
+      }
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
   public static void main(String[] args) throws Exception {
 //    installCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
     /*String caPath = PathUtil.ROOT_PATH + "ca.crt";
@@ -203,9 +213,7 @@ public class WindowsUtil {
         .loadCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
     //读取CA证书使用者信息
     System.out.println(Long.toHexString(certificate.getSerialNumber().longValue()));*/
-    System.out.println(
-        existsCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt")));
-    installCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
+    System.out.println(isAdmin());
     System.out.println(
         existsCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt")));
   }
