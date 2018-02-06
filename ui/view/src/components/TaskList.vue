@@ -59,6 +59,11 @@
                   <p>
                     <span>状态：</span>
                     <b>{{leftTime(task)}}</b>
+                    <el-tooltip v-show="task.status==6" class="item"
+                                content="下载链接失效，可重新下载相同资源，在创建任务页面里选中当前任务来刷新链接继续下载"
+                                placement="right">
+                      <i class="el-icon-question"></i>
+                    </el-tooltip>
                   </p>
                 </div>
                 <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=16}">
@@ -133,7 +138,7 @@
       newTaskId() {
         this.setNewTaskStatus(0);
         //强制渲染
-        this.$nextTick(()=>{
+        this.$nextTick(() => {
           this.setNewTaskStatus(2);
         });
       }

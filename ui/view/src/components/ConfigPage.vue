@@ -175,8 +175,4 @@
     padding-left: 5px;
     width: 50%;
   }
-
-  .item {
-    padding-left: 5px;
-  }
 </style>

@@ -227,8 +227,4 @@
     color: #8492a6;
     font-size: 14px
   }
-
-  .item {
-    padding-left: 5px;
-  }
 </style>

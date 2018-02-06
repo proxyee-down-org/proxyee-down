@@ -458,7 +458,10 @@ public class HttpDownController {
       HttpRequestInfo requestInfo = HttpDownUtil
           .buildGetRequest(form.getUrl(), heads, form.getBody());
       TaskInfo taskInfo = HttpDownUtil
-          .getTaskInfo(requestInfo, null, HttpDownConstant.clientSslContext,
+          .getTaskInfo(requestInfo,
+              null,
+              ContentManager.CONFIG.get().getSecProxyConfig(),
+              HttpDownConstant.clientSslContext,
               HttpDownConstant.clientLoopGroup);
       HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo,
           ContentManager.CONFIG.get().getSecProxyConfig());

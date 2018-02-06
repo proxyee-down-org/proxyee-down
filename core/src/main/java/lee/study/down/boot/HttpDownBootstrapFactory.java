@@ -8,7 +8,7 @@ import lee.study.down.util.OsUtil;
 
 public class HttpDownBootstrapFactory {
 
-  public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo,
+  public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo, int retryCount,
       SslContext clientSslContext, NioEventLoopGroup clientLoopGroup, HttpDownCallback callback) {
     if (OsUtil.is64()) {
       return new X64HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,

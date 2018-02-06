@@ -126,7 +126,7 @@ public class HttpDownInitializer extends ChannelInitializer {
               chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
               throw new RuntimeException("http down response error:" + httpResponse);
             }
-            realContentSize = HttpDownUtil.getDownFileSize(httpResponse.headers());
+            realContentSize = HttpDownUtil.getDownContentSize(httpResponse.headers());
             synchronized (chunkInfo) {
               //判断状态是否为连接中
               if (chunkInfo.getStatus() == HttpDownStatus.CONNECTING_NORMAL
@@ -189,9 +189,5 @@ public class HttpDownInitializer extends ChannelInitializer {
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     super.exceptionCaught(ctx, cause);
     LOGGER.error("down onInit:", cause);
-  }
-
-  public static void main(String[] args) throws Exception {
-    System.out.println(System.getProperty("java.home"));
   }
 }

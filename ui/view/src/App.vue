@@ -192,3 +192,9 @@
 
   @import "./assets/icon/iconfont.css";
 </style>
+
+<style>
+  .item {
+    padding-left: 5px;
+  }
+</style>

@@ -63,8 +63,8 @@
       </el-col>
       <el-col :span="6">
         <el-button @click="checkUpdate" type="primary" :loading="checkLoading">检测更新</el-button>
-        <el-tooltip class="item" content="若更新进度无响应可重新检查更新" placement="right">
-          <i class="el-icon-question" style="position: relative;top:-15px;"></i>
+        <el-tooltip content="若更新进度无响应可重新检查更新" placement="right">
+          <i class="el-icon-question"></i>
         </el-tooltip>
       </el-col>
       <el-dialog
