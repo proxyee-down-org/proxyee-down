@@ -29,7 +29,7 @@ public class ConfigContent {
       try {
         ByteUtil.serialize(configContent, HttpDownConstant.CONFIG_PATH);
       } catch (IOException e) {
-        LOGGER.warn("写入配置文件失败：", e);
+        LOGGER.error("写入配置文件失败：", e);
       }
     }
   }
@@ -39,7 +39,7 @@ public class ConfigContent {
       try {
         configContent = (ConfigInfo) ByteUtil.deserialize(HttpDownConstant.CONFIG_PATH);
       } catch (Exception e) {
-        LOGGER.warn("加载配置文件失败：", e);
+        LOGGER.error("加载配置文件失败：", e);
       }
     }
     if (configContent == null) {
@@ -47,11 +47,13 @@ public class ConfigContent {
       //默认代理端口
       configContent.setProxyPort(9999);
       //默认分段数
-      configContent.setConnections(32);
+      configContent.setConnections(16);
       //默认30秒无响应重试
       configContent.setTimeout(30);
       //默认百度云嗅探模式
       configContent.setSniffModel(2);
+      //默认重试次数
+      configContent.setRetryCount(5);
       //安装证书
       try {
         WindowsUtil.installCert(

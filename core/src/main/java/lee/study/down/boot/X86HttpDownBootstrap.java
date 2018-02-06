@@ -3,17 +3,12 @@ package lee.study.down.boot;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 import java.io.Closeable;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
-import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
-import lee.study.down.io.LargeMappedByteBuffer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
@@ -22,10 +17,11 @@ import lee.study.down.util.FileUtil;
 public class X86HttpDownBootstrap extends AbstractHttpDownBootstrap {
 
   public X86HttpDownBootstrap(HttpDownInfo httpDownInfo,
+      int retryCount,
       SslContext clientSslContext,
       NioEventLoopGroup clientLoopGroup,
       HttpDownCallback callback) {
-    super(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+    super(httpDownInfo, retryCount, clientSslContext, clientLoopGroup, callback);
   }
 
   @Override

@@ -91,6 +91,7 @@ public class DownContent {
 
   public void putBoot(HttpDownInfo httpDownInfo) {
     AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
+        ContentManager.CONFIG.get().getRetryCount(),
         HttpDownConstant.clientSslContext,
         HttpDownConstant.clientLoopGroup,
         HttpDownConstant.httpDownCallback);
@@ -147,6 +148,7 @@ public class DownContent {
             .deserialize(HttpDownConstant.TASK_RECORD_PATH);
         for (HttpDownInfo httpDownInfo : records) {
           AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
+              ContentManager.CONFIG.get().getRetryCount(),
               HttpDownConstant.clientSslContext,
               HttpDownConstant.clientLoopGroup,
               HttpDownConstant.httpDownCallback);
@@ -168,7 +170,7 @@ public class DownContent {
             if (taskInfo.getStatus() == HttpDownStatus.MERGE) {
               //设置为合并取消状态
               taskInfo.setStatus(HttpDownStatus.MERGE_CANCEL);
-            } else {
+            } else if (taskInfo.getStatus() != HttpDownStatus.FAIL) {
               //设置为暂停状态
               taskInfo.setStatus(HttpDownStatus.PAUSE);
               taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setStatus(HttpDownStatus.PAUSE));

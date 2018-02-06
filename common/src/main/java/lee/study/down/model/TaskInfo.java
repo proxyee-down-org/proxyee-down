@@ -85,6 +85,7 @@ public class TaskInfo implements Serializable {
       chunkInfo.setStartTime(0);
       chunkInfo.setLastTime(0);
       chunkInfo.setPauseTime(0);
+      chunkInfo.setErrorCount(0);
     });
   }
 

@@ -11,9 +11,11 @@ public class HttpDownBootstrapFactory {
   public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo,
       SslContext clientSslContext, NioEventLoopGroup clientLoopGroup, HttpDownCallback callback) {
     if (OsUtil.is64()) {
-      return new X64HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+      return new X64HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
+          callback);
     } else {
-      return new X86HttpDownBootstrap(httpDownInfo, clientSslContext, clientLoopGroup, callback);
+      return new X86HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
+          callback);
     }
   }
 }

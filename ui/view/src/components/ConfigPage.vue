@@ -24,6 +24,12 @@
         <i class="el-icon-question"></i>
       </el-tooltip>
     </el-form-item>
+    <el-form-item label="重试次数" prop="retryCount">
+      <el-input v-model.number="form.retryCount" class="num-input"></el-input>
+      <el-tooltip class="item" content="分段连接失败重试次数，超过该次数则不再重新发起连接" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
+    </el-form-item>
     <el-form-item label="二级代理">
       <el-switch v-model="form.secProxyEnable"></el-switch>
       <el-tooltip class="item" content="配置下载器的代理服务器" placement="right">
@@ -85,6 +91,10 @@
           timeout: [
             {required: true, message: '不能为空'},
             {type: 'integer', min: 10, message: '请输入大于或等于10的数字'},
+          ],
+          retryCount: [
+            {required: true, message: '不能为空'},
+            {type: 'integer', min: 5, max: 30, message: '请输入5-30之间的数字'},
           ]
         },
         proxyTypeOptions: [{

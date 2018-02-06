@@ -1,12 +1,7 @@
 package lee.study.down.dispatch;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.util.ReferenceCountUtil;
 import java.io.File;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.HashMap;
 import lee.study.down.content.ContentManager;
 import lee.study.down.io.BdyZip;
@@ -48,10 +43,15 @@ public class HttpDownHandleCallback implements HttpDownCallback {
   }
 
   @Override
-  public void onError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
+  public void onError(HttpDownInfo httpDownInfo, Throwable cause) {
+    ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
     ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
   }
 
+  @Override
+  public void onChunkError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+  }
   @Override
   public void onChunkDone(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
