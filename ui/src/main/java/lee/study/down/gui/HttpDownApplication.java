@@ -84,11 +84,7 @@ public class HttpDownApplication extends Application {
     //程序退出监听
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       if (OsUtil.isWindows()) {
-        try {
-          WindowsUtil.disabledProxy();
-        } catch (IOException e) {
-          LOGGER.error("disabled proxy error:", e);
-        }
+        WindowsUtil.disabledProxy();
       }
     }));
   }
