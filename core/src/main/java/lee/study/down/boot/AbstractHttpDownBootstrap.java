@@ -12,13 +12,17 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.ssl.SslContext;
 import io.netty.resolver.NoopAddressResolverGroup;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
+import lee.study.down.exception.BootstrapException;
 import lee.study.down.handle.HttpDownInitializer;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpDownInfo;
@@ -51,8 +55,20 @@ public abstract class AbstractHttpDownBootstrap {
   public void startDown() throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     taskInfo.buildChunkInfoList();
-    FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
-    FileUtil.createDirSmart(taskInfo.getFilePath());
+    if (!FileUtil.exists(taskInfo.getFilePath())) {
+      FileUtil.createDirSmart(taskInfo.getFilePath());
+    }
+    if (!Files.isWritable(Paths.get(taskInfo.getFilePath()))) {
+      throw new BootstrapException("无权访问下载路径，请修改路径或开放目录写入权限");
+    }
+    //磁盘空间不足
+    if (taskInfo.getTotalSize() > FileUtil.getDiskFreeSize(taskInfo.getFilePath())) {
+      throw new BootstrapException("磁盘空间不足，请修改路径");
+    }
+    //有文件同名
+    if (new File(taskInfo.buildTaskFilePath()).exists()) {
+      throw new BootstrapException("文件名已存在，请修改文件名");
+    }
     initBoot();
     //文件下载开始回调
     taskInfo.reset();
@@ -69,7 +85,7 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  public void startChunkDown(ChunkInfo chunkInfo, int updateStatus) {
+  public void startChunkDown(ChunkInfo chunkInfo, int updateStatus) throws Exception {
     HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
     RequestProto requestProto = requestInfo.requestProto();
     LOGGER.debug("开始下载：" + chunkInfo);
@@ -80,6 +96,9 @@ public abstract class AbstractHttpDownBootstrap {
     if (httpDownInfo.getProxyConfig() != null) {
       //代理服务器解析DNS和连接
       bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+    }
+    if (callback != null) {
+      callback.onChunkConnecting(httpDownInfo, chunkInfo);
     }
     ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort());
     chunkInfo.setStatus(updateStatus);
@@ -230,6 +249,23 @@ public abstract class AbstractHttpDownBootstrap {
         synchronized (chunkInfo) {
           close(chunkInfo);
         }
+      }
+    }
+  }
+
+  public void delete(boolean delFile) throws Exception {
+    close();
+    TaskInfo taskInfo = httpDownInfo.getTaskInfo();
+    //删除任务进度记录文件
+    synchronized (taskInfo) {
+      FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
+      FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
+      if (delFile) {
+        FileUtil.deleteIfExists(taskInfo.buildChunksPath());
+        FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
+      }
+      if (callback != null) {
+        callback.onDelete(httpDownInfo);
       }
     }
   }

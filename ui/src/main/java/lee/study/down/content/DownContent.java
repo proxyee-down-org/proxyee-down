@@ -2,8 +2,6 @@ package lee.study.down.content;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +61,17 @@ public class DownContent {
     return taskInfoList;
   }
 
+  public List<TaskInfo> getDowningTasks() {
+    List<TaskInfo> taskInfoList = new ArrayList<>();
+    for (String id : downContent.keySet()) {
+      TaskInfo taskInfo = getTaskInfo(id);
+      if (taskInfo != null && taskInfo.getStatus() == HttpDownStatus.RUNNING) {
+        taskInfoList.add(taskInfo);
+      }
+    }
+    return taskInfoList;
+  }
+
   public TaskInfo getWaitTask() {
     for (String id : downContent.keySet()) {
       TaskInfo taskInfo = getTaskInfo(id);
@@ -73,8 +82,24 @@ public class DownContent {
     return null;
   }
 
-  public WsForm buildWsForm() {
-    return new WsForm(WsDataType.TASK_LIST, getStartTasks());
+  public WsForm buildWsForm(String taskId) {
+    List<TaskInfo> list = new ArrayList<>();
+    TaskInfo taskInfo = getTaskInfo(taskId);
+    if (taskInfo == null) {
+      return null;
+    } else {
+      list.add(taskInfo);
+      return new WsForm(WsDataType.TASK_LIST, list);
+    }
+  }
+
+  public WsForm buildDowningWsForm() {
+    List<TaskInfo> list = getDowningTasks();
+    if (list == null || list.size() == 0) {
+      return null;
+    } else {
+      return new WsForm(WsDataType.TASK_LIST, list);
+    }
   }
 
   public void putBoot(AbstractHttpDownBootstrap bootstrap) {

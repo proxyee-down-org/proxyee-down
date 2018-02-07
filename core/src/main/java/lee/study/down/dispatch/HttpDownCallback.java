@@ -7,7 +7,9 @@ public interface HttpDownCallback {
 
   void onStart(HttpDownInfo httpDownInfo) throws Exception;
 
-  void onChunkStart(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception;
+  void onChunkConnecting(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception;
+
+  void onChunkConnected(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception;
 
   void onProgress(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception;
 
@@ -25,4 +27,6 @@ public interface HttpDownCallback {
   void onMerge(HttpDownInfo httpDownInfo) throws Exception;
 
   void onDone(HttpDownInfo httpDownInfo) throws Exception;
+
+  void onDelete(HttpDownInfo httpDownInfo) throws Exception;
 }

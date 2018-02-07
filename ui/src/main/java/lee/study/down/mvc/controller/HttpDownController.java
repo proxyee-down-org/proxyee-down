@@ -17,6 +17,7 @@ import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
+import lee.study.down.exception.BootstrapException;
 import lee.study.down.gui.HttpDownApplication;
 import lee.study.down.io.BdyZip;
 import lee.study.down.io.BdyZip.BdyUnzipCallback;
@@ -86,6 +87,13 @@ public class HttpDownController {
     return resultInfo;
   }
 
+  @RequestMapping("/getStartTasks")
+  public ResultInfo getStartTasks() throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    resultInfo.setData(ContentManager.DOWN.getStartTasks());
+    return resultInfo;
+  }
+
   @RequestMapping("/startTask")
   public ResultInfo startTask(@RequestBody NewTaskForm taskForm) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
@@ -133,20 +141,6 @@ public class HttpDownController {
         }
         taskInfo.setFileName(taskForm.getFileName());
         taskInfo.setFilePath(taskForm.getFilePath());
-        if (!Files.isWritable(Paths.get(taskForm.getFilePath()))) {
-          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问下载路径，请修改路径或开放目录写入权限");
-          return resultInfo;
-        }
-        //磁盘空间不足
-        if (taskInfo.getTotalSize() > FileUtil.getDiskFreeSize(taskForm.getFilePath())) {
-          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("磁盘空间不足，请修改路径");
-          return resultInfo;
-        }
-        //有文件同名
-        if (new File(taskInfo.buildTaskFilePath()).exists()) {
-          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("文件名已存在，请修改文件名");
-          return resultInfo;
-        }
         Map<String, Object> attr = httpDownInfo.getAttrs();
         if (attr == null) {
           attr = new HashMap<>();
@@ -159,7 +153,12 @@ public class HttpDownController {
         } else {
           taskInfo.setConnections(1);
         }
-        bootstrap.startDown();
+        try {
+          bootstrap.startDown();
+        } catch (BootstrapException e) {
+          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg(e.getMessage());
+          return resultInfo;
+        }
         //记录存储路径
         String lastPath = ContentManager.CONFIG.get().getLastPath();
         if (!taskForm.getFilePath().equalsIgnoreCase(lastPath)) {
@@ -245,19 +244,7 @@ public class HttpDownController {
     if (bootstrap == null) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("任务不存在");
     } else {
-      TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
-      bootstrap.close();
-      //删除任务进度记录文件
-      synchronized (taskInfo) {
-        ContentManager.DOWN.removeBoot(id);
-        ContentManager.DOWN.save();
-        FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
-        FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
-        if (delFile) {
-          FileUtil.deleteIfExists(taskInfo.buildChunksPath());
-          FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
-        }
-      }
+      bootstrap.delete(delFile);
     }
     return resultInfo;
   }

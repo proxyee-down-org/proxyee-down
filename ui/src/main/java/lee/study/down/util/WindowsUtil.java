@@ -2,88 +2,73 @@ package lee.study.down.util;
 
 import com.sun.jna.Pointer;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.cert.X509Certificate;
 import lee.study.down.jna.WinInet;
-import lee.study.down.jna.WinInet.INTERNET_PER_CONN_OPTION;
-import lee.study.down.jna.WinInet.INTERNET_PER_CONN_OPTION.ByReference;
-import lee.study.down.jna.WinInet.INTERNET_PER_CONN_OPTION_LIST;
 import lee.study.proxyee.crt.CertUtil;
 
 public class WindowsUtil {
 
-  private static INTERNET_PER_CONN_OPTION_LIST buildOptionList(int size) {
-    INTERNET_PER_CONN_OPTION_LIST list = new INTERNET_PER_CONN_OPTION_LIST();
+  private static final String HEAD_COMMON = " \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ";
+  private static final String REG_ADD_HEAD = "reg add" + HEAD_COMMON;
+  private static final String REG_DEL_HEAD = "reg delete" + HEAD_COMMON;
+  private static final String REG_TAIL = " /f";
+  private static final String PAC_URL_KEY = "AutoConfigURL ";
+  private static final String PROXY_ENABLE_KEY = "ProxyEnable ";
+  private static final String PROXY_SERVER_KEY = "ProxyServer ";
+  private static final String PROXY_OVERRIDE_KEY = "ProxyOverride ";
+  private static final String REG_TYPE_DWORD = " /t REG_DWORD";
 
-    // Fill the list structure.
-    list.dwSize = list.size();
-
-    // NULL == LAN, otherwise connectoid name.
-    list.pszConnection = null;
-
-    // Set three options.
-    list.dwOptionCount = size;
-    list.pOptions = new ByReference();
-
-    // Ensure that the memory was allocated.
-    if (null == list.pOptions) {
-      // Return FALSE if the memory wasn't allocated.
-      return null;
+  public static void enabledIEProxy(String host, int port, boolean refresh) throws IOException {
+    Runtime.getRuntime().exec(REG_ADD_HEAD + PROXY_ENABLE_KEY + "/d 1" + REG_TYPE_DWORD + REG_TAIL);
+    Runtime.getRuntime()
+        .exec(REG_ADD_HEAD + PROXY_SERVER_KEY + "/d " + host + ":" + port + REG_TAIL);
+    Runtime.getRuntime().exec(REG_ADD_HEAD + PROXY_OVERRIDE_KEY + "/d <local>" + REG_TAIL);
+    if (refresh) {
+      refreshOptions();
     }
-    return list;
   }
 
-  public static boolean enabledPACProxy(String pac) {
-    INTERNET_PER_CONN_OPTION_LIST list = buildOptionList(2);
-    if (list == null) {
-      return false;
-    }
-    INTERNET_PER_CONN_OPTION[] pOptions = (INTERNET_PER_CONN_OPTION[]) list.pOptions
-        .toArray(list.dwOptionCount);
-    // Set flags.
-    pOptions[0].dwOption = WinInet.INTERNET_PER_CONN_FLAGS;
-    pOptions[0].Value.dwValue = WinInet.PROXY_TYPE_AUTO_PROXY_URL;
-    pOptions[0].Value.setType(int.class);
-
-    // Set flags.
-    pOptions[1].dwOption = WinInet.INTERNET_PER_CONN_AUTOCONFIG_URL;
-    pOptions[1].Value.pszValue = pac;
-    pOptions[1].Value.setType(String.class);
-
-    return refreshOptions(list);
+  public static void enabledIEProxy(String host, int port) throws IOException {
+    disabledPACProxy(false);
+    enabledIEProxy(host, port, true);
   }
 
-  public static boolean enabledIEProxy(String host, int port) {
-    INTERNET_PER_CONN_OPTION_LIST list = buildOptionList(2);
-    if (list == null) {
-      return false;
+  public static void disabledIEProxy(boolean refresh) throws IOException {
+    Runtime.getRuntime().exec(REG_ADD_HEAD + PROXY_ENABLE_KEY + "/d 0" + REG_TYPE_DWORD + REG_TAIL);
+    if (refresh) {
+      refreshOptions();
     }
-    INTERNET_PER_CONN_OPTION[] pOptions = (INTERNET_PER_CONN_OPTION[]) list.pOptions
-        .toArray(list.dwOptionCount);
-
-    // Set flags.
-    pOptions[0].dwOption = WinInet.INTERNET_PER_CONN_FLAGS;
-    pOptions[0].Value.dwValue = WinInet.PROXY_TYPE_PROXY;
-    pOptions[0].Value.setType(int.class);
-
-    // Set proxy name.
-    pOptions[1].dwOption = WinInet.INTERNET_PER_CONN_PROXY_SERVER;
-    pOptions[1].Value.pszValue = host + ":" + port;
-    pOptions[1].Value.setType(String.class);
-
-    return refreshOptions(list);
   }
 
-  private static boolean refreshOptions(INTERNET_PER_CONN_OPTION_LIST list) {
-    if (!WinInet.INSTANCE
-        .InternetSetOption(Pointer.NULL, WinInet.INTERNET_OPTION_PER_CONNECTION_OPTION, list,
-            list.size())) {
-      return false;
+  public static void enabledPACProxy(String url, boolean refresh) throws IOException {
+    Runtime.getRuntime().exec(REG_ADD_HEAD + PAC_URL_KEY + "/d " + url + REG_TAIL);
+    if (refresh) {
+      refreshOptions();
     }
+  }
 
+  public static void enabledPACProxy(String url) throws IOException {
+    disabledIEProxy(false);
+    enabledPACProxy(url, true);
+  }
+
+  public static void disabledPACProxy(boolean refresh) throws IOException {
+    Runtime.getRuntime().exec(REG_DEL_HEAD + PAC_URL_KEY + REG_TAIL);
+    if (refresh) {
+      refreshOptions();
+    }
+  }
+
+  public static boolean disabledProxy() throws IOException {
+    disabledPACProxy(false);
+    disabledIEProxy(false);
+    return refreshOptions();
+  }
+
+  private static boolean refreshOptions() {
     if (!WinInet.INSTANCE
         .InternetSetOption(Pointer.NULL, WinInet.INTERNET_OPTION_PROXY_SETTINGS_CHANGED,
             Pointer.NULL, 0)) {
@@ -98,19 +83,6 @@ public class WindowsUtil {
     return true;
   }
 
-  public static boolean disabledProxy() {
-    INTERNET_PER_CONN_OPTION_LIST list = buildOptionList(1);
-    if (list == null) {
-      return false;
-    }
-    INTERNET_PER_CONN_OPTION[] pOptions = (INTERNET_PER_CONN_OPTION[]) list.pOptions
-        .toArray(list.dwOptionCount);
-    // Set flags.
-    pOptions[0].dwOption = WinInet.INTERNET_PER_CONN_FLAGS;
-    pOptions[0].Value.dwValue = WinInet.PROXY_TYPE_DIRECT;
-    pOptions[0].Value.setType(int.class);
-    return refreshOptions(list);
-  }
 
   /**
    * 证书是否已存在
@@ -148,7 +120,7 @@ public class WindowsUtil {
     FileUtil.initFile(caPath, input, false);
     getProcessPrint(Runtime.getRuntime().exec("certutil "
         + "-addstore "
-        + (isAdmin() ? "" : "-user ")
+        + (OsUtil.isAdmin() ? "" : "-user ")
         + "root "
         + "\"" + caPath + "\""
     ));
@@ -156,12 +128,13 @@ public class WindowsUtil {
   }
 
   /**
-   * 安装证书至受信任的机构根目录
+   * 删除证书
    */
   public static void unistallCert(InputStream input) throws Exception {
     String certId = getCertId(input);
     getProcessPrint(Runtime.getRuntime().exec("certutil "
         + "-delstore "
+        + (OsUtil.isAdmin() ? "" : "-user ")
         + "root "
         + certId
     ));
@@ -183,38 +156,5 @@ public class WindowsUtil {
       }
     }
     return sb.toString();
-  }
-
-  public static boolean isAdmin() {
-    try {
-      String programFiles = System.getenv("ProgramFiles");
-      if (programFiles == null) {
-        programFiles = "C:\\Program Files";
-      }
-      File temp = new File(programFiles, "test.txt");
-      if (temp.createNewFile()) {
-        temp.delete();
-        return true;
-      } else {
-        return false;
-      }
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  public static void main(String[] args) throws Exception {
-//    installCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
-    /*String caPath = PathUtil.ROOT_PATH + "ca.crt";
-    FileUtil.initFile(caPath,
-        Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"), true);
-    Desktop.getDesktop().open(new File(PathUtil.ROOT_PATH));*/
-    /*X509Certificate certificate = CertUtil
-        .loadCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
-    //读取CA证书使用者信息
-    System.out.println(Long.toHexString(certificate.getSerialNumber().longValue()));*/
-    System.out.println(isAdmin());
-    System.out.println(
-        existsCert(Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt")));
   }
 }

@@ -32,6 +32,9 @@ public class WsContent {
 
   public void sendMsg(WsForm wsForm) {
     try {
+      if (wsForm == null) {
+        return;
+      }
       TextMessage message = new TextMessage(JSON.toJSONString(wsForm));
       for (Entry<String, WebSocketSession> entry : wcContent.entrySet()) {
         WebSocketSession session = entry.getValue();

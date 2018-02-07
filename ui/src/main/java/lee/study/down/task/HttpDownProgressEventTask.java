@@ -38,7 +38,7 @@ public class HttpDownProgressEventTask extends Thread {
             }
           }
         }
-        ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+        ContentManager.WS.sendMsg(ContentManager.DOWN.buildDowningWsForm());
         TimeUnit.MILLISECONDS.sleep(1000);
       } catch (Exception e) {
         LOGGER.error("eventTask:", e);

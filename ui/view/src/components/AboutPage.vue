@@ -19,11 +19,7 @@
       <el-col :span="16">
         <span>
           <a target="_blank"
-             href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">@官方编写</a>
-        </span>
-        <span style="padding-left: 20px">
-          <a target="_blank"
-             href="https://www.zhanghuanglong.com/detail/another-download-of-magic-proxyee-down">@°只为大大编写</a>
+             href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">@官方教程</a>
         </span>
       </el-col>
     </el-row>

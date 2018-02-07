@@ -8,6 +8,7 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
+import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import javafx.application.Application;
@@ -25,7 +26,6 @@ import javafx.stage.Stage;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lee.study.down.HttpDownProxyServer;
-import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.mvc.HttpDownSpringBoot;
@@ -33,6 +33,7 @@ import lee.study.down.task.HttpDownErrorCheckTask;
 import lee.study.down.task.HttpDownProgressEventTask;
 import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.OsUtil;
+import lee.study.down.util.PathUtil;
 import lee.study.down.util.WindowsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class HttpDownApplication extends Application {
 
   static {
     //设置slf4j日志打印目录
-    System.setProperty("LOG_PATH", HttpDownConstant.HOME_PATH);
+    System.setProperty("LOG_PATH", PathUtil.ROOT_PATH);
     //netty设置为堆内存分配
     System.setProperty("io.netty.noPreferDirect", "true");
   }
@@ -72,27 +73,52 @@ public class HttpDownApplication extends Application {
   }
 
   private void initHandle() throws Exception {
+    //配置文件加载
     initConfig();
+    //springboot加载
+    List<String> args = ParametersImpl.getParameters(this).getRaw();
+    new SpringApplicationBuilder(HttpDownSpringBoot.class).headless(false).build()
+        .run(args.toArray(new String[args.size()]));
+    //上下文加载
     ContentManager.init();
+    //程序退出监听
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       if (OsUtil.isWindows()) {
-        WindowsUtil.disabledProxy();
+        try {
+          WindowsUtil.disabledProxy();
+        } catch (IOException e) {
+          LOGGER.error("disabled proxy error:", e);
+        }
       }
     }));
   }
 
   private void beforeOpen() throws Exception {
-    List<String> args = ParametersImpl.getParameters(this).getRaw();
-    //springboot加载
-    new SpringApplicationBuilder(HttpDownSpringBoot.class).headless(false).build()
-        .run(args.toArray(new String[args.size()]));
-
     //webview加载
     if (Boolean.valueOf(ConfigUtil.getValue("javafx.model"))) {
       this.browser = new Browser();
       stage.setScene(new Scene(browser));
       browser.load(this.url);
     }
+
+    //证书安装引导
+    ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    try {
+      if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
+        if (OsUtil.isAdmin()) { //admin权限静默安装
+          WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+        } else {
+          showMsg("尚未安装证书，点击确定进行安装");
+          WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+          showMsg("证书安装成功");
+        }
+      }
+    } catch (Exception e) {
+      LOGGER.error("install cert error:", e);
+    }
+  }
+
+  private void afterOpen() {
     //嗅探代理服务器启动
     proxyServer = new HttpDownProxyServer(
         ContentManager.CONFIG.get().getSecProxyConfig(),
@@ -112,9 +138,7 @@ public class HttpDownApplication extends Application {
     } else {
       new Thread(() -> proxyServer.start(ContentManager.CONFIG.get().getProxyPort())).start();
     }
-  }
 
-  private void afterOpen() {
     //启动线程
     new HttpDownErrorCheckTask().start();
     new HttpDownProgressEventTask().start();
@@ -154,8 +178,11 @@ public class HttpDownApplication extends Application {
       return;
     }
     if (stage.isShowing()) {
-      stage.setIconified(true);
-      stage.setIconified(false);
+      if (stage.isIconified()) {
+        stage.setIconified(false);
+      } else {
+        stage.toFront();
+      }
     } else {
       stage.show();
       stage.toFront();
@@ -167,7 +194,7 @@ public class HttpDownApplication extends Application {
   }
 
   private void showMsg(String msg) {
-    JOptionPane.showMessageDialog(null, msg, "运行警告", JOptionPane.WARNING_MESSAGE);
+    JOptionPane.showMessageDialog(null, msg, "提示", JOptionPane.WARNING_MESSAGE);
   }
 
   private void addTray() {
@@ -188,33 +215,15 @@ public class HttpDownApplication extends Application {
         MenuItem tasksItem = new MenuItem("显示");
         tasksItem.addActionListener(event -> Platform.runLater(() -> open()));
 
-        MenuItem crtItem;
-        if (OsUtil.isWindows()) {
-          crtItem = new MenuItem("安装证书");
-          crtItem.addActionListener(event -> {
-            try {
-              ClassLoader loader = Thread.currentThread().getContextClassLoader();
-              if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
-                WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
-                trayIcon.displayMessage("提示", "证书安装成功", TrayIcon.MessageType.INFO);
-              } else {
-                trayIcon.displayMessage("提示", "证书已安装", TrayIcon.MessageType.INFO);
-              }
-            } catch (Exception e) {
-              LOGGER.error("down cert error", e);
-            }
-          });
-        } else {
-          crtItem = new MenuItem("下载证书");
-          crtItem.addActionListener(event -> {
-            try {
-              OsUtil
-                  .openBrowse("http://127.0.0.1:" + ContentManager.CONFIG.get().getProxyPort());
-            } catch (Exception e) {
-              LOGGER.error("down cert error", e);
-            }
-          });
-        }
+        MenuItem crtItem = new MenuItem("下载证书");
+        crtItem.addActionListener(event -> {
+          try {
+            OsUtil
+                .openBrowse("http://127.0.0.1:" + ContentManager.CONFIG.get().getProxyPort());
+          } catch (Exception e) {
+            LOGGER.error("down cert error", e);
+          }
+        });
 
         Menu proxyMenu = new Menu("嗅探模式");
         if (!OsUtil.isWindows()) {
@@ -248,32 +257,34 @@ public class HttpDownApplication extends Application {
           }
           mig.addActionListener(event -> {
             try {
-              boolean ret;
               String selectedItemName = ((CheckboxMenuItem) event.getSource()).getName();
               if ("1".equals(selectedItemName)) {
                 ContentManager.CONFIG.get().setSniffModel(1);
-                ret = WindowsUtil
+                WindowsUtil
                     .enabledIEProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
               } else if ("2".equals(selectedItemName)) {
                 ContentManager.CONFIG.get().setSniffModel(2);
-                ret = WindowsUtil.enabledPACProxy(
+                WindowsUtil.enabledPACProxy(
                     "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
                         + "/res/pd.pac?t=" + System.currentTimeMillis());
               } else {
-                ret = WindowsUtil.disabledProxy();
+                WindowsUtil.disabledProxy();
               }
               ContentManager.CONFIG.save();
-              if (!ret) {
-                trayIcon.displayMessage("提示", "嗅探模式切换失败", TrayIcon.MessageType.INFO);
-              }
             } catch (Exception e) {
               LOGGER.error("proxy switch error", e);
+              trayIcon.displayMessage("提示", "嗅探模式切换失败", TrayIcon.MessageType.INFO);
             }
           });
         }
 
         MenuItem aboutItem = new MenuItem("关于");
-        aboutItem.addActionListener(event -> Platform.runLater(() -> open()));
+        aboutItem.addActionListener(event -> Platform.runLater(() -> {
+          if (browser != null) {
+            browser.webEngine.executeScript("vue.$children[0].openTabHandle('/about');");
+          }
+          open();
+        }));
 
         MenuItem closeItem = new MenuItem("退出");
         closeItem.addActionListener(event -> System.exit(0));

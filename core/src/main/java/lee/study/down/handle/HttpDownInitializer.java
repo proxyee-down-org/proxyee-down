@@ -140,7 +140,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                 fileChannels = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
                 if (callback != null) {
-                  callback.onChunkStart(bootstrap.getHttpDownInfo(), chunkInfo);
+                  callback.onChunkConnected(bootstrap.getHttpDownInfo(), chunkInfo);
                 }
                 isSucc = true;
               } else {

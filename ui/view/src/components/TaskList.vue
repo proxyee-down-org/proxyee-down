@@ -287,6 +287,7 @@
           this.$http.get('api/deleteTask?id=' + task.id + "&delFile=" + document.getElementById(
             "task-delete").checked)
           .then(() => {
+            this.$store.commit("tasks/delTask", task.id);
           }).catch(() => {
           });
         }).catch(() => {
@@ -307,6 +308,12 @@
       ]),
     },
     created() {
+      this.$http.get('api/getStartTasks')
+      .then(result => {
+        this.$store.commit("tasks/setTasks", result.data);
+        this.$store.commit("tasks/setInitFlag", false);
+      }).catch(() => {
+      });
       this.$http.get('api/getNewTask')
       .then(result => {
         this.buildTaskHandle(result);

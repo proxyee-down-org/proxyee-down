@@ -5,17 +5,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.util.prefs.Preferences;
 
 public class OsUtil {
-
-  private static final String REG_HEAD = "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\" /v ";
-  private static final String REG_TAIL = " /f";
-  private static final String PROXY_ENABLE_KEY = "ProxyEnable ";
-  private static final String PROXY_SERVER_KEY = "ProxyServer ";
-  private static final String PROXY_OVERRIDE_KEY = "ProxyOverride ";
-  private static final String REG_TYPE_DWORD = " /t REG_DWORD";
 
   /**
    * 获取空闲端口号
@@ -83,16 +78,6 @@ public class OsUtil {
     }
   }
 
-  public static void enabledIEProxy(String host, int port) throws IOException {
-    Runtime.getRuntime().exec(REG_HEAD + PROXY_ENABLE_KEY + "/d 1" + REG_TYPE_DWORD + REG_TAIL);
-    Runtime.getRuntime().exec(REG_HEAD + PROXY_SERVER_KEY + "/d " + host + ":" + port + REG_TAIL);
-    Runtime.getRuntime().exec(REG_HEAD + PROXY_OVERRIDE_KEY + "/d <local>" + REG_TAIL);
-  }
-
-  public static void disabledIEProxy() throws IOException {
-    Runtime.getRuntime().exec(REG_HEAD + PROXY_ENABLE_KEY + "/d 0" + REG_TYPE_DWORD + REG_TAIL);
-  }
-
   public static void execFile(InputStream inputStream, String filePath) throws IOException {
     File file = new File(filePath);
     if (!file.exists()) {
@@ -139,5 +124,29 @@ public class OsUtil {
 
   public static boolean is32() {
     return "32".equals(ARCH);
+  }
+
+  static {
+    Preferences prefs = Preferences.systemRoot();
+    PrintStream systemErr = System.err;
+    synchronized (systemErr) {    // better synchroize to avoid problems with other threads that access System.err
+      System.setErr(null);
+      try {
+        prefs.put("pd_test", "1"); // SecurityException on Windows
+        prefs.remove("pd_test");
+        prefs.flush(); // BackingStoreException on Linux
+        isAdmin = true;
+      } catch (Exception e) {
+        isAdmin = false;
+      } finally {
+        System.setErr(systemErr);
+      }
+    }
+  }
+
+  private static boolean isAdmin;
+
+  public static boolean isAdmin() {
+    return isAdmin;
   }
 }

@@ -1,18 +1,14 @@
 package lee.study.down.update;
 
-import io.netty.handler.codec.http.HttpMethod;
 import java.util.Collections;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.boot.HttpDownBootstrapFactory;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.HttpDownInfo;
-import lee.study.down.model.HttpHeadsInfo;
 import lee.study.down.model.HttpRequestInfo;
-import lee.study.down.model.HttpRequestInfo.HttpVer;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.model.UpdateInfo;
 import lee.study.down.util.HttpDownUtil;
-import lee.study.proxyee.util.ProtoUtil.RequestProto;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

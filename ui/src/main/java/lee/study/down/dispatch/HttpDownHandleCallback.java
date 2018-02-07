@@ -1,7 +1,5 @@
 package lee.study.down.dispatch;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import lee.study.down.content.ContentManager;
 import lee.study.down.io.BdyZip;
@@ -15,16 +13,24 @@ import lee.study.down.util.FileUtil;
 
 public class HttpDownHandleCallback implements HttpDownCallback {
 
-  @Override
-  public void onStart(HttpDownInfo httpDownInfo) throws Exception {
-    //保存下载记录
-    ContentManager.DOWN.save();
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+  private void sendTask(String id) {
+    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm(id));
   }
 
   @Override
-  public void onChunkStart(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
+  public void onStart(HttpDownInfo httpDownInfo) throws Exception {
+    ContentManager.DOWN.save();
+    sendTask(httpDownInfo.getTaskInfo().getId());
+  }
 
+  @Override
+  public void onChunkConnecting(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
+    sendTask(httpDownInfo.getTaskInfo().getId());
+  }
+
+  @Override
+  public void onChunkConnected(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
@@ -34,34 +40,35 @@ public class HttpDownHandleCallback implements HttpDownCallback {
 
   @Override
   public void onPause(HttpDownInfo httpDownInfo) throws Exception {
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
   public void onContinue(HttpDownInfo httpDownInfo) throws Exception {
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
   public void onError(HttpDownInfo httpDownInfo, Throwable cause) {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
   public void onChunkError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
+
   @Override
   public void onChunkDone(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
   public void onMerge(HttpDownInfo httpDownInfo) throws Exception {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
@@ -74,7 +81,7 @@ public class HttpDownHandleCallback implements HttpDownCallback {
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
     }
-    ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm());
+    sendTask(httpDownInfo.getTaskInfo().getId());
     NewTaskForm taskForm = NewTaskForm.parse(httpDownInfo);
     if (taskForm.isUnzip()) {
       if (BdyZip.isBdyZip(taskInfo.buildTaskFilePath())) {
@@ -89,21 +96,11 @@ public class HttpDownHandleCallback implements HttpDownCallback {
     }
   }
 
-  public static void main(String[] args) throws IOException {
-//  System.setProperty("io.netty.noPreferDirect","true");
-//    System.setProperty("io.netty.allocator.numDirectArenas","0");
-   /* while (true){
-      ByteBuf byteBuf = PooledByteBufAllocator.DEFAULT.buffer(1024*1024*128);
-      byteBuf.release();
-    }*/
-    File file = new File("c:/test.txt");
-    try {
-      file.createNewFile();
-    } catch (IOException e) {
-      System.out.println(e.getStackTrace()[0].getMethodName());
-      e.printStackTrace();
-    }
-
-//      System.out.println(byteBuf.getClass());
+  @Override
+  public void onDelete(HttpDownInfo httpDownInfo) throws Exception {
+    String taskId = httpDownInfo.getTaskInfo().getId();
+    ContentManager.DOWN.removeBoot(taskId);
+    ContentManager.DOWN.save();
+    sendTask(taskId);
   }
 }

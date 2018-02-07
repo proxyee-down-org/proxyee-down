@@ -12,19 +12,16 @@ import lee.study.down.util.PathUtil;
 
 public class HttpDownConstant {
 
-  public static String HOME_PATH;
-  public static String MAIN_PATH;
-  public static String TASK_RECORD_PATH;
-  public static String CONFIG_PATH;
+  public final static String HOME_PATH = PathUtil.ROOT_PATH;
+  public final static String MAIN_PATH = new File(HOME_PATH).getParent() + File.separator + "main";
+  public final static String TASK_RECORD_PATH = HOME_PATH + ".records.inf";
+  public final static String CONFIG_PATH = HOME_PATH + ".config.inf";
+
   public static SslContext clientSslContext;
   public static NioEventLoopGroup clientLoopGroup;
   public static HttpDownCallback httpDownCallback;
 
   static {
-    HOME_PATH = PathUtil.ROOT_PATH;
-    MAIN_PATH = new File(HOME_PATH).getParent() + File.separator + "main";
-    TASK_RECORD_PATH = HOME_PATH + ".records.inf";
-    CONFIG_PATH = HOME_PATH + ".config.inf";
     try {
       clientSslContext = SslContextBuilder.forClient()
           .trustManager(InsecureTrustManagerFactory.INSTANCE)
