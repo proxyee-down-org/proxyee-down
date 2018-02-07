@@ -8,7 +8,6 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import javafx.application.Application;
@@ -55,6 +54,8 @@ public class HttpDownApplication extends Application {
     System.setProperty("LOG_PATH", PathUtil.ROOT_PATH);
     //netty设置为堆内存分配
     System.setProperty("io.netty.noPreferDirect", "true");
+    //不使用内存池
+    System.setProperty("io.netty.allocator.numHeapArenas","0");
   }
 
   private void initConfig() throws Exception {
@@ -91,10 +92,8 @@ public class HttpDownApplication extends Application {
 
   private void beforeOpen() throws Exception {
     //webview加载
-    if (Boolean.valueOf(ConfigUtil.getValue("javafx.model"))) {
-      this.browser = new Browser();
-      stage.setScene(new Scene(browser));
-      browser.load(this.url);
+    if (ContentManager.CONFIG.get().getUiModel() == 1) {
+      initBrowser();
     }
 
     //证书安装引导
@@ -147,7 +146,6 @@ public class HttpDownApplication extends Application {
     Platform.setImplicitExit(false);
     SwingUtilities.invokeLater(this::addTray);
     stage.setTitle("proxyee-down-" + version);
-    stage.setResizable(false);
     Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
     stage.setX(primaryScreenBounds.getMinX());
     stage.setY(primaryScreenBounds.getMinY());
@@ -160,12 +158,12 @@ public class HttpDownApplication extends Application {
       close();
     });
     beforeOpen();
-    open();
+//    open();
     afterOpen();
   }
 
   public void open() {
-    if (browser == null) {
+    if (browser == null || ContentManager.CONFIG.get().getUiModel() == 2) {
       try {
         OsUtil.openBrowse(url);
       } catch (Exception e) {
@@ -274,6 +272,38 @@ public class HttpDownApplication extends Application {
           });
         }
 
+        Menu uiMenu = new Menu("UI模式");
+        CheckboxMenuItemGroup mig = new CheckboxMenuItemGroup();
+        CheckboxMenuItem guiItem = new CheckboxMenuItem("GUI");
+        guiItem.setName("1");
+        CheckboxMenuItem browserItem = new CheckboxMenuItem("浏览器");
+        browserItem.setName("2");
+        uiMenu.add(guiItem);
+        uiMenu.add(browserItem);
+        mig.add(guiItem);
+        mig.add(browserItem);
+        //默认选中
+        if (ContentManager.CONFIG.get().getUiModel() == 1) {
+          mig.selectItem(guiItem);
+        } else {
+          mig.selectItem(browserItem);
+        }
+        mig.addActionListener(event -> {
+          String selectedItemName = ((CheckboxMenuItem) event.getSource()).getName();
+          Platform.runLater(() -> {
+            if ("1".equals(selectedItemName)) {
+              initBrowser();
+              ContentManager.CONFIG.get().setUiModel(1);
+            } else {
+              destroyBrowser();
+              stage.close();
+              ContentManager.CONFIG.get().setUiModel(2);
+            }
+            open();
+            ContentManager.CONFIG.save();
+          });
+        });
+
         MenuItem aboutItem = new MenuItem("关于");
         aboutItem.addActionListener(event -> Platform.runLater(() -> {
           if (browser != null) {
@@ -289,6 +319,7 @@ public class HttpDownApplication extends Application {
         popupMenu.addSeparator();
         popupMenu.add(crtItem);
         popupMenu.add(proxyMenu);
+        popupMenu.add(uiMenu);
         popupMenu.addSeparator();
         popupMenu.add(aboutItem);
         popupMenu.add(closeItem);
@@ -299,6 +330,20 @@ public class HttpDownApplication extends Application {
     } catch (Exception e) {
       LOGGER.error("addTray error:", e);
       showMsg("托盘初始化失败");
+    }
+  }
+
+  private void initBrowser() {
+    if (this.browser == null) {
+      this.browser = new Browser();
+      stage.setScene(new Scene(browser));
+    }
+    browser.load(this.url);
+  }
+
+  private void destroyBrowser() {
+    if (this.browser != null) {
+      browser.load(null);
     }
   }
 

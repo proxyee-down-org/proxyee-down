@@ -25,12 +25,10 @@ public class HttpDownHandleCallback implements HttpDownCallback {
 
   @Override
   public void onChunkConnecting(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
-    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
   public void onChunkConnected(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
-    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
@@ -56,13 +54,11 @@ public class HttpDownHandleCallback implements HttpDownCallback {
 
   @Override
   public void onChunkError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
-    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override
   public void onChunkDone(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
-    sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
   @Override

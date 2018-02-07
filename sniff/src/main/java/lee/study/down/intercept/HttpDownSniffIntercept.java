@@ -62,22 +62,22 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
       HttpHeaders httpResHeaders = httpResponse.headers();
       String accept = pipeline.getHttpRequest().headers().get(HttpHeaderNames.ACCEPT);
       String contentType = httpResHeaders.get(HttpHeaderNames.CONTENT_TYPE);
-      if (accept != null
-          && accept.matches("^.*text/html.*$")  //直接url的方式访问不是以HTML标签加载的(a标签除外)
-          && contentType != null
-          && !contentType.matches("^.*text/.*$")) { //响应体不是text/html报文
-        //有两种情况进行下载 1.url后缀为.xxx  2.带有CONTENT_DISPOSITION:ATTACHMENT响应头
-        String disposition = httpResHeaders.get(HttpHeaderNames.CONTENT_DISPOSITION);
-        if (pipeline.getHttpRequest().uri().matches("^.*\\.[^./]{1,5}(\\?[^?]*)?$")
-            || (disposition != null && disposition.contains(HttpHeaderValues.ATTACHMENT))) {
-          downFlag = true;
-        }
+      //有两种情况进行下载 1.url后缀为.xxx  2.带有CONTENT_DISPOSITION:ATTACHMENT响应头
+      String disposition = httpResHeaders.get(HttpHeaderNames.CONTENT_DISPOSITION);
+      if ((disposition != null
+          && disposition.contains(HttpHeaderValues.ATTACHMENT)
+          && disposition.contains(HttpHeaderValues.FILENAME))
+          || (pipeline.getHttpRequest().uri().matches("^.*\\.[^./]{1,5}(\\?[^?]*)?$")
+          && isDownAccept(accept, contentType))) {
+        downFlag = true;
       }
+
       HttpRequestInfo httpRequestInfo = (HttpRequestInfo) pipeline.getHttpRequest();
       if (downFlag) {   //如果是下载
         proxyChannel.close();//关闭嗅探下载连接
         LOGGER.debug("=====================下载===========================\n" +
             pipeline.getHttpRequest().toString() + "\n" +
+            "------------------------------------------------" +
             httpResponse.toString() + "\n" +
             "================================================");
         //原始的请求协议
@@ -100,5 +100,29 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
     } else {
       pipeline.afterResponse(clientChannel, proxyChannel, httpContent);
     }
+  }
+
+  private boolean isDownAccept(String accepts, String contentType) {
+    if (accepts != null && accepts.matches("^.*text/html.*$")) {
+      String[] acceptArray = accepts.split(",");
+      String contentType0 = contentType.split(";")[0];
+      for (String accpet : acceptArray) {
+        if (accpet.equals("*/*") && contentType.matches("^(?i)application/x.*$")) {
+          return false;
+        } else {
+          String accpet0 = "^(?i)" + accpet.split(";")[0].replaceAll("\\*", ".*") + "$";
+          if (contentType0.matches(accpet0)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public static void main(String[] args) {
+    System.out.println(new HttpDownSniffIntercept().isDownAccept("*/*", "image/gif"));
   }
 }

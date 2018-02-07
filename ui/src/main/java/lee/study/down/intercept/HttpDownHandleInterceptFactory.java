@@ -43,12 +43,7 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
         httpResponse.setStatus(HttpResponseStatus.OK);
         httpResponse.headers().clear();
         httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
-        byte[] content = (
-            "<html>"
-                + "<head>"
-                + "<script type=\"text/javascript\">window.history.back();</script>"
-                + "</head>"
-                + "</html>")
+        byte[] content = ("<html></html>")
             .getBytes("utf-8");
         httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.length);
         clientChannel.writeAndFlush(httpResponse);

@@ -42,7 +42,7 @@ public class ConfigContent {
         LOGGER.error("加载配置文件失败：", e);
       }
     }
-    if (configContent == null) {
+    if (configContent == null || configContent.getProxyPort() == 0) {
       configContent = new ConfigInfo();
       //默认代理端口
       configContent.setProxyPort(9999);
@@ -52,15 +52,10 @@ public class ConfigContent {
       configContent.setTimeout(30);
       //默认百度云嗅探模式
       configContent.setSniffModel(2);
+      //默认GUI模式
+      configContent.setUiModel(1);
       //默认重试次数
       configContent.setRetryCount(5);
-      //安装证书
-      try {
-        WindowsUtil.installCert(
-            Thread.currentThread().getContextClassLoader().getResourceAsStream("ca.crt"));
-      } catch (IOException e) {
-        LOGGER.error("install cert error：", e);
-      }
       save();
     }
   }
