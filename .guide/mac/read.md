@@ -14,7 +14,7 @@
 4. 在钥匙串访问界面找到刚刚安装的**ProxyeeRoot**，然后修改证书为始终信任  
 ![4-4](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/mac/imgs/4-4.png)
 ## SwitchyOmega插件安装与设置
-[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/swtichy/read.md)
+[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)
 ## 完成
 打开浏览器,选择要下载的资源进行下载就会弹出下载页面了。    
 

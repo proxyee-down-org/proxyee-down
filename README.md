@@ -23,7 +23,7 @@
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md)
 ## 其他
 ### SwitchyOmega插件安装与设置
-[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/swtichy/read.md)
+[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)
 ### QQ群
 1群**11352304**(已满)、2群**20236964**
 
