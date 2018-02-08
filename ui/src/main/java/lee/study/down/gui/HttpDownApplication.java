@@ -226,7 +226,7 @@ public class HttpDownApplication extends Application {
           proxyMenu.setEnabled(false);
         } else {
           CheckboxMenuItemGroup mig = new CheckboxMenuItemGroup();
-          CheckboxMenuItem globalProxyItem = new CheckboxMenuItem("全局");
+          CheckboxMenuItem globalProxyItem = new CheckboxMenuItem("全网");
           globalProxyItem.setName("1");
           CheckboxMenuItem bdyProxyItem = new CheckboxMenuItem("百度云");
           bdyProxyItem.setName("2");
@@ -264,6 +264,7 @@ public class HttpDownApplication extends Application {
                     "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
                         + "/res/pd.pac?t=" + System.currentTimeMillis());
               } else {
+                ContentManager.CONFIG.get().setSniffModel(3);
                 WindowsUtil.disabledProxy();
               }
               ContentManager.CONFIG.save();
