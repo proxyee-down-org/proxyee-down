@@ -4,7 +4,7 @@
 ## 下载
 进入[下载页面](https://github.com/monkeyWie/proxyee-down/releases)，下载proxyee-down-x.xx-jar.zip文件
 ## 解压并运行
-将下载好的proxyee-down-x.xx-jar.zip解压至电脑任意目录。双击proxyee-down.jar运行软件，运行成功后会有提示和托盘出现。  
+将下载好的proxyee-down-x.xx-jar.zip解压至电脑任意目录。双击proxyee-down.jar运行软件（如果不成功，使用命令行`java -jar proxyee-down.jar`），运行成功后会有提示和托盘出现。  
 ## 证书安装
 1. 右击软件托盘，点击下载证书，会跳转到下载页面。  
 ![4-1](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/mac/imgs/4-1.png)
