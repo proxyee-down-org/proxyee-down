@@ -55,7 +55,7 @@ public class HttpDownApplication extends Application {
     //netty设置为堆内存分配
     System.setProperty("io.netty.noPreferDirect", "true");
     //不使用内存池
-    System.setProperty("io.netty.allocator.numHeapArenas","0");
+    System.setProperty("io.netty.allocator.numHeapArenas", "0");
   }
 
   private void initConfig() throws Exception {
@@ -97,19 +97,21 @@ public class HttpDownApplication extends Application {
     }
 
     //证书安装引导
-    ClassLoader loader = Thread.currentThread().getContextClassLoader();
-    try {
-      if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
-        if (OsUtil.isAdmin()) { //admin权限静默安装
-          WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
-        } else {
-          showMsg("尚未安装证书，点击确定进行安装");
-          WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
-          showMsg("证书安装成功");
+    if (OsUtil.isWindows()) {
+      ClassLoader loader = Thread.currentThread().getContextClassLoader();
+      try {
+        if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
+          if (OsUtil.isAdmin()) { //admin权限静默安装
+            WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+          } else {
+            showMsg("尚未安装证书，点击确定进行安装");
+            WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+            showMsg("证书安装成功");
+          }
         }
+      } catch (Exception e) {
+        LOGGER.error("install cert error:", e);
       }
-    } catch (Exception e) {
-      LOGGER.error("install cert error:", e);
     }
   }
 
