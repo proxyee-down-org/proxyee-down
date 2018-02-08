@@ -31,7 +31,7 @@ public class Bootstrap {
     if (files != null && files.length > 0) {
       javaHome = files[0].getAbsolutePath() + execPath;
     } else {
-      javaHome = System.getenv("JAVA_HOME") + execPath;
+      javaHome = System.getProperty("java.home") + execPath;
     }
     if (OsUtil.isWindows()) {
       CMD = "\"" + javaHome + "\" -jar \"" + CORE_PATH + "\"";

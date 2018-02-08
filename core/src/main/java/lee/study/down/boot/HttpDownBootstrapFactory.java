@@ -14,7 +14,7 @@ public class HttpDownBootstrapFactory {
       return new X64HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
           callback);
     } else {
-      return new X32HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
+      return new X86HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
           callback);
     }
   }

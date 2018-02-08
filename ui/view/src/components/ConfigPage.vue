@@ -10,7 +10,7 @@
       <el-slider
         v-model="form.connections"
         :min="2"
-        :max="128"
+        :max="256"
         :step="2"
         show-input>
       </el-slider>
@@ -135,10 +135,11 @@
           if (valid) {
             this.load = true;
             this.$http.post('api/setConfigInfo', this.form)
-            .then((response) => {
-              let result = response.data;
+            .then(() => {
+              this.$message({showClose: true, message: '保存成功'});
               this.load = false;
-              this.$message({showClose: true, message: result.msg});
+            }).catch(() => {
+              this.load = false;
             });
           }
         });
@@ -146,17 +147,14 @@
     },
     created() {
       this.$http.get('api/getConfigInfo')
-      .then((response) => {
-        let result = response.data;
-        if (result.status == 200) {
-          if (!result.data.secProxyEnable) {
-            result.data.secProxyConfig = this.form.secProxyConfig;
-          }
-          this.form = result.data;
-          this.load = false;
-        } else {
-          this.$message({showClose: true, message: result.msg});
+      .then(result => {
+        if (!result.data.secProxyEnable) {
+          result.data.secProxyConfig = this.form.secProxyConfig;
         }
+        this.form = result.data;
+        this.load = false;
+      }).catch(() => {
+        this.load = false;
       });
     }
   }
@@ -176,9 +174,5 @@
     display: inline-block;
     padding-left: 5px;
     width: 50%;
-  }
-
-  .item {
-    padding-left: 5px;
   }
 </style>

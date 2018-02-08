@@ -7,9 +7,9 @@ import lombok.EqualsAndHashCode;
 @Data
 public class ConfigBaseInfo implements Serializable {
 
-  private boolean guideFlag;  //是否需要新手引导教程
   private int proxyPort;  //代理端口号
-  private int proxyModel;  //全局代理 0.关闭 1.开启
+  private int sniffModel;  //嗅探模式 1.全局 2.百度云 3.关闭
+  private int uiModel;  //嗅探模式 1.GUI 2.浏览器
   private int connections;  //默认分段数
   private int timeout;  //超时重试时间
   private boolean secProxyEnable; //二级代理开关

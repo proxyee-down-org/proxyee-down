@@ -47,6 +47,10 @@ public class TaskInfo implements Serializable {
     return getFilePath() + File.separator + "." + getFileName() + ".inf";
   }
 
+  public String buildTaskRecordBakFilePath() {
+    return getFilePath() + File.separator + "." + getFileName() + ".inf.bak";
+  }
+
   public TaskInfo buildChunkInfoList() {
     List<ChunkInfo> chunkInfoList = new ArrayList<>();
     if (getTotalSize() > 0) {  //非chunked编码

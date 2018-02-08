@@ -53,13 +53,18 @@ public class X64HttpDownBootstrap extends AbstractHttpDownBootstrap {
 
   @Override
   public Closeable[] initFileWriter(ChunkInfo chunkInfo) throws Exception {
+    Closeable[] fileChannels;
     FileChannel fileChannel = new RandomAccessFile(
         getHttpDownInfo().getTaskInfo().buildTaskFilePath(), "rw")
         .getChannel();
-    LargeMappedByteBuffer mappedBuffer = new LargeMappedByteBuffer(fileChannel,
-        MapMode.READ_WRITE, chunkInfo.getNowStartPosition(),
-        chunkInfo.getEndPosition() - chunkInfo.getNowStartPosition() + 1);
-    Closeable[] fileChannels = new Closeable[]{fileChannel, mappedBuffer};
+    if (getHttpDownInfo().getTaskInfo().getConnections() > 1) {
+      LargeMappedByteBuffer mappedBuffer = new LargeMappedByteBuffer(fileChannel,
+          MapMode.READ_WRITE, chunkInfo.getNowStartPosition(),
+          chunkInfo.getEndPosition() - chunkInfo.getNowStartPosition() + 1);
+      fileChannels = new Closeable[]{fileChannel, mappedBuffer};
+    } else {
+      fileChannels = new Closeable[]{fileChannel};
+    }
     setAttr(chunkInfo, ATTR_FILE_CHANNELS, fileChannels);
     return fileChannels;
   }
@@ -67,11 +72,19 @@ public class X64HttpDownBootstrap extends AbstractHttpDownBootstrap {
   @Override
   public boolean doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer) throws IOException {
     Closeable[] fileChannels = getFileWriter(chunkInfo);
-    if (fileChannels != null && fileChannels.length > 0) {
-      LargeMappedByteBuffer mappedBuffer = (LargeMappedByteBuffer) getFileWriter(chunkInfo)[1];
-      if (mappedBuffer != null) {
-        mappedBuffer.put(buffer);
-        return true;
+    if (fileChannels != null) {
+      if (fileChannels.length > 1) {
+        LargeMappedByteBuffer mappedBuffer = (LargeMappedByteBuffer) getFileWriter(chunkInfo)[1];
+        if (mappedBuffer != null) {
+          mappedBuffer.put(buffer);
+          return true;
+        }
+      } else {
+        FileChannel fileChannel = (FileChannel) getFileWriter(chunkInfo)[0];
+        if (fileChannel != null) {
+          fileChannel.write(buffer);
+          return true;
+        }
       }
     }
     return false;

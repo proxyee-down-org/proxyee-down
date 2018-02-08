@@ -12,6 +12,8 @@ import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
 import org.slf4j.Logger;
@@ -52,15 +54,64 @@ public class DownContent {
     List<TaskInfo> taskInfoList = new ArrayList<>();
     for (String id : downContent.keySet()) {
       TaskInfo taskInfo = getTaskInfo(id);
-      if (taskInfo != null && taskInfo.getStatus() != 0) {
+      if (taskInfo != null && taskInfo.getStatus() != HttpDownStatus.WAIT) {
         taskInfoList.add(taskInfo);
       }
     }
     return taskInfoList;
   }
 
+  public List<TaskInfo> getDowningTasks() {
+    List<TaskInfo> taskInfoList = new ArrayList<>();
+    for (String id : downContent.keySet()) {
+      TaskInfo taskInfo = getTaskInfo(id);
+      if (taskInfo != null && taskInfo.getStatus() == HttpDownStatus.RUNNING) {
+        taskInfoList.add(taskInfo);
+      }
+    }
+    return taskInfoList;
+  }
+
+  public TaskInfo getWaitTask() {
+    for (String id : downContent.keySet()) {
+      TaskInfo taskInfo = getTaskInfo(id);
+      if (taskInfo != null && taskInfo.getStatus() == HttpDownStatus.WAIT) {
+        return taskInfo;
+      }
+    }
+    return null;
+  }
+
+  public WsForm buildWsForm(String taskId) {
+    List<TaskInfo> list = new ArrayList<>();
+    TaskInfo taskInfo = getTaskInfo(taskId);
+    if (taskInfo == null) {
+      return null;
+    } else {
+      list.add(taskInfo);
+      return new WsForm(WsDataType.TASK_LIST, list);
+    }
+  }
+
+  public WsForm buildDowningWsForm() {
+    List<TaskInfo> list = getDowningTasks();
+    if (list == null || list.size() == 0) {
+      return null;
+    } else {
+      return new WsForm(WsDataType.TASK_LIST, list);
+    }
+  }
+
   public void putBoot(AbstractHttpDownBootstrap bootstrap) {
-    downContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
+    synchronized (downContent) {
+      if (bootstrap.getHttpDownInfo().getTaskInfo().getStatus() == HttpDownStatus.WAIT) {
+        TaskInfo taskInfo = getWaitTask();
+        if (taskInfo != null) {
+          downContent.remove(taskInfo.getId());
+        }
+      }
+      downContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
+    }
   }
 
   public void putBoot(HttpDownInfo httpDownInfo) {
@@ -102,11 +153,12 @@ public class DownContent {
       TaskInfo taskInfo = getTaskInfo(id);
       if (taskInfo != null) {
         synchronized (taskInfo) {
-          ByteUtil.serialize(taskInfo, taskInfo.buildTaskRecordFilePath());
+          ByteUtil.serialize(taskInfo, taskInfo.buildTaskRecordFilePath(),
+              taskInfo.buildTaskRecordBakFilePath());
         }
       }
     } catch (IOException e) {
-      LOGGER.error("写入配置文件失败：", e);
+      LOGGER.warn("写入配置文件失败：", e);
     }
   }
 
@@ -132,9 +184,10 @@ public class DownContent {
           //下载未完成
           if (taskInfo.getStatus() != HttpDownStatus.DONE) {
             String taskDetailPath = taskInfo.buildTaskRecordFilePath();
+            String taskDetailBakPath = taskInfo.buildTaskRecordBakFilePath();
             //存在下载进度信息则更新,否则重新下载
-            if (FileUtil.exists(taskDetailPath)) {
-              taskInfo = (TaskInfo) ByteUtil.deserialize(taskDetailPath);
+            if (FileUtil.existsAny(taskDetailPath, taskDetailBakPath)) {
+              taskInfo = (TaskInfo) ByteUtil.deserialize(taskDetailPath, taskDetailBakPath);
               httpDownInfo.setTaskInfo(taskInfo);
             } else {
               taskInfo.reset();
@@ -151,7 +204,7 @@ public class DownContent {
           putBoot(bootstrap);
         }
       } catch (Exception e) {
-        LOGGER.error("加载配置文件失败：", e);
+        LOGGER.warn("加载配置文件失败：", e);
       }
     }
   }

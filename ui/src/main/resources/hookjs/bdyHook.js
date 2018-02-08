@@ -13,10 +13,12 @@ if (Object.defineProperty) {
   navigator.__defineGetter__('platform', pfHook);
   navigator.__defineGetter__('userAgent', uaHook);
 }
-window.onload = function () {
   var initHookInterval = setInterval(function(){
     try {
-    var pd_dd = $('.module-header-wrapper dl:first').find('dd:first');
+      if(!$){
+        return;
+      }
+      var pd_dd = $('.module-header-wrapper dl:first').find('dd:first');
       if(pd_dd.find(">span").attr("class")&&pd_dd.find(">span>span").attr("class")){
         var pd_parent_span_class = pd_dd.find(">span").attr("class").split(" ")[0];
         var pd_child_span_class = pd_dd.find(">span>span").attr("class").split(" ")[0];
@@ -30,4 +32,3 @@ window.onload = function () {
       }
     }catch (e){}
   },200)
-}

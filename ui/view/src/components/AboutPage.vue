@@ -19,11 +19,7 @@
       <el-col :span="16">
         <span>
           <a target="_blank"
-             href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">@官方编写</a>
-        </span>
-        <span style="padding-left: 20px">
-          <a target="_blank"
-             href="https://www.zhanghuanglong.com/detail/another-download-of-magic-proxyee-down">@°只为大大编写</a>
+             href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">@官方教程</a>
         </span>
       </el-col>
     </el-row>
@@ -63,8 +59,8 @@
       </el-col>
       <el-col :span="6">
         <el-button @click="checkUpdate" type="primary" :loading="checkLoading">检测更新</el-button>
-        <el-tooltip class="item" content="若更新进度无响应可重新检查更新" placement="right">
-          <i class="el-icon-question" style="position: relative;top:-15px;"></i>
+        <el-tooltip content="若更新进度无响应可重新检查更新" placement="right">
+          <i class="el-icon-question"></i>
         </el-tooltip>
       </el-col>
       <el-dialog
@@ -135,30 +131,26 @@
       checkUpdate() {
         this.checkLoading = true;
         this.$http.get('api/checkUpdate')
-        .then((response) => {
-          let result = response.data;
-          if (result.status == 200) {
-            this.updateInfo = result.data;
-            this.updateInfo.version = this.fmtVersion(this.updateInfo.version);
-            this.dialogVisible = true;
-          } else {
-            this.$message({showClose: true, message: result.msg});
-          }
+        .then(result => {
+          this.updateInfo = result.data;
+          this.updateInfo.version = this.fmtVersion(this.updateInfo.version);
+          this.dialogVisible = true;
           this.checkLoading = false;
+        }).catch(() => {
+          this.checkLoading = false
         });
       },
       doUpdate() {
         this.updateLoading = true;
         this.$http.get('api/doUpdate')
-        .then((response) => {
-          let result = response.data;
-          if (result.status == 200) {
-          } else {
-            this.$message({showClose: true, message: result.msg});
-          }
+        .then(() => {
+          this.dialogVisible = false;
+          this.updateLoading = false;
+        }).catch(() => {
           this.dialogVisible = false;
           this.updateLoading = false;
         });
+        ;
       },
       progress(task) {
         let fileDownSize = task.downSize;
@@ -186,20 +178,15 @@
     },
     created() {
       this.$http.get('api/getVersion')
-      .then((response) => {
-        let result = response.data;
-        if (result.status == 200) {
-          this.version = this.fmtVersion(result.data);
-        } else {
-          this.$message({showClose: true, message: result.msg});
-        }
+      .then(result => {
+        this.version = this.fmtVersion(result.data);
+      }).catch(() => {
       });
       this.intervalId = setInterval(() => {
 
         this.$http.get('api/getUpdateProgress')
-        .then((response) => {
-          let result = response.data
-          if (result.status == 200 && result.data) {
+        .then(result => {
+          if (result.data) {
             this.updateTask = result.data;
             if (this.updateTask.status == 7) {
               clearInterval(this.intervalId);
@@ -217,6 +204,7 @@
               });
             }
           }
+        }).catch(() => {
         });
       }, 1000);
     },

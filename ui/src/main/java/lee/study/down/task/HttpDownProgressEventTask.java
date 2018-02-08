@@ -3,7 +3,6 @@ package lee.study.down.task;
 import java.util.concurrent.TimeUnit;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
-import lee.study.down.content.WsContent;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import org.slf4j.Logger;
@@ -39,7 +38,7 @@ public class HttpDownProgressEventTask extends Thread {
             }
           }
         }
-        ContentManager.WS.sendMsg();
+        ContentManager.WS.sendMsg(ContentManager.DOWN.buildDowningWsForm());
         TimeUnit.MILLISECONDS.sleep(1000);
       } catch (Exception e) {
         LOGGER.error("eventTask:", e);

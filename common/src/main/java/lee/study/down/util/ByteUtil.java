@@ -88,20 +88,34 @@ public class ByteUtil {
 
   public static void serialize(Serializable object, String path, boolean isHidden)
       throws IOException {
-    if (FileUtil.exists(path)) {
-      try (
-          RandomAccessFile raf = new RandomAccessFile(path, "rw")
-      ) {
-        raf.setLength(0);
-      }
-    } else {
-      FileUtil.createFile(path, isHidden);
-    }
+    FileUtil.initFile(path, isHidden);
     try (
         RandomAccessFile raf = new RandomAccessFile(path, "rw")
     ) {
       raf.write(objToBts(object));
     }
+  }
+
+  public static void serialize(Serializable object, String path, String bakPath, boolean isHidden)
+      throws IOException {
+    FileUtil.initFile(path, isHidden);
+    byte[] bts = objToBts(object);
+    try (
+        RandomAccessFile raf = new RandomAccessFile(path, "rw")
+    ) {
+      raf.write(bts);
+      FileUtil.initFile(bakPath, isHidden);
+      try (
+          RandomAccessFile raf2 = new RandomAccessFile(bakPath, "rw")
+      ) {
+        raf2.write(bts);
+      }
+    }
+  }
+
+  public static void serialize(Serializable object, String path, String bakPath)
+      throws IOException {
+    serialize(object, path, bakPath, true);
   }
 
   public static void serialize(Serializable object, String path)
@@ -114,6 +128,21 @@ public class ByteUtil {
         ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))
     ) {
       return ois.readObject();
+    }
+  }
+
+  public static Object deserialize(String path, String bakPath)
+      throws IOException, ClassNotFoundException {
+    try (
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(path))
+    ) {
+      return ois.readObject();
+    } catch (Exception e) {
+      try (
+          ObjectInputStream ois = new ObjectInputStream(new FileInputStream(bakPath))
+      ) {
+        return ois.readObject();
+      }
     }
   }
 
@@ -167,24 +196,33 @@ public class ByteUtil {
     return str.toString();
   }
 
+  public static String readContent(InputStream inputStream, Charset charset) {
+    StringBuilder sb = new StringBuilder();
+    try (
+        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, charset))
+    ) {
+      String line;
+      while ((line = br.readLine()) != null) {
+        sb.append(line);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return sb.toString();
+  }
+
+  public static String readContent(InputStream inputStream) {
+    return readContent(inputStream, Charset.forName("UTF-8"));
+  }
+
   public static String readJsContent(InputStream inputStream) {
     return readJsContent(inputStream, Charset.defaultCharset());
   }
 
   public static String readJsContent(InputStream inputStream, Charset charset) {
-    StringBuilder sb = new StringBuilder();
-    try (
-        BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, charset))
-    ) {
-      sb.append("<script type=\"text/javascript\">");
-      String line;
-      while ((line = br.readLine()) != null) {
-        sb.append(line);
-      }
-      sb.append("</script>");
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    StringBuilder sb = new StringBuilder(readContent(inputStream, charset));
+    sb.insert(0, "<script type=\"text/javascript\">");
+    sb.append("</script>");
     return sb.toString();
   }
 
@@ -218,9 +256,20 @@ public class ByteUtil {
 
   public static long getNextTokenSize(FileChannel fileChannel, long position, byte[]... btsArr)
       throws IOException {
+    return getNextTokenSize(fileChannel, -1, position, btsArr);
+  }
+
+  public static long getNextTokenSize(FileChannel fileChannel, long start, long position,
+      byte[]... btsArr)
+      throws IOException {
     long ret = -1;
     ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
-    long startPosition = fileChannel.position();
+    long startPosition;
+    if (start >= 0) {
+      startPosition = start;
+    } else {
+      startPosition = fileChannel.position();
+    }
     if (position >= 0) {
       fileChannel.position(position);
     }
@@ -240,9 +289,19 @@ public class ByteUtil {
 
   public static boolean matchToken(FileChannel fileChannel, long position, byte[] bts)
       throws IOException {
+    return matchToken(fileChannel, -1, position, bts);
+  }
+
+  public static boolean matchToken(FileChannel fileChannel, long start, long position, byte[] bts)
+      throws IOException {
     boolean ret;
     ByteBuffer buffer = ByteBuffer.allocate(bts.length);
-    long rawPosition = fileChannel.position();
+    long rawPosition;
+    if (start >= 0) {
+      rawPosition = start;
+    } else {
+      rawPosition = fileChannel.position();
+    }
     if (position >= 0) {
       fileChannel.position(position);
     }
