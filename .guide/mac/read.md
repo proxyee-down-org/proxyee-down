@@ -1,5 +1,5 @@
 ## 环境安装
-进入[JRE下载](https://github.com/monkeyWie/proxyee-down/releases)，下载对应的JRE并安装  
+进入[JRE下载页面](https://github.com/monkeyWie/proxyee-down/releases)，下载对应的JRE并安装  
 ![1-1](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/mac/imgs/1-1.png)
 ## 下载
 进入[下载页面](https://github.com/monkeyWie/proxyee-down/releases)，下载proxyee-down-x.xx-jar.zip文件
