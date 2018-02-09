@@ -12,6 +12,8 @@ import java.net.URL;
 import java.util.List;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker.State;
 import javafx.geometry.HPos;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
@@ -34,6 +36,7 @@ import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.OsUtil;
 import lee.study.down.util.PathUtil;
 import lee.study.down.util.WindowsUtil;
+import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -226,7 +229,7 @@ public class HttpDownApplication extends Application {
           proxyMenu.setEnabled(false);
         } else {
           CheckboxMenuItemGroup mig = new CheckboxMenuItemGroup();
-          CheckboxMenuItem globalProxyItem = new CheckboxMenuItem("全局");
+          CheckboxMenuItem globalProxyItem = new CheckboxMenuItem("全网");
           globalProxyItem.setName("1");
           CheckboxMenuItem bdyProxyItem = new CheckboxMenuItem("百度云");
           bdyProxyItem.setName("2");
@@ -264,6 +267,7 @@ public class HttpDownApplication extends Application {
                     "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
                         + "/res/pd.pac?t=" + System.currentTimeMillis());
               } else {
+                ContentManager.CONFIG.get().setSniffModel(3);
                 WindowsUtil.disabledProxy();
               }
               ContentManager.CONFIG.save();
@@ -360,6 +364,14 @@ public class HttpDownApplication extends Application {
 
     public Browser() {
       getChildren().add(browser);
+      webEngine.getLoadWorker().stateProperty().addListener(
+          (ObservableValue<? extends State> ov, State oldState,
+              State newState) -> {
+            if (newState == State.SUCCEEDED) {
+              JSObject win = (JSObject) webEngine.executeScript("window");
+              win.setMember("jNative", new JNative());
+            }
+          });
     }
 
     @Override
@@ -372,6 +384,18 @@ public class HttpDownApplication extends Application {
     public void load(String url) {
       webEngine.load(url);
     }
+  }
+
+  public class JNative {
+
+    public void open(String url) {
+      try {
+        OsUtil.openBrowse(url);
+      } catch (Exception e) {
+        LOGGER.warn("can't openBrowse:", e);
+      }
+    }
+
   }
 
   public static void main(String[] args) {

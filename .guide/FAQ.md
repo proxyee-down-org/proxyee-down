@@ -18,7 +18,7 @@
 <details>
   <summary>下载进度一直不动或任务状态显示失败怎么解决?</summary>
   
-  **这种情况一般都是下载链接失效了，需要刷新下载链接，具体[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/refresh/read.md)**
+  **这种情况一般都是下载链接失效了，需要刷新下载链接，具体[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md)**
 </details>
 <details>
   <summary>关闭软件后无法正常上网？</summary>

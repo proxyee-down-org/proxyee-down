@@ -72,11 +72,22 @@ export default {
       }
     }
   },
-  getFileNameNoSuffix(fileName){
+  getFileNameNoSuffix(fileName) {
     let index = fileName.lastIndexOf(".");
     if (index != -1) {
       return fileName.substring(0, index);
     }
     return fileName;
+  },
+  getUnzipFilePath(filePath, fileName) {
+    debugger;
+    if (!filePath) {
+      return '';
+    }
+    if (filePath.lastIndexOf('\\') == filePath.length - 1) {
+      return filePath + this.getFileNameNoSuffix(fileName);
+    } else {
+      return filePath + '\\' + this.getFileNameNoSuffix(fileName);
+    }
   },
 }

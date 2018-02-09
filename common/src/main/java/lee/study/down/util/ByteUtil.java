@@ -3,8 +3,8 @@ package lee.study.down.util;
 import io.netty.buffer.ByteBuf;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,12 +15,12 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.UUID;
+import lee.study.down.constant.HttpDownStatus;
+import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.TaskInfo;
 
 public class ByteUtil {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ByteUtil.class);
 
   /**
    * 大端序
@@ -104,12 +104,12 @@ public class ByteUtil {
         RandomAccessFile raf = new RandomAccessFile(path, "rw")
     ) {
       raf.write(bts);
-      FileUtil.initFile(bakPath, isHidden);
-      try (
-          RandomAccessFile raf2 = new RandomAccessFile(bakPath, "rw")
-      ) {
-        raf2.write(bts);
-      }
+    }
+    FileUtil.initFile(bakPath, isHidden);
+    try (
+        RandomAccessFile raf2 = new RandomAccessFile(bakPath, "rw")
+    ) {
+      raf2.write(bts);
     }
   }
 
@@ -310,5 +310,37 @@ public class ByteUtil {
     ret = findBytes(buffer, bts) == 0;
     fileChannel.position(rawPosition);
     return ret;
+  }
+
+  public static void main(String[] args) throws IOException {
+    /*String file = args[0];
+    long totalSize = Long.parseLong(args[1]);*/
+    String file = "F:\\【批量下载】c  .part7等.zip";
+    long totalSize = 12312;
+    File downFile = new File(file);
+    File[] chunks = new File(
+        downFile.getParentFile().getAbsolutePath() + File.separator + "." + downFile.getName()
+            + "_cks").listFiles();
+    TaskInfo taskInfo = new TaskInfo()
+        .setId(UUID.randomUUID().toString())
+        .setFilePath(downFile.getParentFile().getAbsolutePath())
+        .setFileName(downFile.getName())
+        .setConnections(chunks.length)
+        .setSupportRange(true)
+        .setStatus(HttpDownStatus.RUNNING)
+        .setTotalSize(totalSize)
+        .setStartTime(System.currentTimeMillis())
+        .buildChunkInfoList();
+    long downSize = 0;
+    for (int i = 0; i < chunks.length; i++) {
+      downSize += chunks[i].length();
+      ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
+      chunkInfo.setDownSize(chunks[i].length());
+      chunkInfo.setStatus(HttpDownStatus.RUNNING);
+      chunkInfo.setStartTime(System.currentTimeMillis());
+      chunkInfo.setIndex(i);
+    }
+    taskInfo.setDownSize(downSize);
+    serialize(taskInfo, taskInfo.buildTaskRecordFilePath(), taskInfo.buildTaskRecordBakFilePath());
   }
 }

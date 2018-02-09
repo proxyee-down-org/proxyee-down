@@ -7,8 +7,9 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <a target="_blank"
-             href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down</a>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down"
+                    text="GitHub@proxyee-down"></native-a>
         </span>
       </el-col>
     </el-row>
@@ -18,8 +19,8 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <a target="_blank"
-             href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">@官方教程</a>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down" text="@官方教程"></native-a>
         </span>
       </el-col>
     </el-row>
@@ -29,8 +30,9 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <a target="_blank"
-             href="https://github.com/monkeyWie/proxyee-down/releases">GitHub@proxyee-down/releases</a>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down"
+                    text="GitHub@proxyee-down/releases"></native-a>
         </span>
       </el-col>
     </el-row>
@@ -40,7 +42,9 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <a target="_blank" href="https://github.com/monkeyWie/proxyee-down/issues">GitHub@proxyee-down/issue</a>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down"
+                    text="GitHub@proxyee-down/issue"></native-a>
         </span>
       </el-col>
     </el-row>
@@ -86,28 +90,32 @@
     <el-row>
       <el-col :span="16">
         <span>
-          <a target="_blank" href="http://spring.io/">spring</a>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down" text="spring"></native-a>
         </span>
       </el-col>
     </el-row>
     <el-row>
       <el-col :span="16">
         <span>
-          <a target="_blank" href="http://netty.io/">netty</a>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down" text="netty"></native-a>
         </span>
       </el-col>
     </el-row>
     <el-row>
       <el-col :span="16">
         <span>
-          <a target="_blank" href="https://cn.vuejs.org/">vue.js</a>
+           <native-a target="_blank"
+                     href="https://github.com/monkeyWie/proxyee-down" text="vue.js"></native-a>
         </span>
       </el-col>
     </el-row>
     <el-row>
       <el-col :span="16">
         <span>
-          <a target="_blank" href="http://element.eleme.io">Element UI</a>
+           <native-a target="_blank"
+                     href="https://github.com/monkeyWie/proxyee-down" text="Element UI"></native-a>
         </span>
       </el-col>
     </el-row>
@@ -115,6 +123,8 @@
 </template>
 
 <script>
+  import NativeA from './base/NativeA'
+
   export default {
     data() {
       return {
@@ -126,6 +136,9 @@
         intervalId: null,
         updateTask: null
       }
+    },
+    components: {
+      NativeA
     },
     methods: {
       checkUpdate() {

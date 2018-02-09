@@ -161,10 +161,10 @@ public class HttpDownInitializer extends ChannelInitializer {
         Channel nowChannel = bootstrap.getChannel(chunkInfo);
         safeClose(ctx.channel());
         if (nowChannel == ctx.channel()) {
-          bootstrap.retryChunkDown(chunkInfo);
           if (callback != null) {
             callback.onChunkError(bootstrap.getHttpDownInfo(), chunkInfo, cause);
           }
+          bootstrap.retryChunkDown(chunkInfo);
         }
       }
 

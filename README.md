@@ -8,22 +8,24 @@
 ### 安装成功
 在安装成功之后，浏览器下载资源时会跳转到创建任务页面，然后选择保存的路径和分段数进行创建下载任务。    
 ![新建任务](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/new-task.png)
-## 功能
+## 常见问题(**必看**)
+在开始使用前务必看一遍[常见问题列表](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md)，可以解决你使用proxyee-down下载遇到的绝大多数问题。
+## 常用功能
 ### 手动创建任务
-[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/create/read.md)
+可以根据链接来创建一个任务，支持自定义请求头和请求体，具体请[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/create/read.md)。
 ### 刷新任务下载链接
-[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md)
+当任务下载链接失效了，下载没速度或失败则可以使用刷新下载链接的功能，使用新的链接继续下载，具体请[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md)。
 ### 百度云破解
 百度云大文件、合并下载限制突破,成功安装下载器后，打开百度云页面会有如下提示  
 ![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/bdy-hook.png)
 ### 百度云解压工具
 在下载器工具页面里进入百度云解压工具，选择百度云批量下载的文件进行解压  
 ![百度云解压](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/bdy-unzip.png)
-## 常见问题
-[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md)
 ## 其他
 ### SwitchyOmega插件安装与设置
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)
+### 火狐浏览器证书安装
+[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/firefox-ca/read.md)
 ### QQ群
 1群**11352304**(已满)、2群**20236964**
 
