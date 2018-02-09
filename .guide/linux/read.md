@@ -20,7 +20,7 @@ root@test:/opt# cd /bin
 root@test:/bin# ln -s /opt/jre1.8.0_161/bin/java java
 ```
 - 验证软件的正确性
-[5](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/5.png)
+![5](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/5.png)
 
 - 配置Java环境
 ```
@@ -43,11 +43,11 @@ root@test:/bin# echo $JAVA_HOME
 ulimit -c unlimited
 java -jar proxyee-down.jar
 ```
-[10](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/10.png)
+![10](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/10.png)
 
 ## 证书安装
 访问`127.0.0.1:9999`下载证书，选择第一条`Trust this CA to identify websites`，然后OK
-[11](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/11.png)
+![11](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/11.png)
 
 ## SwitchyOmega插件安装与设置
 
