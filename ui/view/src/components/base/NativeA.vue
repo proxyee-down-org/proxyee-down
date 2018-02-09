@@ -1,5 +1,5 @@
 <template>
-  <a @click.prevent="onClick">{{text}}</a>
+  <a @click.prevent="onClick"><slot></slot></a>
 </template>
 
 <script>

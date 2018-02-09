@@ -8,8 +8,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down"
-                    text="GitHub@proxyee-down"></native-a>
+                    href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down</native-a>
         </span>
       </el-col>
     </el-row>
@@ -20,7 +19,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down" text="@官方教程"></native-a>
+                    href="https://github.com/monkeyWie/proxyee-down">@官方教程</native-a>
         </span>
       </el-col>
     </el-row>
@@ -31,8 +30,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down"
-                    text="GitHub@proxyee-down/releases"></native-a>
+                    href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down/releases</native-a>
         </span>
       </el-col>
     </el-row>
@@ -43,8 +41,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down"
-                    text="GitHub@proxyee-down/issue"></native-a>
+                    href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down/issue</native-a>
         </span>
       </el-col>
     </el-row>
@@ -91,7 +88,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down" text="spring"></native-a>
+                    href="https://github.com/monkeyWie/proxyee-down">spring</native-a>
         </span>
       </el-col>
     </el-row>
@@ -99,7 +96,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down" text="netty"></native-a>
+                    href="https://github.com/monkeyWie/proxyee-down">netty</native-a>
         </span>
       </el-col>
     </el-row>
@@ -107,7 +104,7 @@
       <el-col :span="16">
         <span>
            <native-a target="_blank"
-                     href="https://github.com/monkeyWie/proxyee-down" text="vue.js"></native-a>
+                     href="https://github.com/monkeyWie/proxyee-down">vue.js</native-a>
         </span>
       </el-col>
     </el-row>
@@ -115,7 +112,7 @@
       <el-col :span="16">
         <span>
            <native-a target="_blank"
-                     href="https://github.com/monkeyWie/proxyee-down" text="Element UI"></native-a>
+                     href="https://github.com/monkeyWie/proxyee-down">Element UI</native-a>
         </span>
       </el-col>
     </el-row>

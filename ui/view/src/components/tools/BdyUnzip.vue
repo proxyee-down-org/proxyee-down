@@ -19,7 +19,7 @@
       </el-form-item>
     </div>
     <el-form-item>
-      <el-button type="primary" @click="onSubmit" :loading="load">确定</el-button>
+      <el-button type="primary" @click="onSubmit" :loading="load">解压</el-button>
     </el-form-item>
   </el-form>
 </template>
