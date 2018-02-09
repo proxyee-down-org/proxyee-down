@@ -1,5 +1,5 @@
 ## 安装环境 
-- 进入[JRE下载页面](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)，下载对应的JRE
+- 进入[JRE下载页面](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)，下载对应的JRE  
 ![1](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/1.png)
 
 - 以root用户登录将下载的jre-8u161-linux-x64.tar.gz文件放到/temp目录下，使用如下命令解压:
@@ -19,7 +19,7 @@ root@test:/opt# mv /temp/jre1.8.0_161/ .
 root@test:/opt# cd /bin
 root@test:/bin# ln -s /opt/jre1.8.0_161/bin/java java
 ```
-- 验证软件的正确性
+- 验证软件的正确性  
 ![5](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/5.png)
 
 - 配置Java环境
