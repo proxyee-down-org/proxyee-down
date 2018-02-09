@@ -187,8 +187,12 @@ public class DownContent {
             String taskDetailBakPath = taskInfo.buildTaskRecordBakFilePath();
             //存在下载进度信息则更新,否则重新下载
             if (FileUtil.existsAny(taskDetailPath, taskDetailBakPath)) {
-              taskInfo = (TaskInfo) ByteUtil.deserialize(taskDetailPath, taskDetailBakPath);
-              httpDownInfo.setTaskInfo(taskInfo);
+              try {
+                taskInfo = (TaskInfo) ByteUtil.deserialize(taskDetailPath, taskDetailBakPath);
+                httpDownInfo.setTaskInfo(taskInfo);
+              } catch (IOException | ClassNotFoundException e) {
+                taskInfo.reset();
+              }
             } else {
               taskInfo.reset();
             }

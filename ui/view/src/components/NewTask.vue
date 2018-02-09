@@ -98,19 +98,11 @@
       'taskId'
     ],
     watch: {
-      'form.filePath': function (filePath) {
-        if (filePath) {
-          this.form.unzipPath = filePath + '\\' + Util.getFileNameNoSuffix(this.form.fileName);
-        } else {
-          this.form.unzipPath = '';
-        }
-      },
       'form.fileName': function (fileName) {
-        if (this.form.filePath) {
-          this.form.unzipPath = this.form.filePath + '\\' + Util.getFileNameNoSuffix(fileName);
-        } else {
-          this.form.unzipPath = '';
-        }
+        this.form.unzipPath = Util.getUnzipFilePath(this.form.filePath, fileName);
+      },
+      'form.filePath': function (filePath) {
+        this.form.unzipPath = Util.getUnzipFilePath(filePath, this.form.fileName);
       },
       'form.unzip': function (val) {
         if (val) {
