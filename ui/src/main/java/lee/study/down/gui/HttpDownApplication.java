@@ -164,6 +164,7 @@ public class HttpDownApplication extends Application {
     });
     beforeOpen();
 //    open();
+//    close();
     afterOpen();
   }
 
@@ -185,6 +186,8 @@ public class HttpDownApplication extends Application {
     } else {
       stage.show();
       stage.toFront();
+      stage.setIconified(true);
+      stage.setIconified(false);
     }
   }
 

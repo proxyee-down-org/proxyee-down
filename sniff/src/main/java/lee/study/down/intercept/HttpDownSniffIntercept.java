@@ -64,14 +64,15 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
       String contentType = httpResHeaders.get(HttpHeaderNames.CONTENT_TYPE);
       //有两种情况进行下载 1.url后缀为.xxx  2.带有CONTENT_DISPOSITION:ATTACHMENT响应头
       String disposition = httpResHeaders.get(HttpHeaderNames.CONTENT_DISPOSITION);
-      if ((disposition != null
-          && accept != null
+      if (accept != null
+          && accept.matches("^.*text/html.*$")
+          && ((disposition != null
           && !accept.equals("*/*")
           && disposition.contains(HttpHeaderValues.ATTACHMENT)
           && disposition.contains(HttpHeaderValues.FILENAME))
           || (!pipeline.getHttpRequest().uri().matches("^.*/favicon\\.ico(\\?[^?]*)?$")
           && pipeline.getHttpRequest().uri().matches("^.*\\.[^./]{1,5}(\\?[^?]*)?$")
-          && isDownAccept(accept, contentType))) {
+          && isDownAccept(accept, contentType)))) {
         downFlag = true;
       }
 
@@ -106,25 +107,21 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
   }
 
   private boolean isDownAccept(String accepts, String contentType) {
-    if (accepts != null && accepts.matches("^.*text/html.*$")) {
-      String[] acceptArray = accepts.split(",");
-      String contentType0 = contentType.split(";")[0];
-      for (String accpet : acceptArray) {
-        accpet = accpet.split(";")[0];
-        if (accpet.equals("*/*")) {
-          if (contentType.matches("^(?i)application/x.*$")) {
-            return false;
-          }
-        } else {
-          String accpet0 = "^(?i)" + accpet.replaceAll("\\*", ".*") + "$";
-          if (contentType0.matches(accpet0)) {
-            return false;
-          }
+    String[] acceptArray = accepts.split(",");
+    String contentType0 = contentType.split(";")[0];
+    for (String accpet : acceptArray) {
+      accpet = accpet.split(";")[0];
+      if (accpet.equals("*/*")) {
+        if (contentType.matches("^(?i)application/x.*$")) {
+          return false;
+        }
+      } else {
+        String accpet0 = "^(?i)" + accpet.replaceAll("\\*", ".*") + "$";
+        if (contentType0.matches(accpet0)) {
+          return false;
         }
       }
-      return true;
-    } else {
-      return false;
     }
+    return true;
   }
 }
