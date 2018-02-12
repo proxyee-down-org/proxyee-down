@@ -59,6 +59,8 @@ public class HttpDownApplication extends Application {
     System.setProperty("io.netty.noPreferDirect", "true");
     //不使用内存池
     System.setProperty("io.netty.allocator.numHeapArenas", "0");
+    //指定默认文件编码
+    System.setProperty("file.encoding", "GB18030");
   }
 
   private void initConfig() throws Exception {
