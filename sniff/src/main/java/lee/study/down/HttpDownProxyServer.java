@@ -10,6 +10,7 @@ import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 import lee.study.proxyee.proxy.ProxyConfig;
+import lee.study.proxyee.server.HttpProxyCACertFactory;
 import lee.study.proxyee.server.HttpProxyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +24,12 @@ public class HttpDownProxyServer {
   private HttpProxyServer proxyServer;
   private ProxyConfig proxyConfig;
 
-  public HttpDownProxyServer(ProxyConfig proxyConfig, HttpDownInterceptFactory interceptFactory) {
+  public HttpDownProxyServer(HttpProxyCACertFactory caCertFactory, ProxyConfig proxyConfig,
+      HttpDownInterceptFactory interceptFactory) {
     this.proxyConfig = proxyConfig;
     this.interceptFactory = interceptFactory;
-    proxyServer = new HttpProxyServer();
+
+    this.proxyServer = new HttpProxyServer(caCertFactory);
   }
 
   public void setProxyConfig(ProxyConfig proxyConfig) {
@@ -35,7 +38,6 @@ public class HttpDownProxyServer {
 
   public void start(int port) {
     LOGGER.debug("HttpDownProxyServer listen " + port + "\tproxyConfig:" + proxyConfig);
-    proxyServer.proxyConfig(proxyConfig);
     //监听http下载请求
     proxyServer.proxyInterceptInitializer(new HttpProxyInterceptInitializer() {
       @Override
@@ -49,17 +51,18 @@ public class HttpDownProxyServer {
         }
       }
     })
-    .httpProxyExceptionHandle(new HttpProxyExceptionHandle() {
-      @Override
-      public void beforeCatch(Channel clientChannel, Throwable cause) throws Exception {
-        LOGGER.warn("beforeCatch:",cause);
-      }
+        .httpProxyExceptionHandle(new HttpProxyExceptionHandle() {
+          @Override
+          public void beforeCatch(Channel clientChannel, Throwable cause) throws Exception {
+            LOGGER.warn("beforeCatch:", cause);
+          }
 
-      @Override
-      public void afterCatch(Channel clientChannel, Channel proxyChannel, Throwable cause) throws Exception {
-        LOGGER.warn("afterCatch:",cause);
-      }
-    }).start(port);
+          @Override
+          public void afterCatch(Channel clientChannel, Channel proxyChannel, Throwable cause)
+              throws Exception {
+            LOGGER.warn("afterCatch:", cause);
+          }
+        }).start(port);
   }
 
   public void close() {

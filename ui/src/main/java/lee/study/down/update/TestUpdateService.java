@@ -38,7 +38,7 @@ public class TestUpdateService implements UpdateService {
             HttpDownConstant.clientLoopGroup)
         .setConnections(64)
         .setFileName("proxyee-down-core.jar.bak")
-        .setFilePath(HttpDownConstant.MAIN_PATH);
+        .setFilePath(HttpDownConstant.HOME_PATH);
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
     AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo, 5,
         HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup, null);

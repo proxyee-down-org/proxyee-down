@@ -44,18 +44,6 @@ public class ConfigContent {
     }
     if (configContent == null || configContent.getProxyPort() == 0) {
       configContent = new ConfigInfo();
-      //默认代理端口
-      configContent.setProxyPort(9999);
-      //默认分段数
-      configContent.setConnections(32);
-      //默认30秒无响应重试
-      configContent.setTimeout(30);
-      //默认百度云嗅探模式
-      configContent.setSniffModel(2);
-      //默认GUI模式
-      configContent.setUiModel(1);
-      //默认重试次数
-      configContent.setRetryCount(5);
       save();
     }
   }

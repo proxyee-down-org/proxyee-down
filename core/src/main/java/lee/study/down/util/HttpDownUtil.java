@@ -100,7 +100,7 @@ public class HttpDownUtil {
         }
         try {
           fileName = new String(bts, "UTF-8");
-          fileName = URLDecoder.decode(fileName, "UTF-8");
+          fileName = URLDecoder.decode(fileName.replaceAll("\\+", "%2b"), "UTF-8");
         } catch (Exception e) {
 
         }

@@ -43,9 +43,7 @@ public class BdyZip {
     private long fileNameLength;
     private long extraFieldLength;
     private String fileName;
-    private byte[] extraField;
     private boolean isDir;
-    private boolean isFix;
     private long fileStartPosition;
     private boolean isEnd;
 
@@ -57,117 +55,114 @@ public class BdyZip {
   public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
       BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
+    String currDir = null;
     while (true) {
-      BdyZipEntry entry = getNextBdyZipEntry(fileChannel, list, null, 0, callback);
+      BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, currDir);
+      list.add(entry);
+      callback.onFix(fileChannel.size(), entry.getFileStartPosition() + entry.getCompressedSize());
       if (entry.isEnd()) {
+        callback.onFixDone(list);
         return list;
+      } else if (entry.isDir()) {
+        currDir = entry.getFileName();
       }
     }
   }
 
-  public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel, List<BdyZipEntry> entryList,
-      BdyZipEntry fixEntry, long skipSize, BdyUnzipCallback callback)
+  public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel, long position)
       throws IOException {
-    BdyZipEntry zipEntry;
-    if (fixEntry == null) {
-      zipEntry = new BdyZipEntry();
-      ByteBuffer buffer = ByteBuffer.allocate(30);
-      fileChannel.read(buffer);
-      buffer.flip();
-      buffer.get(zipEntry.getHeader());
-      buffer.get(zipEntry.getVersion());
-      buffer.get(zipEntry.getGeneral());
-      buffer.get(zipEntry.getMethod());
-      buffer.get(zipEntry.getTime());
-      buffer.get(zipEntry.getDate());
-      buffer.get(zipEntry.getCrc32());
-
-      byte[] bts4 = new byte[4];
-      buffer.get(bts4);
-      zipEntry.setCompressedSize(ByteUtil.btsToNumForSmall(bts4));
-      buffer.get(bts4);
-      zipEntry.setUnCompressedSize(ByteUtil.btsToNumForSmall(bts4));
-      byte[] bts2 = new byte[2];
-      buffer.get(bts2);
-      zipEntry.setFileNameLength(ByteUtil.btsToNumForSmall(bts2));
-      buffer.get(bts2);
-      zipEntry.setExtraFieldLength(ByteUtil.btsToNumForSmall(bts2));
-
-      ByteBuffer fileNameBuffer = ByteBuffer.allocate((int) zipEntry.getFileNameLength());
-      fileChannel.read(fileNameBuffer);
-      fileNameBuffer.flip();
-      zipEntry.setFileName(Charset.forName("GB18030").decode(fileNameBuffer).toString());
-      if (zipEntry.getExtraFieldLength() > 0) {
-        ByteBuffer extraFieldBuffer = ByteBuffer.allocate((int) zipEntry.getExtraFieldLength());
-        fileChannel.read(extraFieldBuffer);
-        zipEntry.setExtraField(extraFieldBuffer.array());
-      }
-      if (zipEntry.getCompressedSize() == 0
-          && (zipEntry.getFileName().length() == 0
-          || "/".equals(zipEntry.getFileName().substring(zipEntry.getFileName().length() - 1)))) {
-        zipEntry.setDir(true);
-      }
-      zipEntry.setFileStartPosition(fileChannel.position());
-      entryList.add(zipEntry);
-    } else {
-      zipEntry = fixEntry;
+    if (position > 0) {
+      fileChannel.position(position);
     }
-    if (callback != null) {
-      callback.onFix(fileChannel.size(), fileChannel.position());
+    BdyZipEntry zipEntry = new BdyZipEntry();
+    ByteBuffer buffer = ByteBuffer.allocate(30);
+    fileChannel.read(buffer);
+    buffer.flip();
+    buffer.get(zipEntry.getHeader());
+    buffer.get(zipEntry.getVersion());
+    buffer.get(zipEntry.getGeneral());
+    buffer.get(zipEntry.getMethod());
+    buffer.get(zipEntry.getTime());
+    buffer.get(zipEntry.getDate());
+    buffer.get(zipEntry.getCrc32());
+
+    byte[] bts4 = new byte[4];
+    buffer.get(bts4);
+    zipEntry.setCompressedSize(ByteUtil.btsToNumForSmall(bts4));
+    buffer.get(bts4);
+    zipEntry.setUnCompressedSize(ByteUtil.btsToNumForSmall(bts4));
+    byte[] bts2 = new byte[2];
+    buffer.get(bts2);
+    zipEntry.setFileNameLength(ByteUtil.btsToNumForSmall(bts2));
+    buffer.get(bts2);
+    zipEntry.setExtraFieldLength(ByteUtil.btsToNumForSmall(bts2));
+
+    ByteBuffer fileNameBuffer = ByteBuffer.allocate((int) zipEntry.getFileNameLength());
+    fileChannel.read(fileNameBuffer);
+    fileNameBuffer.flip();
+    zipEntry.setFileName(Charset.forName("GB18030").decode(fileNameBuffer).toString());
+    if (zipEntry.getExtraFieldLength() > 0) {
+      fileChannel.position(fileChannel.position() + zipEntry.getExtraFieldLength());
     }
+    if (zipEntry.getCompressedSize() == 0
+        && (zipEntry.getFileName().length() == 0
+        || "/".equals(zipEntry.getFileName().substring(zipEntry.getFileName().length() - 1)))) {
+      zipEntry.setDir(true);
+    }
+    zipEntry.setFileStartPosition(fileChannel.position());
+    return zipEntry;
+  }
+
+  public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel)
+      throws IOException {
+    return getNextBdyZipEntry(fileChannel, -1);
+  }
+
+  public static BdyZipEntry getNextFixedBdyZipEntry(FileChannel fileChannel, String currDir)
+      throws IOException {
+    BdyZipEntry zipEntry = getNextBdyZipEntry(fileChannel);
     if (ByteUtil
         .matchToken(fileChannel,
             zipEntry.getFileStartPosition(),
-            zipEntry.getFileStartPosition() + zipEntry.getCompressedSize() + skipSize,
+            zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
             ZIP_ENTRY_DIR_HEARD)) {
       zipEntry.setEnd(true);
     } else if (!ByteUtil
         .matchToken(fileChannel,
             zipEntry.getFileStartPosition(),
-            zipEntry.getFileStartPosition() + zipEntry.getCompressedSize() + skipSize,
+            zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
             ZIP_ENTRY_FILE_HEARD)) {
-      long totalSkipSize = skipSize > 0 ? zipEntry.getCompressedSize() + skipSize : _4G;
-      long fixSize = ByteUtil
-          .getNextTokenSize(fileChannel, zipEntry.getFileStartPosition(),
-              zipEntry.getFileStartPosition() + totalSkipSize,
-              ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
-      if (fixSize != -1) {
-        zipEntry.setFix(true);
-        fileChannel.position(fileChannel.position() + fixSize);
-        zipEntry.setUnCompressedSize(fixSize);
-        zipEntry.setCompressedSize(fixSize);
-        if (ByteUtil
-            .matchToken(fileChannel, zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
-                ZIP_ENTRY_DIR_HEARD)) {
-          zipEntry.setEnd(true);
-        }
-      } else {
-        //找到最近一个修复错误的文件重新修复
-        long needSkipSize = 0;
-        int index = -1;
-        for (int i = entryList.size() - 1; i >= 0; i--) {
-          BdyZipEntry temp = entryList.get(i);
-          if (temp.isFix()) {
-            index = i;
-            break;
-          } else {
-            needSkipSize += temp.getEntrySize();
-            entryList.remove(i);
-          }
-        }
-        BdyZipEntry needFixEntry = entryList.get(index);
-        getNextBdyZipEntry(fileChannel, entryList, needFixEntry, needSkipSize, callback);
-        if (fileChannel.position() >= fileChannel.size()) {
-          zipEntry.setEnd(true);
-        }
+      long fixedSize = fixedEntrySize(fileChannel, zipEntry, _4G, currDir);
+      zipEntry.setUnCompressedSize(fixedSize);
+      zipEntry.setCompressedSize(fixedSize);
+      if (ByteUtil
+          .matchToken(fileChannel, zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
+              ZIP_ENTRY_DIR_HEARD)) {
+        zipEntry.setEnd(true);
       }
-    } else {
-      fileChannel.position(fileChannel.position() + zipEntry.getCompressedSize());
     }
-    if (fileChannel.position() >= fileChannel.size()) {
-      zipEntry.setEnd(true);
+    if (!zipEntry.isEnd()) {
+      fileChannel.position(zipEntry.getFileStartPosition() + zipEntry.getCompressedSize());
     }
     return zipEntry;
+  }
+
+  private static long fixedEntrySize(FileChannel fileChannel, BdyZipEntry zipEntry, long skipSize,
+      String currDir)
+      throws IOException {
+    long fixedSize = ByteUtil
+        .getNextTokenSize(fileChannel, zipEntry.getFileStartPosition(),
+            zipEntry.getFileStartPosition() + skipSize,
+            ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
+    BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
+        zipEntry.getFileStartPosition() + fixedSize);
+    //修复长度后下个文件目录没对上
+    if (!((currDir == null && nextEntry.getFileName().matches("^/[^/]*$"))
+        || nextEntry.getFileName().matches("^" + currDir + "[^/]*$"))) {
+      return fixedEntrySize(fileChannel, zipEntry, skipSize + nextEntry.getEntrySize(), currDir);
+    } else {
+      return fixedSize;
+    }
   }
 
   public static void unzip(String path, String toPath, BdyUnzipCallback callback)
@@ -182,9 +177,6 @@ public class BdyZip {
           FileChannel fileChannel = new RandomAccessFile(zipFile, "rw").getChannel()
       ) {
         List<BdyZipEntry> list = getFixedEntryList(fileChannel, callback);
-        if (callback != null) {
-          callback.onFixDone(list);
-        }
         for (BdyZipEntry zipEntry : list) {
           if (callback != null) {
             callback.onEntryStart(zipEntry);
@@ -231,6 +223,10 @@ public class BdyZip {
     unzip(path, toPath, null);
   }
 
+  public static void main(String[] args) throws IOException {
+    unzip("f:/down/test2测试.zip", "f:/down/test2测试", new TestUnzipCallback());
+  }
+
   /**
    * 检查是否为百度云合并下载ZIP
    */
@@ -271,5 +267,43 @@ public class BdyZip {
     void onDone();
 
     void onError(Exception e);
+  }
+
+  static class TestUnzipCallback implements BdyUnzipCallback {
+
+    @Override
+    public void onStart() {
+      System.out.println("onStart");
+    }
+
+    @Override
+    public void onFix(long totalSize, long fixSize) {
+      System.out.println("onFix:" + totalSize + " " + fixSize);
+    }
+
+    @Override
+    public void onFixDone(List<BdyZipEntry> list) {
+      System.out.println("onFixDone");
+    }
+
+    @Override
+    public void onEntryStart(BdyZipEntry entry) {
+
+    }
+
+    @Override
+    public void onEntryWrite(long totalSize, long writeSize) {
+
+    }
+
+    @Override
+    public void onDone() {
+
+    }
+
+    @Override
+    public void onError(Exception e) {
+
+    }
   }
 }
