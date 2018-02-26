@@ -159,7 +159,7 @@ public class BdyZip {
       BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
     List<String> dirList = new ArrayList<>();
-    dirList.add("/");
+    dirList.add("");
     while (true) {
       BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, dirList, callback);
       list.add(entry);
@@ -244,8 +244,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws IOException {
-    unzip("f:/down/pack13.zip", "f:/down/pack13", new TestUnzipCallback());
-//    unzip("f:/down/ttt.zip", "f:/down/ttt", new TestUnzipCallback());
+    unzip("f:/down/ttt.zip", "f:/down/ttt", new TestUnzipCallback());
   }
 
   /**
