@@ -57,7 +57,7 @@ public class GithubUpdateService implements UpdateService {
             HttpDownConstant.clientLoopGroup)
         .setConnections(32)
         .setFileName(UPDATE_CORE_FILE_NAME + ".bak")
-        .setFilePath(HttpDownConstant.MAIN_PATH);
+        .setFilePath(HttpDownConstant.HOME_PATH);
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
     AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo, 5,
         HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup, null);

@@ -9,6 +9,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Stack;
+import java.util.UUID;
 
 public class FileUtil {
 
@@ -74,13 +75,9 @@ public class FileUtil {
    * 创建文件，如果目标存在则删除
    */
   public static File createFile(String path, boolean isHidden) throws IOException {
-    File file = new File(path);
-    deleteIfExists(file);
-    file.createNewFile();
-    File newFile = new File(path);
-    newFile.createNewFile();
+    File file = createFileSmart(path);
     if (OsUtil.isWindows()) {
-      Files.setAttribute(newFile.toPath(), "dos:hidden", isHidden);
+      Files.setAttribute(file.toPath(), "dos:hidden", isHidden);
     }
     return file;
   }
@@ -228,5 +225,18 @@ public class FileUtil {
         input.close();
       }
     }
+  }
+
+  public static boolean canWrite(String path) {
+    File file = new File(path);
+    File test = new File(
+        file.getParent() + File.separator + UUID.randomUUID().toString() + ".test");
+    try {
+      test.createNewFile();
+      test.delete();
+    } catch (IOException e) {
+      return false;
+    }
+    return true;
   }
 }

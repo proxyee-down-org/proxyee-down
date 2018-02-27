@@ -257,7 +257,7 @@ public class HttpDownController {
     if (file.exists() && file.isFile()) {
       if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
         UnzipInfo unzipInfo = new UnzipInfo().setId(id);
-        if (!Files.isWritable(Paths.get(unzipForm.getFilePath()))) {
+        if (!FileUtil.canWrite(unzipForm.getFilePath())) {
           resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问解压路径，请修改路径或开放目录写入权限");
           return resultInfo;
         }
@@ -324,7 +324,7 @@ public class HttpDownController {
         }).start();
       } else {
         resultInfo.setStatus(ResultStatus.BAD.getCode());
-        resultInfo.setMsg("解压失败，请确认是否为百度云合并下载zip文件");
+        resultInfo.setMsg("解压失败，请确认是否为百度云批量下载zip文件");
       }
     } else {
       resultInfo.setStatus(ResultStatus.BAD.getCode());
@@ -458,7 +458,7 @@ public class HttpDownController {
     } catch (MalformedURLException e) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("链接格式不正确");
     } catch (Exception e) {
-      throw new RuntimeException("buildTask error:" + form.toString());
+      throw new RuntimeException("buildTask error:" + form.toString(), e);
     }
     return resultInfo;
   }

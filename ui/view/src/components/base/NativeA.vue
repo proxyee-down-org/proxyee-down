@@ -6,13 +6,12 @@
   import Vue from 'vue'
 
   export default {
-    props: ['text'],
     methods: {
       onClick() {
-        if (window.jNative) {
-          window.jNative.open(this.$attrs.href);
+        if (jNative) {
+          jNative.open(this.$attrs.href);
         } else {
-          window.open(this.$attrs.href);
+          open(this.$attrs.href);
         }
       }
     }

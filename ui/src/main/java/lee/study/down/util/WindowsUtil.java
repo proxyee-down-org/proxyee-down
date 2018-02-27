@@ -116,11 +116,18 @@ public class WindowsUtil {
    * 证书是否已存在
    */
   public static boolean existsCert(InputStream input) throws Exception {
-    String certId = getCertId(input);
+    return existsCert(getCertId(input));
+  }
+
+  /**
+   * 证书是否已存在
+   */
+
+  public static boolean existsCert(String param) throws IOException {
     Process process = Runtime.getRuntime().exec("certutil "
         + "-store "
         + "root "
-        + certId
+        + param
     );
     String ret = getProcessPrint(process);
     if (ret.indexOf("======") != -1) {
@@ -130,7 +137,7 @@ public class WindowsUtil {
           + "-store "
           + "-user "
           + "root "
-          + certId
+          + param
       );
       ret = getProcessPrint(process);
       if (ret.indexOf("======") != -1) {
@@ -143,28 +150,36 @@ public class WindowsUtil {
   /**
    * 安装证书至受信任的机构根目录
    */
-  public static void installCert(InputStream input) throws IOException {
-    String caPath = PathUtil.ROOT_PATH + "/ca.crt";
-    FileUtil.initFile(caPath, input, false);
+  public static void installCert(String path) throws IOException {
     getProcessPrint(Runtime.getRuntime().exec("certutil "
         + "-addstore "
         + (OsUtil.isAdmin() ? "" : "-user ")
         + "root "
-        + "\"" + caPath + "\""
+        + "\"" + path + "\""
     ));
-    FileUtil.deleteIfExists(caPath);
   }
 
   /**
    * 删除证书
    */
   public static void unistallCert(InputStream input) throws Exception {
-    String certId = getCertId(input);
     getProcessPrint(Runtime.getRuntime().exec("certutil "
         + "-delstore "
         + (OsUtil.isAdmin() ? "" : "-user ")
         + "root "
-        + certId
+        + getCertId(input)
+    ));
+  }
+
+  /**
+   * 删除证书
+   */
+  public static void unistallCert(String param) throws Exception {
+    getProcessPrint(Runtime.getRuntime().exec("certutil "
+        + "-delstore "
+        + (OsUtil.isAdmin() ? "" : "-user ")
+        + "root "
+        + param
     ));
   }
 

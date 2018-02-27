@@ -8,8 +8,14 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyPair;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
@@ -27,15 +33,19 @@ import javafx.stage.Stage;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import lee.study.down.HttpDownProxyServer;
+import lee.study.down.ca.HttpDownProxyCACertFactory;
+import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.mvc.HttpDownSpringBoot;
 import lee.study.down.task.HttpDownErrorCheckTask;
 import lee.study.down.task.HttpDownProgressEventTask;
 import lee.study.down.util.ConfigUtil;
+import lee.study.down.util.FileUtil;
 import lee.study.down.util.OsUtil;
 import lee.study.down.util.PathUtil;
 import lee.study.down.util.WindowsUtil;
+import lee.study.proxyee.crt.CertUtil;
 import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,16 +109,39 @@ public class HttpDownApplication extends Application {
       initBrowser();
     }
 
+    boolean isRebuild = false;
+    //根证书生成
+    if (!FileUtil.exists(HttpDownConstant.CA_PRI_PATH)
+        || !FileUtil.exists(HttpDownConstant.CA_CERT_PATH)) {
+      //生成ca证书和私钥
+      KeyPair keyPair = CertUtil.genKeyPair();
+      File priKeyFile = FileUtil.createFile(HttpDownConstant.CA_PRI_PATH, true);
+      File caCertFile = FileUtil.createFile(HttpDownConstant.CA_CERT_PATH, true);
+      Files.write(Paths.get(priKeyFile.toURI()), keyPair.getPrivate().getEncoded());
+      Files.write(Paths.get(caCertFile.toURI()),
+          CertUtil.genCACert(
+              "C=CN, ST=GD, L=SZ, O=lee, OU=study, CN=" + HttpDownConstant.CA_SUBJECT,
+              new Date(),
+              new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(3650)),
+              keyPair)
+              .getEncoded());
+      isRebuild = true;
+    }
+
     //证书安装引导
     if (OsUtil.isWindows()) {
-      ClassLoader loader = Thread.currentThread().getContextClassLoader();
       try {
-        if (!WindowsUtil.existsCert(loader.getResourceAsStream("ca.crt"))) {
+        if (isRebuild) {
+          //重新生成卸载之前的证书
+          WindowsUtil.unistallCert(HttpDownConstant.CA_SUBJECT);
+        }
+        //ProxyeeRoot证书是否已经安装
+        if (!WindowsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
           if (OsUtil.isAdmin()) { //admin权限静默安装
-            WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+            WindowsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
           } else {
-            showMsg("尚未安装证书，点击确定进行安装");
-            WindowsUtil.installCert(loader.getResourceAsStream("ca.crt"));
+            showMsg("尚未安装证书，点击确定按引导进行安装");
+            WindowsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
             showMsg("证书安装成功");
           }
         }
@@ -121,6 +154,7 @@ public class HttpDownApplication extends Application {
   private void afterOpen() {
     //嗅探代理服务器启动
     proxyServer = new HttpDownProxyServer(
+        new HttpDownProxyCACertFactory(HttpDownConstant.CA_CERT_PATH, HttpDownConstant.CA_PRI_PATH),
         ContentManager.CONFIG.get().getSecProxyConfig(),
         new HttpDownHandleInterceptFactory(httpDownInfo -> Platform.runLater(() -> {
           if (browser != null) {
@@ -164,6 +198,7 @@ public class HttpDownApplication extends Application {
     });
     beforeOpen();
 //    open();
+//    close();
     afterOpen();
   }
 
@@ -176,15 +211,21 @@ public class HttpDownApplication extends Application {
       }
       return;
     }
+    boolean openFlag = false;
     if (stage.isShowing()) {
       if (stage.isIconified()) {
         stage.setIconified(false);
       } else {
-        stage.toFront();
+        openFlag = true;
       }
     } else {
+      openFlag = true;
+    }
+    if (openFlag) {
       stage.show();
       stage.toFront();
+      stage.setIconified(true);
+      stage.setIconified(false);
     }
   }
 
@@ -252,7 +293,6 @@ public class HttpDownApplication extends Application {
                     + "/res/pd.pac?t=" + System.currentTimeMillis());
           } else {
             mig.selectItem(disableProxyItem);
-            WindowsUtil.disabledProxy();
           }
           mig.addActionListener(event -> {
             try {
@@ -364,6 +404,7 @@ public class HttpDownApplication extends Application {
 
     public Browser() {
       getChildren().add(browser);
+      browser.setContextMenuEnabled(false);
       webEngine.getLoadWorker().stateProperty().addListener(
           (ObservableValue<? extends State> ov, State oldState,
               State newState) -> {

@@ -49,7 +49,7 @@
         rules: {
           url: [
             {required: true, message: '不能为空'},
-            {type: 'url', message: '格式不正确'}
+            {pattern: /^https?:\/\/.*$/i, message: '格式不正确'}
           ]
         },
       }

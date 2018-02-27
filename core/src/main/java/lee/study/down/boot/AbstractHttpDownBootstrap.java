@@ -58,7 +58,7 @@ public abstract class AbstractHttpDownBootstrap {
     if (!FileUtil.exists(taskInfo.getFilePath())) {
       FileUtil.createDirSmart(taskInfo.getFilePath());
     }
-    if (!Files.isWritable(Paths.get(taskInfo.getFilePath()))) {
+    if (!FileUtil.canWrite(taskInfo.getFilePath())) {
       throw new BootstrapException("无权访问下载路径，请修改路径或开放目录写入权限");
     }
     //磁盘空间不足

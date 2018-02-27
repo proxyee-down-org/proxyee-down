@@ -50,7 +50,7 @@
         <span>QQ群</span>
       </el-col>
       <el-col :span="16">
-        <span>11352304</span>
+        <span>11352304(已满)、20236964</span>
       </el-col>
     </el-row>
     <h1 class="title">软件升级</h1>
