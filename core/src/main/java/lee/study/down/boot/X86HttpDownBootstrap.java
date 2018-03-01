@@ -20,8 +20,9 @@ public class X86HttpDownBootstrap extends AbstractHttpDownBootstrap {
       int retryCount,
       SslContext clientSslContext,
       NioEventLoopGroup clientLoopGroup,
-      HttpDownCallback callback) {
-    super(httpDownInfo, retryCount, clientSslContext, clientLoopGroup, callback);
+      HttpDownCallback callback,
+      TimeoutCheckTask timeoutCheckTask) {
+    super(httpDownInfo, retryCount, clientSslContext, clientLoopGroup, callback, timeoutCheckTask);
   }
 
   @Override

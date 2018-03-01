@@ -50,6 +50,7 @@ public abstract class AbstractHttpDownBootstrap {
   private SslContext clientSslContext;
   private NioEventLoopGroup clientLoopGroup;
   private HttpDownCallback callback;
+  private TimeoutCheckTask timeoutCheckTask;
   private final Map<Integer, Map<String, Object>> attr = new HashMap<>();
 
   public void startDown() throws Exception {
@@ -256,6 +257,7 @@ public abstract class AbstractHttpDownBootstrap {
 
   public void delete(boolean delFile) throws Exception {
     close();
+    timeoutCheckTask.delBoot(httpDownInfo.getTaskInfo().getId());
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     //删除任务进度记录文件
     synchronized (taskInfo) {

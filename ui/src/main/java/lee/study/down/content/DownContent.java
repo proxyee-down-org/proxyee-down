@@ -1,5 +1,6 @@
 package lee.study.down.content;
 
+import io.netty.handler.codec.http.HttpRequest;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,13 +12,16 @@ import lee.study.down.boot.HttpDownBootstrapFactory;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.HttpDownInfo;
+import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.form.TaskInfoForm;
 import lee.study.down.mvc.form.WsForm;
 import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 
 public class DownContent {
 
@@ -89,7 +93,7 @@ public class DownContent {
       return null;
     } else {
       list.add(taskInfo);
-      return new WsForm(WsDataType.TASK_LIST, list);
+      return new WsForm(WsDataType.TASK_LIST, setUrl(list));
     }
   }
 
@@ -98,8 +102,27 @@ public class DownContent {
     if (list == null || list.size() == 0) {
       return null;
     } else {
-      return new WsForm(WsDataType.TASK_LIST, list);
+      return new WsForm(WsDataType.TASK_LIST, setUrl(list));
     }
+  }
+
+  public static List<TaskInfoForm> setUrl(List<TaskInfo> taskInfoList) {
+    List<TaskInfoForm> ret = new ArrayList<>();
+    for (TaskInfo taskInfo : taskInfoList) {
+      TaskInfoForm taskInfoForm = new TaskInfoForm();
+      BeanUtils.copyProperties(taskInfo, taskInfoForm);
+      HttpRequestInfo httpRequest = (HttpRequestInfo) ContentManager.DOWN
+          .getDownInfo(taskInfo.getId()).getRequest();
+      String uri = httpRequest.uri();
+      String host = httpRequest.requestProto().getHost();
+      String url = (uri.indexOf("/") == 0 ? host : "") + uri;
+      if (url.indexOf("http://") != 0 && url.indexOf("https://") != 0) {
+        url = (httpRequest.requestProto().getSsl() ? "https://" : "http://") + url;
+      }
+      taskInfoForm.setUrl(url);
+      ret.add(taskInfoForm);
+    }
+    return ret;
   }
 
   public void putBoot(AbstractHttpDownBootstrap bootstrap) {

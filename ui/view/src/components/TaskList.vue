@@ -37,6 +37,9 @@
                 trigger="click">
                 <div class="file-detail">
                   <p>
+                    <b style="display:block;height: 80px;overflow-y: auto">{{task.url}}</b>
+                  </p>
+                  <p>
                     <span>名称：</span>
                     <b>{{task.fileName}}</b>
                   </p>

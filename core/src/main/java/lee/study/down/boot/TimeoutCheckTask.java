@@ -1,29 +1,41 @@
-package lee.study.down.task;
+package lee.study.down.boot;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
-import lee.study.down.content.ContentManager;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * 30秒内没有下载判断为失败，进行重试
- */
-public class HttpDownErrorCheckTask extends Thread {
+public class TimeoutCheckTask extends Thread {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(HttpDownErrorCheckTask.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TimeoutCheckTask.class);
+
+  private static int seconds = 30;
+  private static Map<String, AbstractHttpDownBootstrap> bootstrapContent = new ConcurrentHashMap<>();
+
+  public synchronized static void setTimeout(int seconds) {
+    TimeoutCheckTask.seconds = seconds;
+  }
+
+  public void addBoot(AbstractHttpDownBootstrap bootstrap) {
+    bootstrapContent.put(bootstrap.getHttpDownInfo().getTaskInfo().getId(), bootstrap);
+  }
+
+  public void delBoot(String id) {
+    bootstrapContent.remove(id);
+  }
 
   @Override
   public void run() {
     Map<String, Long> flagMap = new HashMap<>();
     while (true) {
       try {
-        for (TaskInfo taskInfo : ContentManager.DOWN.getStartTasks()) {
+        for (AbstractHttpDownBootstrap bootstrap : bootstrapContent.values()) {
+          TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
           if (taskInfo.getChunkInfoList() != null) {
             for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
               //30秒没有反应则重新建立连接下载
@@ -34,9 +46,9 @@ public class HttpDownErrorCheckTask extends Thread {
                 Long downSize = flagMap.get(key);
                 //下载失败
                 if (downSize != null && downSize == chunkInfo.getDownSize()) {
-                  LOGGER.debug("30秒内无响应重试：" + chunkInfo);
+                  LOGGER.debug(seconds + "秒内无响应重试：" + chunkInfo);
                   //避免同时下载
-                  ContentManager.DOWN.getBoot(taskInfo.getId()).retryChunkDown(chunkInfo);
+                  bootstrap.retryChunkDown(chunkInfo);
                 } else {
                   flagMap.put(key, chunkInfo.getDownSize());
                 }
@@ -45,7 +57,7 @@ public class HttpDownErrorCheckTask extends Thread {
           }
 
         }
-        TimeUnit.SECONDS.sleep(ContentManager.CONFIG.get().getTimeout());
+        TimeUnit.SECONDS.sleep(TimeoutCheckTask.seconds);
       } catch (Exception e) {
         LOGGER.error("checkTask:" + e);
       }

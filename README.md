@@ -1,5 +1,5 @@
 # HTTP下载器
-使用本地http代理服务器方式嗅探下载请求，支持所有操作系统和浏览器(IE9+),支持分段下载和断点下载。
+使用本地http代理服务器方式嗅探下载请求，支持所有操作系统和大部分主流浏览器(不支持safari),支持分段下载和断点下载。
 ## 使用教程
 ### 安装
 1. [Windows安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/windows/read.md)

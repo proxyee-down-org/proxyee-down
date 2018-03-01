@@ -14,9 +14,11 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
+import lee.study.down.boot.TimeoutCheckTask;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
+import lee.study.down.content.DownContent;
 import lee.study.down.exception.BootstrapException;
 import lee.study.down.gui.HttpDownApplication;
 import lee.study.down.io.BdyZip;
@@ -91,7 +93,7 @@ public class HttpDownController {
   @RequestMapping("/getStartTasks")
   public ResultInfo getStartTasks() throws Exception {
     ResultInfo resultInfo = new ResultInfo();
-    resultInfo.setData(ContentManager.DOWN.getStartTasks());
+    resultInfo.setData(DownContent.setUrl(ContentManager.DOWN.getStartTasks()));
     return resultInfo;
   }
 
@@ -178,7 +180,11 @@ public class HttpDownController {
     resultInfo.setData(data);
     File[] files;
     if (body == null || StringUtils.isEmpty(body.getPath())) {
-      files = File.listRoots();
+      if (OsUtil.isMac()) {
+        files = new File[]{new File(System.getProperty("user.home"))};
+      } else {
+        files = File.listRoots();
+      }
     } else {
       File file = new File(body.getPath());
       if (file.exists() && file.isDirectory()) {

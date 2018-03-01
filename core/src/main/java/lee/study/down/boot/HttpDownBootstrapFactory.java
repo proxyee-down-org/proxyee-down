@@ -8,14 +8,27 @@ import lee.study.down.util.OsUtil;
 
 public class HttpDownBootstrapFactory {
 
+  private static volatile TimeoutCheckTask timeoutCheck;
+
   public static AbstractHttpDownBootstrap create(HttpDownInfo httpDownInfo, int retryCount,
       SslContext clientSslContext, NioEventLoopGroup clientLoopGroup, HttpDownCallback callback) {
-    if (OsUtil.is64()) {
-      return new X64HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
-          callback);
-    } else {
-      return new X86HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext, clientLoopGroup,
-          callback);
+    if (timeoutCheck == null) {
+      synchronized (HttpDownBootstrapFactory.class) {
+        if (timeoutCheck == null) {
+          timeoutCheck = new TimeoutCheckTask();
+          timeoutCheck.start();
+        }
+      }
     }
+    AbstractHttpDownBootstrap bootstrap;
+    if (OsUtil.is64()) {
+      bootstrap = new X64HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext,
+          clientLoopGroup, callback, timeoutCheck);
+    } else {
+      bootstrap = new X86HttpDownBootstrap(httpDownInfo, retryCount, clientSslContext,
+          clientLoopGroup, callback, timeoutCheck);
+    }
+    timeoutCheck.addBoot(bootstrap);
+    return bootstrap;
   }
 }

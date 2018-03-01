@@ -1,0 +1,3 @@
+#!/bin/sh
+cd `dirname $0`
+sudo ./jre1.8.0_162/Contents/Home/bin/java -jar ./proxyee-down.jar

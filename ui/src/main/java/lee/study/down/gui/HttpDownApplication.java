@@ -38,7 +38,6 @@ import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.mvc.HttpDownSpringBoot;
-import lee.study.down.task.HttpDownErrorCheckTask;
 import lee.study.down.task.HttpDownProgressEventTask;
 import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.FileUtil;
@@ -175,7 +174,6 @@ public class HttpDownApplication extends Application {
     }
 
     //启动线程
-    new HttpDownErrorCheckTask().start();
     new HttpDownProgressEventTask().start();
   }
 

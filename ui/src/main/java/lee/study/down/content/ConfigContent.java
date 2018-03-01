@@ -1,6 +1,7 @@
 package lee.study.down.content;
 
 import java.io.IOException;
+import lee.study.down.boot.TimeoutCheckTask;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.util.ByteUtil;
@@ -17,6 +18,8 @@ public class ConfigContent {
 
   public void set(ConfigInfo configInfo) {
     configContent = configInfo;
+    //设置超时检测时间
+    TimeoutCheckTask.setTimeout(configInfo.getTimeout());
   }
 
   public ConfigInfo get() {
@@ -36,13 +39,13 @@ public class ConfigContent {
   public void init() {
     if (FileUtil.exists(HttpDownConstant.CONFIG_PATH)) {
       try {
-        configContent = (ConfigInfo) ByteUtil.deserialize(HttpDownConstant.CONFIG_PATH);
+        set((ConfigInfo) ByteUtil.deserialize(HttpDownConstant.CONFIG_PATH));
       } catch (Exception e) {
         LOGGER.error("加载配置文件失败：", e);
       }
     }
     if (configContent == null || configContent.getProxyPort() == 0) {
-      configContent = new ConfigInfo();
+      set(new ConfigInfo());
       save();
     }
   }
