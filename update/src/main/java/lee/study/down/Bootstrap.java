@@ -20,28 +20,22 @@ public class Bootstrap {
   private static final String MAIN_PATH = PathUtil.ROOT_PATH + "main" + File.separator;
   private static final String CORE_PATH = MAIN_PATH + "proxyee-down-core.jar";
   private static final String UPDATE_PATH = MAIN_PATH + "proxyee-down-core.jar.bak";
+  private static final String SHELL_PARAMS = " -Dfile.encoding=GBK -Xms256m -Xmx512m -jar ";
   private static Process process;
-  private static String CMD;
+  private static String SHELL;
 
   static {
     String execPath = File.separator + "bin" + File.separator + "java";
-    File dir = new File(PathUtil.ROOT_PATH);
-    File[] files = dir.listFiles((d, name) -> d.isDirectory() && name.indexOf("jre") > -1);
-    String javaHome;
-    if (files != null && files.length > 0) {
-      javaHome = files[0].getAbsolutePath() + execPath;
-    } else {
-      javaHome = System.getProperty("java.home") + execPath;
-    }
+    String javaHome = System.getProperty("java.home") + execPath;
     if (OsUtil.isWindows()) {
-      CMD = "\"" + javaHome + "\" -jar \"" + CORE_PATH + "\"";
+      SHELL = "\"" + javaHome + "\"" + SHELL_PARAMS + "\"" + CORE_PATH + "\"";
     } else {
-      CMD = javaHome + " -jar " + CORE_PATH;
+      SHELL = javaHome + SHELL_PARAMS + CORE_PATH;
     }
   }
 
   private static void fork() throws Exception {
-    process = Runtime.getRuntime().exec(CMD);
+    process = Runtime.getRuntime().exec(SHELL);
     BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
     String line;
     boolean isUpdate = false;

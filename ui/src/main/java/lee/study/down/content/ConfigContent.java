@@ -5,7 +5,6 @@ import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.ConfigInfo;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
-import lee.study.down.util.WindowsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

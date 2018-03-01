@@ -224,7 +224,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws IOException {
-    unzip("f:/down/test2测试.zip", "f:/down/test2测试", new TestUnzipCallback());
+    unzip("f:/down/test2测试", "f:/down/test2测试", new TestUnzipCallback());
   }
 
   /**

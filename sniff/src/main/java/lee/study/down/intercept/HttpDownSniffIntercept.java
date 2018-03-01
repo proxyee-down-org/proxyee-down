@@ -67,12 +67,12 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
       if (accept != null
           && accept.matches("^.*text/html.*$")
           && ((disposition != null
-          && !accept.equals("*/*")
           && disposition.contains(HttpHeaderValues.ATTACHMENT)
           && disposition.contains(HttpHeaderValues.FILENAME))
-          || (!pipeline.getHttpRequest().uri().matches("^.*/favicon\\.ico(\\?[^?]*)?$")
+          || (isChrome(pipeline.getHttpRequest().headers().get(HttpHeaderNames.USER_AGENT))
           && pipeline.getHttpRequest().uri().matches("^.*\\.[^./]{1,5}(\\?[^?]*)?$")
-          && isDownAccept(accept, contentType)))) {
+          && contentType != null
+          && !contentType.matches("^.*text/.*$")))) {
         downFlag = true;
       }
 
@@ -106,22 +106,11 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
     }
   }
 
-  private boolean isDownAccept(String accepts, String contentType) {
-    String[] acceptArray = accepts.split(",");
-    String contentType0 = contentType.split(";")[0];
-    for (String accpet : acceptArray) {
-      accpet = accpet.split(";")[0];
-      if (accpet.equals("*/*")) {
-        if (contentType.matches("^(?i)application/x.*$")) {
-          return false;
-        }
-      } else {
-        String accpet0 = "^(?i)" + accpet.replaceAll("\\*", ".*") + "$";
-        if (contentType0.matches(accpet0)) {
-          return false;
-        }
-      }
+  private boolean isChrome(String ua) {
+    if (ua != null && ua.indexOf("Chrome") != -1) {
+      return true;
+    } else {
+      return false;
     }
-    return true;
   }
 }

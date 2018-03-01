@@ -76,8 +76,9 @@ export default {
     let index = fileName.lastIndexOf(".");
     if (index != -1) {
       return fileName.substring(0, index);
+    } else {
+      return fileName + "_unzip"
     }
-    return fileName;
   },
   getUnzipFilePath(filePath, fileName) {
     debugger;

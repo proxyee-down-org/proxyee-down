@@ -2,6 +2,7 @@ package lee.study.down.gui;
 
 import com.sun.javafx.application.ParametersImpl;
 import java.awt.CheckboxMenuItem;
+import java.awt.Desktop;
 import java.awt.Menu;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -9,6 +10,7 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,8 +20,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker.State;
 import javafx.geometry.HPos;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
@@ -44,9 +44,7 @@ import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.OsUtil;
 import lee.study.down.util.PathUtil;
-import lee.study.down.util.WindowsUtil;
 import lee.study.proxyee.crt.CertUtil;
-import netscape.javascript.JSObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -63,6 +61,7 @@ public class HttpDownApplication extends Application {
   private static HttpDownProxyServer proxyServer;
 
   static {
+//    System.setProperty("file.encoding","GBK");
     //设置slf4j日志打印目录
     System.setProperty("LOG_PATH", PathUtil.ROOT_PATH);
     //netty设置为堆内存分配
@@ -97,8 +96,12 @@ public class HttpDownApplication extends Application {
     ContentManager.init();
     //程序退出监听
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      if (OsUtil.isWindows()) {
-        WindowsUtil.disabledProxy();
+      try {
+        if (ContentManager.CONFIG.get().getSniffModel() != 3) {
+          OsUtil.disabledProxy();
+        }
+      } catch (IOException e) {
+        LOGGER.error("disabledProxy error", e);
       }
     }));
   }
@@ -116,7 +119,7 @@ public class HttpDownApplication extends Application {
       //生成ca证书和私钥
       KeyPair keyPair = CertUtil.genKeyPair();
       File priKeyFile = FileUtil.createFile(HttpDownConstant.CA_PRI_PATH, true);
-      File caCertFile = FileUtil.createFile(HttpDownConstant.CA_CERT_PATH, true);
+      File caCertFile = FileUtil.createFile(HttpDownConstant.CA_CERT_PATH, false);
       Files.write(Paths.get(priKeyFile.toURI()), keyPair.getPrivate().getEncoded());
       Files.write(Paths.get(caCertFile.toURI()),
           CertUtil.genCACert(
@@ -128,26 +131,24 @@ public class HttpDownApplication extends Application {
       isRebuild = true;
     }
 
-    //证书安装引导
-    if (OsUtil.isWindows()) {
-      try {
-        if (isRebuild) {
-          //重新生成卸载之前的证书
-          WindowsUtil.unistallCert(HttpDownConstant.CA_SUBJECT);
+    try {
+      if (isRebuild && OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
+        //重新生成卸载之前的证书
+        if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默卸载
+          showMsg("检测到相同证书，请按引导进行删除");
         }
-        //ProxyeeRoot证书是否已经安装
-        if (!WindowsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
-          if (OsUtil.isAdmin()) { //admin权限静默安装
-            WindowsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
-          } else {
-            showMsg("尚未安装证书，点击确定按引导进行安装");
-            WindowsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
-            showMsg("证书安装成功");
-          }
-        }
-      } catch (Exception e) {
-        LOGGER.error("install cert error:", e);
+        OsUtil.uninstallCert(HttpDownConstant.CA_SUBJECT);
       }
+
+      //ProxyeeRoot证书是否已经安装
+      if (!OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
+        if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默安装
+          showMsg("需要安装新证书，请按引导进行确认");
+        }
+        OsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
+      }
+    } catch (Exception e) {
+      LOGGER.error("install cert error:", e);
     }
   }
 
@@ -157,7 +158,7 @@ public class HttpDownApplication extends Application {
         new HttpDownProxyCACertFactory(HttpDownConstant.CA_CERT_PATH, HttpDownConstant.CA_PRI_PATH),
         ContentManager.CONFIG.get().getSecProxyConfig(),
         new HttpDownHandleInterceptFactory(httpDownInfo -> Platform.runLater(() -> {
-          if (browser != null) {
+          if (ContentManager.CONFIG.get().getUiModel() == 1) {
             String taskId = httpDownInfo.getTaskInfo().getId();
             browser.webEngine.executeScript("vue.$children[0].openTabHandle('/tasks');"
                 + "vue.$store.commit('tasks/setNewTaskId','" + taskId + "');"
@@ -216,10 +217,19 @@ public class HttpDownApplication extends Application {
       if (stage.isIconified()) {
         stage.setIconified(false);
       } else {
-        openFlag = true;
+        if (!OsUtil.isWindows()) {
+          stage.toFront();
+        } else {
+          openFlag = true;
+        }
       }
     } else {
-      openFlag = true;
+      if (!OsUtil.isWindows()) {
+        stage.show();
+        stage.toFront();
+      } else {
+        openFlag = true;
+      }
     }
     if (openFlag) {
       stage.show();
@@ -255,18 +265,17 @@ public class HttpDownApplication extends Application {
         MenuItem tasksItem = new MenuItem("显示");
         tasksItem.addActionListener(event -> Platform.runLater(() -> open()));
 
-        MenuItem crtItem = new MenuItem("下载证书");
+        MenuItem crtItem = new MenuItem("证书目录");
         crtItem.addActionListener(event -> {
           try {
-            OsUtil
-                .openBrowse("http://127.0.0.1:" + ContentManager.CONFIG.get().getProxyPort());
+            Desktop.getDesktop().open(new File(HttpDownConstant.SSL_PATH));
           } catch (Exception e) {
-            LOGGER.error("down cert error", e);
+            LOGGER.error("open cert dir error", e);
           }
         });
 
         Menu proxyMenu = new Menu("嗅探模式");
-        if (!OsUtil.isWindows()) {
+        if (!OsUtil.isWindows() && !OsUtil.isMac()) {
           proxyMenu.setEnabled(false);
         } else {
           CheckboxMenuItemGroup mig = new CheckboxMenuItemGroup();
@@ -285,10 +294,10 @@ public class HttpDownApplication extends Application {
           //默认选中
           if (ContentManager.CONFIG.get().getSniffModel() == 1) {
             mig.selectItem(globalProxyItem);
-            WindowsUtil.enabledIEProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
+            OsUtil.enabledHTTPProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
           } else if (ContentManager.CONFIG.get().getSniffModel() == 2) {
             mig.selectItem(bdyProxyItem);
-            WindowsUtil.enabledPACProxy(
+            OsUtil.enabledPACProxy(
                 "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
                     + "/res/pd.pac?t=" + System.currentTimeMillis());
           } else {
@@ -299,16 +308,15 @@ public class HttpDownApplication extends Application {
               String selectedItemName = ((CheckboxMenuItem) event.getSource()).getName();
               if ("1".equals(selectedItemName)) {
                 ContentManager.CONFIG.get().setSniffModel(1);
-                WindowsUtil
-                    .enabledIEProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
+                OsUtil.enabledHTTPProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
               } else if ("2".equals(selectedItemName)) {
                 ContentManager.CONFIG.get().setSniffModel(2);
-                WindowsUtil.enabledPACProxy(
+                OsUtil.enabledPACProxy(
                     "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
                         + "/res/pd.pac?t=" + System.currentTimeMillis());
               } else {
                 ContentManager.CONFIG.get().setSniffModel(3);
-                WindowsUtil.disabledProxy();
+                OsUtil.disabledProxy();
               }
               ContentManager.CONFIG.save();
             } catch (Exception e) {
@@ -352,7 +360,7 @@ public class HttpDownApplication extends Application {
 
         MenuItem aboutItem = new MenuItem("关于");
         aboutItem.addActionListener(event -> Platform.runLater(() -> {
-          if (browser != null) {
+          if (ContentManager.CONFIG.get().getUiModel() == 1) {
             browser.webEngine.executeScript("vue.$children[0].openTabHandle('/about');");
           }
           open();
@@ -405,14 +413,6 @@ public class HttpDownApplication extends Application {
     public Browser() {
       getChildren().add(browser);
       browser.setContextMenuEnabled(false);
-      webEngine.getLoadWorker().stateProperty().addListener(
-          (ObservableValue<? extends State> ov, State oldState,
-              State newState) -> {
-            if (newState == State.SUCCEEDED) {
-              JSObject win = (JSObject) webEngine.executeScript("window");
-              win.setMember("jNative", new JNative());
-            }
-          });
     }
 
     @Override
@@ -425,18 +425,6 @@ public class HttpDownApplication extends Application {
     public void load(String url) {
       webEngine.load(url);
     }
-  }
-
-  public class JNative {
-
-    public void open(String url) {
-      try {
-        OsUtil.openBrowse(url);
-      } catch (Exception e) {
-        LOGGER.warn("can't openBrowse:", e);
-      }
-    }
-
   }
 
   public static void main(String[] args) {

@@ -42,7 +42,6 @@ public class HttpDownProxyServer {
     proxyServer.proxyInterceptInitializer(new HttpProxyInterceptInitializer() {
       @Override
       public void init(HttpProxyInterceptPipeline pipeline) {
-        pipeline.addLast(new CertDownIntercept());
         pipeline.addLast(new BdyIntercept());
         pipeline.addLast(new HttpDownSniffIntercept());
         HttpProxyIntercept downIntercept = interceptFactory.create();

@@ -42,6 +42,7 @@ import lee.study.down.update.GithubUpdateService;
 import lee.study.down.update.UpdateService;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
+import lee.study.down.util.OsUtil;
 import lee.study.proxyee.proxy.ProxyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -255,76 +256,81 @@ public class HttpDownController {
     ResultInfo resultInfo = new ResultInfo();
     File file = new File(unzipForm.getFilePath());
     if (file.exists() && file.isFile()) {
-      if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
-        UnzipInfo unzipInfo = new UnzipInfo().setId(id);
-        if (!FileUtil.canWrite(unzipForm.getFilePath())) {
-          resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问解压路径，请修改路径或开放目录写入权限");
-          return resultInfo;
-        }
-        new Thread(() -> {
-          try {
-            BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath(), new BdyUnzipCallback() {
-
-              @Override
-              public void onStart() {
-                unzipInfo.setType(BdyZip.ON_START)
-                    .setStartTime(System.currentTimeMillis());
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onFix(long totalSize, long fixSize) {
-                unzipInfo.setType(BdyZip.ON_FIX)
-                    .setTotalFixSize(totalSize)
-                    .setFixSize(fixSize);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onFixDone(List<BdyZipEntry> list) {
-                unzipInfo.setType(BdyZip.ON_FIX_DONE)
-                    .setTotalFileSize(list.stream().map(entry -> entry.getCompressedSize())
-                        .reduce((s1, s2) -> s1 + s2).get());
-              }
-
-              @Override
-              public void onEntryStart(BdyZipEntry entry) {
-                unzipInfo.setType(BdyZip.ON_ENTRY_START)
-                    .setEntry(entry)
-                    .setCurrFileSize(entry.getCompressedSize())
-                    .setCurrWriteSize(0);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onEntryWrite(long totalSize, long writeSize) {
-                unzipInfo.setType(BdyZip.ON_ENTRY_WRITE)
-                    .setCurrWriteSize(unzipInfo.getCurrWriteSize() + writeSize)
-                    .setTotalWriteSize(unzipInfo.getTotalWriteSize() + writeSize);
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onDone() {
-                unzipInfo.setType(BdyZip.ON_DONE)
-                    .setEndTime(System.currentTimeMillis());
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-
-              @Override
-              public void onError(Exception e) {
-                unzipInfo.setType(BdyZip.ON_ERROR)
-                    .setErrorMsg(e.toString());
-                ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
-              }
-            });
-          } catch (IOException e) {
-            LOGGER.error("unzip error:", e);
+      if (!unzipForm.getFilePath().equalsIgnoreCase(unzipForm.getToPath())) {
+        if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
+          UnzipInfo unzipInfo = new UnzipInfo().setId(id);
+          if (!FileUtil.canWrite(unzipForm.getFilePath())) {
+            resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问解压路径，请修改路径或开放目录写入权限");
+            return resultInfo;
           }
-        }).start();
+          new Thread(() -> {
+            try {
+              BdyZip.unzip(unzipForm.getFilePath(), unzipForm.getToPath(), new BdyUnzipCallback() {
+
+                @Override
+                public void onStart() {
+                  unzipInfo.setType(BdyZip.ON_START)
+                      .setStartTime(System.currentTimeMillis());
+                  ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+                }
+
+                @Override
+                public void onFix(long totalSize, long fixSize) {
+                  unzipInfo.setType(BdyZip.ON_FIX)
+                      .setTotalFixSize(totalSize)
+                      .setFixSize(fixSize);
+                  ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+                }
+
+                @Override
+                public void onFixDone(List<BdyZipEntry> list) {
+                  unzipInfo.setType(BdyZip.ON_FIX_DONE)
+                      .setTotalFileSize(list.stream().map(entry -> entry.getCompressedSize())
+                          .reduce((s1, s2) -> s1 + s2).get());
+                }
+
+                @Override
+                public void onEntryStart(BdyZipEntry entry) {
+                  unzipInfo.setType(BdyZip.ON_ENTRY_START)
+                      .setEntry(entry)
+                      .setCurrFileSize(entry.getCompressedSize())
+                      .setCurrWriteSize(0);
+                  ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+                }
+
+                @Override
+                public void onEntryWrite(long totalSize, long writeSize) {
+                  unzipInfo.setType(BdyZip.ON_ENTRY_WRITE)
+                      .setCurrWriteSize(unzipInfo.getCurrWriteSize() + writeSize)
+                      .setTotalWriteSize(unzipInfo.getTotalWriteSize() + writeSize);
+                  ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+                }
+
+                @Override
+                public void onDone() {
+                  unzipInfo.setType(BdyZip.ON_DONE)
+                      .setEndTime(System.currentTimeMillis());
+                  ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+                }
+
+                @Override
+                public void onError(Exception e) {
+                  unzipInfo.setType(BdyZip.ON_ERROR)
+                      .setErrorMsg(e.toString());
+                  ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
+                }
+              });
+            } catch (IOException e) {
+              LOGGER.error("unzip error:", e);
+            }
+          }).start();
+        } else {
+          resultInfo.setStatus(ResultStatus.BAD.getCode());
+          resultInfo.setMsg("解压失败，请确认是否为百度云批量下载zip文件");
+        }
       } else {
         resultInfo.setStatus(ResultStatus.BAD.getCode());
-        resultInfo.setMsg("解压失败，请确认是否为百度云批量下载zip文件");
+        resultInfo.setMsg("解压失败，文件路径与解压路径相同");
       }
     } else {
       resultInfo.setStatus(ResultStatus.BAD.getCode());
@@ -480,4 +486,13 @@ public class HttpDownController {
     return resultInfo;
   }
 
+  @RequestMapping("/open")
+  public ResultInfo open(@RequestParam String url) throws Exception {
+    ResultInfo resultInfo = new ResultInfo();
+    if (ContentManager.CONFIG.get().getUiModel() == 1) {
+      OsUtil.openBrowse(url);
+    }
+    resultInfo.setData(ContentManager.CONFIG.get().getUiModel());
+    return resultInfo;
+  }
 }

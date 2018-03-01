@@ -155,6 +155,7 @@ public abstract class AbstractHttpDownBootstrap {
         startChunkDown(chunkInfo, updateStatus);
       } else {
         if (taskInfo.getChunkInfoList().stream()
+            .filter((chunk) -> chunk.getStatus() != HttpDownStatus.DONE)
             .allMatch((chunk) -> chunk.getErrorCount() >= retryCount)) {
           taskInfo.setStatus(HttpDownStatus.FAIL);
           if (callback != null) {

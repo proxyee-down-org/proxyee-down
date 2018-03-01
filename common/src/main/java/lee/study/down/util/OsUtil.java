@@ -1,14 +1,32 @@
 package lee.study.down.util;
 
 import java.awt.Desktop;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.prefs.Preferences;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import lee.study.down.jna.WinInet;
+import lee.study.down.jna.WinInet.INTERNET_PER_CONN_OPTION;
+import lee.study.down.jna.WinInet.INTERNET_PER_CONN_OPTION_LIST;
+import lee.study.down.jna.WinInetImpl;
 
 public class OsUtil {
 
@@ -148,5 +166,227 @@ public class OsUtil {
 
   public static boolean isAdmin() {
     return isAdmin;
+  }
+
+  public static String getProcessPrint(String shell) throws IOException {
+    Process process = Runtime.getRuntime().exec(shell);
+    StringBuilder sb = new StringBuilder();
+    try (
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))
+    ) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        sb.append(line + System.lineSeparator());
+      }
+    } finally {
+      process.destroy();
+    }
+    return sb.toString();
+  }
+
+  public static Map<String, List<String>> getInterfacesInfo() throws SocketException {
+    Map<String, List<String>> interfacesInfo = new HashMap<>();
+    Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+    while (interfaces.hasMoreElements()) {
+      NetworkInterface networkInterface = interfaces.nextElement();
+      Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+      while (addresses.hasMoreElements()) {
+        InetAddress nextElement = addresses.nextElement();
+        String name = networkInterface.getDisplayName();
+        List<String> ipList = interfacesInfo.get(name);
+        if (ipList == null) {
+          ipList = new ArrayList<>();
+          interfacesInfo.put(name, ipList);
+        }
+        ipList.add(nextElement.getHostAddress());
+      }
+    }
+    return interfacesInfo;
+  }
+
+  public static String getRemoteInterface() throws IOException {
+    Map<String, List<String>> interfacesInfo = getInterfacesInfo();
+    Socket socket = new Socket("www.baidu.com", 80);
+    for (Entry<String, List<String>> entry : interfacesInfo.entrySet()) {
+      if (entry.getValue().contains(socket.getLocalAddress().getHostAddress())) {
+        return entry.getKey();
+      }
+    }
+    return null;
+  }
+
+  public static String getRemoteInterfaceName() throws IOException {
+    String remoteInterface = getRemoteInterface();
+    String result = getProcessPrint("networksetup -listnetworkserviceorder");
+    Pattern pattern = Pattern.compile("\\(Hardware\\sPort:\\s(.*),\\sDevice:\\s(.*)\\)");
+    Matcher matcher = pattern.matcher(result);
+    while (matcher.find()) {
+      if (matcher.group(2).equalsIgnoreCase(remoteInterface)) {
+        return matcher.group(1);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 判断证书是否存在
+   */
+  public static boolean existsCert(String name) throws IOException {
+    if (OsUtil.isWindows()) {
+      String ret = getProcessPrint("certutil "
+          + "-store "
+          + "root "
+          + name);
+      if (ret.indexOf("======") != -1) {
+        return true;
+      } else {
+        ret = getProcessPrint("certutil "
+            + "-store "
+            + "-user "
+            + "root "
+            + name);
+        if (ret.indexOf("======") != -1) {
+          return true;
+        }
+      }
+      return false;
+    } else if (OsUtil.isMac()) {
+      String ret = getProcessPrint(
+          "security find-certificate -c " + name + " -p /Library/Keychains/System.keychain");
+      if (ret.indexOf("BEGIN CERTIFICATE") != -1) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 安装证书
+   */
+  public static void installCert(String path) throws IOException {
+    if (OsUtil.isWindows()) {
+      Runtime.getRuntime().exec("certutil "
+          + "-addstore "
+          + (isAdmin() ? "" : "-user ")
+          + "root "
+          + "\"" + path + "\""
+      );
+    } else if (OsUtil.isMac()) {
+      Runtime.getRuntime().exec("security "
+          + "add-trusted-cert "
+          + "-d "
+          + "-r trustRoot "
+          + "-k /Library/Keychains/System.keychain "
+          + path
+      );
+    }
+  }
+
+  /**
+   * 卸载证书
+   */
+  public static void uninstallCert(String name) throws IOException {
+    if (isWindows()) {
+      Runtime.getRuntime().exec("certutil "
+          + "-delstore "
+          + (OsUtil.isAdmin() ? "" : "-user ")
+          + "root "
+          + name
+      );
+    } else if (isMac()) {
+      Runtime.getRuntime().exec("security "
+          + "delete-certificate "
+          + "-c " + name
+          + " /Library/Keychains/System.keychain");
+    }
+
+  }
+
+  /**
+   * 设置PAC代理
+   */
+  public static void enabledPACProxy(String pac) throws IOException {
+    if (isWindows()) {
+      INTERNET_PER_CONN_OPTION_LIST list = WinInetImpl.buildOptionList(2);
+      INTERNET_PER_CONN_OPTION[] pOptions = (INTERNET_PER_CONN_OPTION[]) list.pOptions
+          .toArray(list.dwOptionCount);
+      // Set flags.
+      pOptions[0].dwOption = WinInet.INTERNET_PER_CONN_FLAGS;
+      pOptions[0].Value.dwValue = WinInet.PROXY_TYPE_AUTO_PROXY_URL;
+      pOptions[0].Value.setType(int.class);
+
+      // Set flags.
+      pOptions[1].dwOption = WinInet.INTERNET_PER_CONN_AUTOCONFIG_URL;
+      pOptions[1].Value.pszValue = pac;
+      pOptions[1].Value.setType(String.class);
+
+      WinInetImpl.refreshOptions(list);
+    } else if (isMac()) {
+      disabledProxy();
+      String interName = getRemoteInterfaceName();
+      Runtime.getRuntime()
+          .exec("networksetup -setautoproxyurl " + interName + " " + pac);
+    }
+  }
+
+  /**
+   * 启用http代理
+   */
+  public static void enabledHTTPProxy(String host, int port) throws IOException {
+    if (isWindows()) {
+      INTERNET_PER_CONN_OPTION_LIST list = WinInetImpl.buildOptionList(2);
+      INTERNET_PER_CONN_OPTION[] pOptions = (INTERNET_PER_CONN_OPTION[]) list.pOptions
+          .toArray(list.dwOptionCount);
+
+      // Set flags.
+      pOptions[0].dwOption = WinInet.INTERNET_PER_CONN_FLAGS;
+      pOptions[0].Value.dwValue = WinInet.PROXY_TYPE_PROXY;
+      pOptions[0].Value.setType(int.class);
+
+      // Set proxy name.
+      pOptions[1].dwOption = WinInet.INTERNET_PER_CONN_PROXY_SERVER;
+      pOptions[1].Value.pszValue = host + ":" + port;
+      pOptions[1].Value.setType(String.class);
+
+      WinInetImpl.refreshOptions(list);
+    } else if (isMac()) {
+      disabledProxy();
+      String interName = getRemoteInterfaceName();
+      Runtime.getRuntime()
+          .exec("networksetup -setwebproxy " + interName + " " + host + " " + port);
+      Runtime.getRuntime()
+          .exec("networksetup -setsecurewebproxy " + interName + " " + host + " " + port);
+    }
+  }
+
+  /**
+   * 禁用代理
+   */
+  public static void disabledProxy() throws IOException {
+    if (isWindows()) {
+      INTERNET_PER_CONN_OPTION_LIST list = WinInetImpl.buildOptionList(1);
+      INTERNET_PER_CONN_OPTION[] pOptions = (INTERNET_PER_CONN_OPTION[]) list.pOptions
+          .toArray(list.dwOptionCount);
+      // Set flags.
+      pOptions[0].dwOption = WinInet.INTERNET_PER_CONN_FLAGS;
+      pOptions[0].Value.dwValue = WinInet.PROXY_TYPE_DIRECT;
+      pOptions[0].Value.setType(int.class);
+
+      WinInetImpl.refreshOptions(list);
+    } else if (isMac()) {
+      String interName = getRemoteInterfaceName();
+      Runtime.getRuntime()
+          .exec("networksetup -setautoproxystate " + interName + " off");
+      Runtime.getRuntime()
+          .exec("networksetup -setwebproxystate " + interName + " off");
+      Runtime.getRuntime()
+          .exec("networksetup -setsecurewebproxystate " + interName + " off");
+    }
+  }
+
+  public static void main(String[] args) throws IOException {
+    System.out.println(getRemoteInterface());
   }
 }

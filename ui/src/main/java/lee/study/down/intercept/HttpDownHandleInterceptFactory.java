@@ -42,9 +42,8 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
         ContentManager.DOWN.putBoot(httpDownInfo);
         httpResponse.setStatus(HttpResponseStatus.OK);
         httpResponse.headers().clear();
-        httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
-        byte[] content = ("<html></html>")
-            .getBytes("utf-8");
+        httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
+        byte[] content = "<script>window.history.go(-1);</script>".getBytes();
         httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.length);
         clientChannel.writeAndFlush(httpResponse);
         HttpContent httpContent = new DefaultLastHttpContent();

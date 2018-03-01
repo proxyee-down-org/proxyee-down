@@ -17,8 +17,9 @@ public class HttpDownConstant {
   public final static String CONFIG_PATH = HOME_PATH + ".config.inf";
 
   public final static String CA_SUBJECT = "ProxyeeRoot";
-  public final static String CA_CERT_PATH = HOME_PATH + "ssl" + File.separator + ".ca.crt";
-  public final static String CA_PRI_PATH = HOME_PATH + "ssl" + File.separator + ".ca_pri.der";
+  public final static String SSL_PATH = HOME_PATH + "ssl" + File.separator;
+  public final static String CA_CERT_PATH = SSL_PATH + "ca.crt";
+  public final static String CA_PRI_PATH = SSL_PATH + ".ca_pri.der";
 
   public static SslContext clientSslContext;
   public static NioEventLoopGroup clientLoopGroup;

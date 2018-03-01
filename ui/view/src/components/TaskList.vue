@@ -60,8 +60,11 @@
                     <span>状态：</span>
                     <b>{{leftTime(task)}}</b>
                     <el-tooltip v-show="task.status==6" class="item"
-                                content="下载链接失效，可重新下载相同资源，在创建任务页面里选中当前任务来刷新链接继续下载"
                                 placement="right">
+                      <div slot="content">下载链接失效，可尝试<a
+                        href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                        target="_blank" style="color: #3a8ee6">刷新下载链接</a>
+                      </div>
                       <i class="el-icon-question"></i>
                     </el-tooltip>
                   </p>
