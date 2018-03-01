@@ -1,3 +1,4 @@
 #!/bin/sh
 cd `dirname $0`
+ehco "正在启动proxyee-down，运行需要管理员权限，请输入用户密码(若无输入提示请忽略)"
 sudo ./jre1.8.0_162/Contents/Home/bin/java -jar ./proxyee-down.jar
