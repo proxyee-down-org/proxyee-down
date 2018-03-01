@@ -39,3 +39,5 @@ target/
 
 .idea/
 *.iml
+
+!.pack/*
