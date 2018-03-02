@@ -105,6 +105,8 @@ public class HttpDownApplication extends Application {
     }));
   }
 
+  private static boolean isSupportGUI = true;
+
   private void beforeOpen() throws Exception {
     //webview加载
     if (ContentManager.CONFIG.get().getUiModel() == 1) {
@@ -330,7 +332,12 @@ public class HttpDownApplication extends Application {
         guiItem.setName("1");
         CheckboxMenuItem browserItem = new CheckboxMenuItem("浏览器");
         browserItem.setName("2");
-        uiMenu.add(guiItem);
+        if(isSupportGUI){
+          uiMenu.add(guiItem);
+        }else{
+          ContentManager.CONFIG.get().setUiModel(2);
+          ContentManager.CONFIG.save();
+        }
         uiMenu.add(browserItem);
         mig.add(guiItem);
         mig.add(browserItem);
@@ -344,12 +351,12 @@ public class HttpDownApplication extends Application {
           String selectedItemName = ((CheckboxMenuItem) event.getSource()).getName();
           Platform.runLater(() -> {
             if ("1".equals(selectedItemName)) {
-              initBrowser();
               ContentManager.CONFIG.get().setUiModel(1);
+              initBrowser();
             } else {
+              ContentManager.CONFIG.get().setUiModel(2);
               destroyBrowser();
               stage.close();
-              ContentManager.CONFIG.get().setUiModel(2);
             }
             open();
             ContentManager.CONFIG.save();
@@ -386,11 +393,17 @@ public class HttpDownApplication extends Application {
   }
 
   private void initBrowser() {
-    if (this.browser == null) {
-      this.browser = new Browser();
-      stage.setScene(new Scene(browser));
+    try {
+      if (this.browser == null) {
+        this.browser = new Browser();
+        stage.setScene(new Scene(browser));
+      }
+      browser.load(this.url);
+    } catch (Exception e) {
+      LOGGER.error("initBrowser error", e);
+      isSupportGUI = false;
     }
-    browser.load(this.url);
+
   }
 
   private void destroyBrowser() {
