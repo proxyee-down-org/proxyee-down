@@ -121,6 +121,7 @@
 
 <script>
   import NativeA from './base/NativeA'
+  import {mapState} from 'vuex'
 
   export default {
     data() {
@@ -131,11 +132,16 @@
         dialogVisible: false,
         updateInfo: {},
         intervalId: null,
-        updateTask: null
       }
     },
     components: {
       NativeA
+    },
+    computed: {
+      ...mapState('update', [
+          'updateTask',
+        ],
+      )
     },
     methods: {
       checkUpdate() {
@@ -173,6 +179,18 @@
       status(task) {
         switch (task.status) {
           case 7:
+            setTimeout(() => {
+              this.$confirm('更新完成是否重启程序？', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消'
+              }).then(() => {
+                this.$http.get('api/restart')
+                .then(() => {
+                }).catch(() => {
+                });
+              }).catch(() => {
+              });
+            }, 200)
             return 'success';
           default:
             return null;
@@ -192,37 +210,7 @@
         this.version = this.fmtVersion(result.data);
       }).catch(() => {
       });
-      this.intervalId = setInterval(() => {
-
-        this.$http.get('api/getUpdateProgress')
-        .then(result => {
-          if (result.data) {
-            this.updateTask = result.data;
-            if (this.updateTask.status == 7) {
-              clearInterval(this.intervalId);
-              this.$confirm('更新完成是否重启程序？', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消'
-              }).then(() => {
-                this.$http.get('api/restart')
-                .then(() => {
-                  window.location.href = "about:blank";
-                }).catch(() => {
-                  window.location.href = "about:blank";
-                });
-              }).catch(() => {
-              });
-            }
-          }
-        }).catch(() => {
-        });
-      }, 1000);
     },
-    destroyed() {
-      if (this.intervalId) {
-        clearInterval(this.intervalId);
-      }
-    }
   }
 </script>
 

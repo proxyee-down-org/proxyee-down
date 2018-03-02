@@ -153,6 +153,9 @@
       ...mapMutations('unzips', [
         'setUnzipTask',
       ]),
+      ...mapMutations('update', [
+        'setUpdateTask',
+      ]),
     },
     created() {
       this.openTabHandle('/tasks');
@@ -173,6 +176,9 @@
                 selectTool: 'BdyUnzip',
                 args: {filePath: data.filePath, toPath: data.toPath}
               });
+              break;
+            case 4: //更新进度
+              this.setUpdateTask(data);
               break;
           }
         }

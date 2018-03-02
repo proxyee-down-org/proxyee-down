@@ -1,15 +1,21 @@
 package lee.study.down.util;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Stack;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class FileUtil {
 
@@ -238,5 +244,33 @@ public class FileUtil {
       return false;
     }
     return true;
+  }
+
+  public static void unzip(String zipPath, String toPath, String... unzipFile) throws IOException {
+    try (
+        ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipPath))
+    ) {
+      toPath = toPath == null ? new File(zipPath).getParent() : toPath;
+      ZipEntry entry;
+      while ((entry = zipInputStream.getNextEntry()) != null) {
+        final String entryName = entry.getName();
+        if (entry.isDirectory() || (unzipFile != null && unzipFile.length > 0
+            && Arrays.stream(unzipFile)
+            .noneMatch((file) -> entryName.equalsIgnoreCase(file)))) {
+          zipInputStream.closeEntry();
+          continue;
+        }
+        File file = createFileSmart(toPath + File.separator + entryName);
+        try (
+            FileOutputStream outputStream = new FileOutputStream(file)
+        ) {
+          byte[] bts = new byte[8192];
+          int len;
+          while ((len = zipInputStream.read(bts)) != -1) {
+            outputStream.write(bts, 0, len);
+          }
+        }
+      }
+    }
   }
 }

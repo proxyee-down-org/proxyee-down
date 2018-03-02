@@ -11,7 +11,7 @@ import lee.study.down.mvc.form.WsForm;
 import lee.study.down.mvc.ws.WsDataType;
 import lee.study.down.util.FileUtil;
 
-public class HttpDownHandleCallback implements HttpDownCallback {
+public class HttpDownHandleCallback extends HttpDownCallback {
 
   private void sendTask(String id) {
     ContentManager.WS.sendMsg(ContentManager.DOWN.buildWsForm(id));
@@ -23,18 +23,6 @@ public class HttpDownHandleCallback implements HttpDownCallback {
     sendTask(httpDownInfo.getTaskInfo().getId());
   }
 
-  @Override
-  public void onChunkConnecting(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
-  }
-
-  @Override
-  public void onChunkConnected(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
-  }
-
-  @Override
-  public void onProgress(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo) throws Exception {
-
-  }
 
   @Override
   public void onPause(HttpDownInfo httpDownInfo) throws Exception {
@@ -50,10 +38,6 @@ public class HttpDownHandleCallback implements HttpDownCallback {
   public void onError(HttpDownInfo httpDownInfo, Throwable cause) {
     ContentManager.DOWN.saveTask(httpDownInfo.getTaskInfo().getId());
     sendTask(httpDownInfo.getTaskInfo().getId());
-  }
-
-  @Override
-  public void onChunkError(HttpDownInfo httpDownInfo, ChunkInfo chunkInfo, Throwable cause) {
   }
 
   @Override

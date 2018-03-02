@@ -14,4 +14,8 @@ public class WsDataType {
    * 创建解压任务
    */
   public final static int UNZIP_NEW = 3;
+  /**
+   * 升级进度条
+   */
+  public final static int UPDATE_PROGRESS = 4;
 }

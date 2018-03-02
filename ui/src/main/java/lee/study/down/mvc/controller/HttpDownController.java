@@ -14,11 +14,11 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
-import lee.study.down.boot.TimeoutCheckTask;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
 import lee.study.down.content.DownContent;
+import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.exception.BootstrapException;
 import lee.study.down.gui.HttpDownApplication;
 import lee.study.down.io.BdyZip;
@@ -387,9 +387,8 @@ public class HttpDownController {
     return resultInfo;
   }
 
-  private static AbstractHttpDownBootstrap bootstrap;
+  public static volatile AbstractHttpDownBootstrap updateBootstrap;
   private static volatile UpdateInfo updateInfo;
-  //  private static final UpdateService updateService = new TestUpdateService();
   private static final UpdateService updateService = new GithubUpdateService();
 
   @RequestMapping("/checkUpdate")
@@ -411,24 +410,39 @@ public class HttpDownController {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("没有可用版本进行更新");
       return resultInfo;
     }
-    if (bootstrap != null) {
-      bootstrap.close();
-      bootstrap = null;
+    if (updateBootstrap != null) {
+      updateBootstrap.close();
+      updateBootstrap = null;
     }
     try {
-      bootstrap = updateService.update(updateInfo);
+      updateBootstrap = updateService.update(updateInfo, new HttpDownCallback() {
+        @Override
+        public void onDone(HttpDownInfo httpDownInfo) throws Exception {
+          String zipPath = httpDownInfo.getTaskInfo().buildTaskFilePath();
+          String unzipDir = "proxyee-down-" + updateInfo.getVersionStr();
+          String unzipPath = unzipDir + "/main/proxyee-down-core.jar";
+          //下载完解压
+          FileUtil.unzip(zipPath, null, unzipPath);
+          //复制出来
+          Files.copy(
+              Paths.get(httpDownInfo.getTaskInfo().getFilePath() + File.separator + unzipPath),
+              Paths.get(httpDownInfo.getTaskInfo().getFilePath() + File.separator
+                  + "proxyee-down-core.jar.bak"));
+          //删除临时的文件
+          FileUtil
+              .deleteIfExists(zipPath);
+          FileUtil
+              .deleteIfExists(httpDownInfo.getTaskInfo().getFilePath() + File.separator + unzipDir);
+          //通知客户端
+          ContentManager.WS
+              .sendMsg(new WsForm(WsDataType.UPDATE_PROGRESS, httpDownInfo.getTaskInfo()));
+          //清空更新下载信息
+          updateBootstrap = null;
+        }
+      });
     } catch (TimeoutException e) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("检测更新超时，请重试");
       return resultInfo;
-    }
-    return resultInfo;
-  }
-
-  @RequestMapping("/getUpdateProgress")
-  public ResultInfo getUpdateProgress() throws Exception {
-    ResultInfo resultInfo = new ResultInfo();
-    if (bootstrap != null) {
-      resultInfo.setData(bootstrap.getHttpDownInfo().getTaskInfo());
     }
     return resultInfo;
   }

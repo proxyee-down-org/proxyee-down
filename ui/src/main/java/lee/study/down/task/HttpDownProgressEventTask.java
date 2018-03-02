@@ -5,6 +5,9 @@ import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.content.ContentManager;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
+import lee.study.down.mvc.controller.HttpDownController;
+import lee.study.down.mvc.form.WsForm;
+import lee.study.down.mvc.ws.WsDataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +42,12 @@ public class HttpDownProgressEventTask extends Thread {
           }
         }
         ContentManager.WS.sendMsg(ContentManager.DOWN.buildDowningWsForm());
+        if (HttpDownController.updateBootstrap != null
+            && HttpDownController.updateBootstrap.getHttpDownInfo().getTaskInfo().getStatus()
+            != HttpDownStatus.DONE) {
+          ContentManager.WS.sendMsg(new WsForm(WsDataType.UPDATE_PROGRESS,
+              HttpDownController.updateBootstrap.getHttpDownInfo().getTaskInfo()));
+        }
         TimeUnit.MILLISECONDS.sleep(1000);
       } catch (Exception e) {
         LOGGER.error("eventTask:", e);

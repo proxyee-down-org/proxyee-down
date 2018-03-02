@@ -1,8 +1,12 @@
 ## 下载
 进入[下载页面](https://github.com/monkeyWie/proxyee-down/releases)，选择对应proxyee-down-x.xx-mac.zip文件进行下载。  
 ## 解压并运行
-将下载好的proxyee-down-x.xx-mac.zip解压至电脑任意目录。双击start运行软件，运行成功后会有提示和托盘出现。  
-![1-1](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/windows/imgs/1-1.png)
+将下载好的proxyee-down-x.xx-mac.zip解压至电脑任意目录。双击start运行软件，由于安装证书和切换代理需要root权限，所以在运行软件会提示输入用户密码，输入完按回车确认即可。  
+![1-1](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/windows/imgs/1-1.png)    
+运行成功后会有提示和托盘出现。  
+![1-2](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/windows/imgs/1-2.png)
+## safari浏览器
+safari浏览器不支持百度云破解插件，建议使用chrome浏览器。
 ## 火狐浏览器
 由于火狐浏览器的特殊性，需要自行安装根证书，查看[安装步骤](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/firefox-ca/read.md)。
 ## 完成
