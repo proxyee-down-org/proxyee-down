@@ -143,6 +143,11 @@ public class DownContent {
         HttpDownConstant.clientSslContext,
         HttpDownConstant.clientLoopGroup,
         HttpDownConstant.httpDownCallback);
+    TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
+    if (taskInfo.isSupportRange()) {
+      taskInfo.setConnections(ContentManager.CONFIG.get().getConnections());
+    }
+    taskInfo.setFilePath(ContentManager.CONFIG.get().getLastPath());
     putBoot(bootstrap);
   }
 

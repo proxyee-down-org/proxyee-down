@@ -46,27 +46,6 @@ public class BdyZip {
     private boolean isDir;
     private long fileStartPosition;
     private boolean isEnd;
-
-    public long getEntrySize() {
-      return 30 + compressedSize;
-    }
-  }
-
-  public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
-      BdyUnzipCallback callback) throws IOException {
-    List<BdyZipEntry> list = new ArrayList<>();
-    String currDir = null;
-    while (true) {
-      BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, currDir);
-      list.add(entry);
-      callback.onFix(fileChannel.size(), entry.getFileStartPosition() + entry.getCompressedSize());
-      if (entry.isEnd()) {
-        callback.onFixDone(list);
-        return list;
-      } else if (entry.isDir()) {
-        currDir = entry.getFileName();
-      }
-    }
   }
 
   public static BdyZipEntry getNextBdyZipEntry(FileChannel fileChannel, long position)
@@ -118,9 +97,11 @@ public class BdyZip {
     return getNextBdyZipEntry(fileChannel, -1);
   }
 
-  public static BdyZipEntry getNextFixedBdyZipEntry(FileChannel fileChannel, String currDir)
+  public static BdyZipEntry getNextFixedBdyZipEntry(FileChannel fileChannel, List<String> dirList,
+      BdyUnzipCallback callback)
       throws IOException {
     BdyZipEntry zipEntry = getNextBdyZipEntry(fileChannel);
+    boolean fixFlag = false;
     if (ByteUtil
         .matchToken(fileChannel,
             zipEntry.getFileStartPosition(),
@@ -132,24 +113,32 @@ public class BdyZip {
             zipEntry.getFileStartPosition(),
             zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
             ZIP_ENTRY_FILE_HEARD)) {
-      long fixedSize = fixedEntrySize(fileChannel, zipEntry, _4G, currDir);
+      long fixedSize = fixedEntrySize(fileChannel, zipEntry, _4G, dirList, callback);
       zipEntry.setUnCompressedSize(fixedSize);
       zipEntry.setCompressedSize(fixedSize);
       if (ByteUtil
           .matchToken(fileChannel, zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
               ZIP_ENTRY_DIR_HEARD)) {
         zipEntry.setEnd(true);
+        fixFlag = true;
       }
     }
     if (!zipEntry.isEnd()) {
       fileChannel.position(zipEntry.getFileStartPosition() + zipEntry.getCompressedSize());
     }
+    if (callback != null && !fixFlag) {
+      callback.onFix(fileChannel.size(),
+          zipEntry.getFileStartPosition() + zipEntry.getCompressedSize());
+    }
     return zipEntry;
   }
 
   private static long fixedEntrySize(FileChannel fileChannel, BdyZipEntry zipEntry, long skipSize,
-      String currDir)
+      List<String> dirList, BdyUnzipCallback callback)
       throws IOException {
+    if (callback != null) {
+      callback.onFix(fileChannel.size(), zipEntry.getFileStartPosition() + skipSize);
+    }
     long fixedSize = ByteUtil
         .getNextTokenSize(fileChannel, zipEntry.getFileStartPosition(),
             zipEntry.getFileStartPosition() + skipSize,
@@ -157,11 +146,42 @@ public class BdyZip {
     BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
         zipEntry.getFileStartPosition() + fixedSize);
     //修复长度后下个文件目录没对上
-    if (!((currDir == null && nextEntry.getFileName().matches("^/[^/]*$"))
-        || nextEntry.getFileName().matches("^" + currDir + "[^/]*$"))) {
-      return fixedEntrySize(fileChannel, zipEntry, skipSize + nextEntry.getEntrySize(), currDir);
+    if (!Arrays.equals(nextEntry.getHeader(), ZIP_ENTRY_DIR_HEARD)
+        && !isRight(dirList, nextEntry)) {
+      return fixedEntrySize(fileChannel, zipEntry, fixedSize + ZIP_ENTRY_FILE_HEARD.length,
+          dirList, callback);
     } else {
       return fixedSize;
+    }
+  }
+
+  public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
+      BdyUnzipCallback callback) throws IOException {
+    List<BdyZipEntry> list = new ArrayList<>();
+    List<String> dirList = new ArrayList<>();
+    dirList.add("");
+    while (true) {
+      BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, dirList, callback);
+      list.add(entry);
+      if (entry.isEnd()) {
+        callback.onFixDone(list);
+        return list;
+      } else if (entry.isDir()) {
+        dirList.add(entry.getFileName());
+      }
+    }
+  }
+
+  private static boolean isRight(List<String> dirList, BdyZipEntry nextEntry) {
+    if (nextEntry.isDir()) {
+      for (String dir : dirList) {
+        if (nextEntry.getFileName().matches("^" + dir + "[^/]*$")) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return nextEntry.getFileName().matches("^" + dirList.get(dirList.size() - 1) + "[^/]*$");
     }
   }
 
@@ -224,7 +244,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws IOException {
-    unzip("f:/down/test2测试", "f:/down/test2测试", new TestUnzipCallback());
+    unzip("f:/down/pack13.zip", "f:/down/pack13", new TestUnzipCallback());
   }
 
   /**
@@ -288,7 +308,7 @@ public class BdyZip {
 
     @Override
     public void onEntryStart(BdyZipEntry entry) {
-
+      System.out.println("onEntryStart:" + entry.getFileName());
     }
 
     @Override

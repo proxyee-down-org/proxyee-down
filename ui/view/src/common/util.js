@@ -81,7 +81,6 @@ export default {
     }
   },
   getUnzipFilePath(filePath, fileName) {
-    debugger;
     if (!filePath) {
       return '';
     }

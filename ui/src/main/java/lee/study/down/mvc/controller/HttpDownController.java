@@ -35,6 +35,7 @@ import lee.study.down.model.UnzipInfo;
 import lee.study.down.model.UpdateInfo;
 import lee.study.down.mvc.form.BuildTaskForm;
 import lee.study.down.mvc.form.ConfigForm;
+import lee.study.down.mvc.form.CreateTaskForm;
 import lee.study.down.mvc.form.DirForm;
 import lee.study.down.mvc.form.NewTaskForm;
 import lee.study.down.mvc.form.UnzipForm;
@@ -71,10 +72,6 @@ public class HttpDownController {
     if (httpDownInfo != null) {
       TaskInfo taskInfo = httpDownInfo.getTaskInfo();
       Map<String, Object> data = new HashMap<>();
-      if (taskInfo.isSupportRange()) {
-        taskInfo.setConnections(ContentManager.CONFIG.get().getConnections());
-      }
-      taskInfo.setFilePath(ContentManager.CONFIG.get().getLastPath());
       data.put("task", NewTaskForm.parse(httpDownInfo));
       //检查是否有相同大小的文件
       List<HttpDownInfo> sameTasks = ContentManager.DOWN.getDownInfos().stream()
@@ -120,7 +117,7 @@ public class HttpDownController {
           oldBootstrap.getHttpDownInfo().setAttrs(attr);
         }
         attr.put(NewTaskForm.KEY_UNZIP_FLAG, taskForm.isUnzip());
-        attr.put(NewTaskForm.KEY_UNZIP_PATH, taskForm.getFilePath());
+        attr.put(NewTaskForm.KEY_UNZIP_PATH, taskForm.getUnzipPath());
         //移除新的下载任务
         ContentManager.DOWN.removeBoot(taskForm.getId());
         //持久化
@@ -137,6 +134,7 @@ public class HttpDownController {
         resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("路径不能为空");
         return resultInfo;
       }
+      buildDefaultValues(taskForm);
       TaskInfo taskInfo = httpDownInfo.getTaskInfo();
       synchronized (taskInfo) {
         if (taskInfo.getStatus() != HttpDownStatus.WAIT) {
@@ -171,6 +169,26 @@ public class HttpDownController {
       }
     }
     return resultInfo;
+  }
+
+  private void buildDefaultValues(NewTaskForm taskForm) {
+    //默认分段数
+    if (taskForm.getConnections() <= 0) {
+      taskForm.setConnections(ContentManager.CONFIG.get().getConnections());
+    }
+    //默认解压路径
+    if (taskForm.isUnzip()) {
+      if (StringUtils.isEmpty(taskForm.getUnzipPath())) {
+        int index = taskForm.getFileName().lastIndexOf(".");
+        if (index != -1) {
+          taskForm.setUnzipPath(
+              taskForm.getFilePath() + File.separator + taskForm.getFileName().substring(0, index));
+        } else {
+          taskForm.setUnzipPath(
+              taskForm.getFilePath() + File.separator + taskForm.getFileName() + "_unzip");
+        }
+      }
+    }
   }
 
   @RequestMapping("/getChildDirList")
@@ -265,7 +283,7 @@ public class HttpDownController {
       if (!unzipForm.getFilePath().equalsIgnoreCase(unzipForm.getToPath())) {
         if (BdyZip.isBdyZip(unzipForm.getFilePath())) {
           UnzipInfo unzipInfo = new UnzipInfo().setId(id);
-          if (!FileUtil.canWrite(unzipForm.getFilePath())) {
+          if (!FileUtil.canWrite(unzipForm.getToPath())) {
             resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问解压路径，请修改路径或开放目录写入权限");
             return resultInfo;
           }
@@ -515,4 +533,26 @@ public class HttpDownController {
     resultInfo.setData(ContentManager.CONFIG.get().getUiModel());
     return resultInfo;
   }
+
+  @RequestMapping("/rpc/createTask")
+  public ResultInfo open(@RequestBody CreateTaskForm createTaskForm) throws Exception {
+    ResultInfo resultInfo = buildTask(createTaskForm.getRequest());
+    if (resultInfo.getStatus() == ResultStatus.SUCC.getCode()) {
+      TaskInfo taskInfo = ContentManager.DOWN.getTaskInfo(resultInfo.getData().toString());
+      NewTaskForm taskForm = new NewTaskForm();
+      taskForm.setId(taskInfo.getId());
+      if (!StringUtils.isEmpty(createTaskForm.getFileName())) {
+        taskForm.setFileName(createTaskForm.getFileName());
+      } else {
+        taskForm.setFileName(taskInfo.getFileName());
+      }
+      taskForm.setFilePath(createTaskForm.getFilePath());
+      taskForm.setUnzip(createTaskForm.getUnzipFlag() == 1);
+      taskForm.setUnzipPath(createTaskForm.getUnzipPath());
+      taskForm.setConnections(createTaskForm.getConnections());
+      resultInfo = startTask(taskForm);
+    }
+    return resultInfo;
+  }
+
 }

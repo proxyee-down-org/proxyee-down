@@ -33,11 +33,11 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/api':{
-        target:'http://127.0.0.1:9000',
+        target:'http://127.0.0.1:26339',
         changeOrigin: true
       },
       '/ws':{
-        target:'http://127.0.0.1:9000',
+        target:'http://127.0.0.1:26339',
         ws: true,
       },
     },

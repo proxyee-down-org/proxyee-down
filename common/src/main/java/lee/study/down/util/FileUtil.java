@@ -235,8 +235,13 @@ public class FileUtil {
 
   public static boolean canWrite(String path) {
     File file = new File(path);
-    File test = new File(
-        file.getParent() + File.separator + UUID.randomUUID().toString() + ".test");
+    File test;
+    if (file.isFile()) {
+      test = new File(
+          file.getParent() + File.separator + UUID.randomUUID().toString() + ".test");
+    } else {
+      test = new File(file.getPath() + File.separator + UUID.randomUUID().toString() + ".test");
+    }
     try {
       test.createNewFile();
       test.delete();

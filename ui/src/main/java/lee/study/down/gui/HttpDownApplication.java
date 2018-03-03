@@ -136,7 +136,7 @@ public class HttpDownApplication extends Application {
       if (isRebuild && OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
         //重新生成卸载之前的证书
         if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默卸载
-          showMsg("检测到相同证书，请按引导进行删除");
+          showMsg("检测到相同证书，请按确定再根据引导进行删除");
         }
         OsUtil.uninstallCert(HttpDownConstant.CA_SUBJECT);
       }
@@ -144,7 +144,7 @@ public class HttpDownApplication extends Application {
       //ProxyeeRoot证书是否已经安装
       if (!OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
         if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默安装
-          showMsg("需要安装新证书，请按引导进行确认");
+          showMsg("需要安装新证书，请按确定再引导进行安装");
         }
         OsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
       }
@@ -332,9 +332,9 @@ public class HttpDownApplication extends Application {
         guiItem.setName("1");
         CheckboxMenuItem browserItem = new CheckboxMenuItem("浏览器");
         browserItem.setName("2");
-        if(isSupportGUI){
+        if (isSupportGUI) {
           uiMenu.add(guiItem);
-        }else{
+        } else {
           ContentManager.CONFIG.get().setUiModel(2);
           ContentManager.CONFIG.save();
         }
