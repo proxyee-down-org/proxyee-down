@@ -15,6 +15,8 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.cert.X509Certificate;
 import java.util.UUID;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.model.ChunkInfo;
@@ -203,7 +205,7 @@ public class ByteUtil {
     ) {
       String line;
       while ((line = br.readLine()) != null) {
-        sb.append(line+System.lineSeparator());
+        sb.append(line + System.lineSeparator());
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -342,5 +344,12 @@ public class ByteUtil {
     }
     taskInfo.setDownSize(downSize);
     serialize(taskInfo, taskInfo.buildTaskRecordFilePath(), taskInfo.buildTaskRecordBakFilePath());
+  }
+
+  public static String getCertHash(X509Certificate certificate) throws Exception {
+    MessageDigest md = MessageDigest.getInstance("SHA-1");
+    byte[] der = certificate.getEncoded();
+    md.update(der);
+    return ByteUtil.btsToHex(md.digest());
   }
 }

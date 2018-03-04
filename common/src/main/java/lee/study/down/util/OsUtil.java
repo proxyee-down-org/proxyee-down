@@ -231,29 +231,41 @@ public class OsUtil {
   /**
    * 判断证书是否存在
    */
-  public static boolean existsCert(String name) throws IOException {
+  public static boolean existsCert(String name, String sha1) throws IOException {
     if (OsUtil.isWindows()) {
-      String ret = getProcessPrint("certutil "
-          + "-store "
-          + "root "
-          + name);
-      if (ret.indexOf("======") != -1) {
+      if (findCertList(name, true).toUpperCase().indexOf(": " + sha1.toUpperCase()) != -1) {
         return true;
       } else {
-        ret = getProcessPrint("certutil "
-            + "-store "
-            + "-user "
-            + "root "
-            + name);
-        if (ret.indexOf("======") != -1) {
+        if (findCertList(name, false).toUpperCase().indexOf(": " + sha1.toUpperCase()) != -1) {
           return true;
         }
       }
       return false;
     } else if (OsUtil.isMac()) {
-      String ret = getProcessPrint(
-          "security find-certificate -c " + name + " -p /Library/Keychains/System.keychain");
-      if (ret.indexOf("BEGIN CERTIFICATE") != -1) {
+      if (findCertList(name).toUpperCase().indexOf(": " + sha1.toUpperCase()) != -1) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 判断证书是否存在
+   */
+  public static boolean existsCert(String name) throws IOException {
+    if (OsUtil.isWindows()) {
+      if (findCertList(name, true).indexOf("=====") != -1) {
+        return true;
+      } else {
+        if (findCertList(name, false).indexOf("=====") != -1) {
+          return true;
+        }
+      }
+      return false;
+    } else if (OsUtil.isMac()) {
+      if (findCertList(name).toUpperCase().indexOf("BEGIN CERTIFICATE") != -1) {
         return true;
       } else {
         return false;
@@ -289,19 +301,61 @@ public class OsUtil {
    */
   public static void uninstallCert(String name) throws IOException {
     if (isWindows()) {
-      Runtime.getRuntime().exec("certutil "
-          + "-delstore "
-          + (OsUtil.isAdmin() ? "" : "-user ")
-          + "root "
-          + name
-      );
+      String certList = findCertList(name, true);
+      Pattern pattern = Pattern.compile("(?i)\\(sha1\\):\\s(.*)\r?\n");
+      Matcher matcher = pattern.matcher(certList);
+      while (matcher.find()) {
+        String hash = matcher.group(1);
+        Runtime.getRuntime().exec("certutil "
+            + "-delstore "
+            + "root "
+            + hash);
+      }
+      certList = findCertList(name, false);
+      matcher = pattern.matcher(certList);
+      while (matcher.find()) {
+        String hash = matcher.group(1);
+        Runtime.getRuntime().exec("certutil "
+            + "-delstore "
+            + "-user "
+            + "root "
+            + hash);
+      }
     } else if (isMac()) {
-      Runtime.getRuntime().exec("security "
-          + "delete-certificate "
-          + "-c " + name
-          + " /Library/Keychains/System.keychain");
+      String certList = findCertList(name);
+      Pattern pattern = Pattern.compile("(?i)SHA-1 hash:\\s(.*)\r?\n");
+      Matcher matcher = pattern.matcher(certList);
+      while (matcher.find()) {
+        String hash = matcher.group(1);
+        Runtime.getRuntime().exec("security "
+            + "delete-certificate "
+            + "-Z " + hash
+            + " /Library/Keychains/System.keychain");
+      }
     }
+  }
 
+  private static String findCertList(String name, boolean isAdmin) throws IOException {
+    if (isWindows()) {
+      return getProcessPrint("certutil "
+          + "-store "
+          + (isAdmin ? "" : "-user ")
+          + "root "
+          + name);
+    } else if (isMac()) {
+      return getProcessPrint(
+          "security find-certificate "
+              + "-a "
+              + "-c " + name + " "
+              + "-p "
+              + "-Z "
+              + "/Library/Keychains/System.keychain");
+    }
+    return null;
+  }
+
+  private static String findCertList(String name) throws IOException {
+    return findCertList(name, true);
   }
 
   /**
@@ -384,9 +438,5 @@ public class OsUtil {
       Runtime.getRuntime()
           .exec("networksetup -setsecurewebproxystate " + interName + " off");
     }
-  }
-
-  public static void main(String[] args) throws IOException {
-    System.out.println(getRemoteInterface());
   }
 }

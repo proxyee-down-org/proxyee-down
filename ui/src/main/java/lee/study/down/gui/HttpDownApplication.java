@@ -39,6 +39,7 @@ import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
 import lee.study.down.mvc.HttpDownSpringBoot;
 import lee.study.down.task.HttpDownProgressEventTask;
+import lee.study.down.util.ByteUtil;
 import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.OsUtil;
@@ -105,55 +106,42 @@ public class HttpDownApplication extends Application {
     }));
   }
 
-  private static boolean isSupportGUI = true;
-
-  private void beforeOpen() throws Exception {
-    //webview加载
-    if (ContentManager.CONFIG.get().getUiModel() == 1) {
-      initBrowser();
-    }
-
-    boolean isRebuild = false;
-    //根证书生成
-    if (!FileUtil.exists(HttpDownConstant.CA_PRI_PATH)
-        || !FileUtil.exists(HttpDownConstant.CA_CERT_PATH)) {
-      //生成ca证书和私钥
-      KeyPair keyPair = CertUtil.genKeyPair();
-      File priKeyFile = FileUtil.createFile(HttpDownConstant.CA_PRI_PATH, true);
-      File caCertFile = FileUtil.createFile(HttpDownConstant.CA_CERT_PATH, false);
-      Files.write(Paths.get(priKeyFile.toURI()), keyPair.getPrivate().getEncoded());
-      Files.write(Paths.get(caCertFile.toURI()),
-          CertUtil.genCACert(
-              "C=CN, ST=GD, L=SZ, O=lee, OU=study, CN=" + HttpDownConstant.CA_SUBJECT,
-              new Date(),
-              new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(3650)),
-              keyPair)
-              .getEncoded());
-      isRebuild = true;
-    }
-
+  private void afterTrayInit() {
     try {
-      if (isRebuild && OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
-        //重新生成卸载之前的证书
-        if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默卸载
-          showMsg("检测到相同证书，请按确定再根据引导进行删除");
+      //根证书生成
+      if (!FileUtil.exists(HttpDownConstant.CA_PRI_PATH)
+          || !FileUtil.exists(HttpDownConstant.CA_CERT_PATH)
+          || !OsUtil.existsCert(HttpDownConstant.CA_SUBJECT,
+          ByteUtil.getCertHash(CertUtil.loadCert(HttpDownConstant.CA_CERT_PATH)))) {
+        //生成ca证书和私钥
+        KeyPair keyPair = CertUtil.genKeyPair();
+        File priKeyFile = FileUtil.createFile(HttpDownConstant.CA_PRI_PATH, true);
+        File caCertFile = FileUtil.createFile(HttpDownConstant.CA_CERT_PATH, false);
+        Files.write(Paths.get(priKeyFile.toURI()), keyPair.getPrivate().getEncoded());
+        Files.write(Paths.get(caCertFile.toURI()),
+            CertUtil.genCACert(
+                "C=CN, ST=GD, L=SZ, O=lee, OU=study, CN=" + HttpDownConstant.CA_SUBJECT,
+                new Date(),
+                new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(3650)),
+                keyPair)
+                .getEncoded());
+        if (OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
+          //重新生成卸载之前的证书
+          if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默卸载
+            showMsg("检测到系统存在旧的证书，请按确定再根据引导进行删除");
+          }
+          OsUtil.uninstallCert(HttpDownConstant.CA_SUBJECT);
         }
-        OsUtil.uninstallCert(HttpDownConstant.CA_SUBJECT);
-      }
-
-      //ProxyeeRoot证书是否已经安装
-      if (!OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
         if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默安装
           showMsg("需要安装新证书，请按确定再引导进行安装");
         }
         OsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
       }
     } catch (Exception e) {
-      LOGGER.error("install cert error:", e);
+      showMsg("证书安装失败，请手动安装");
+      LOGGER.error("cert handle error", e);
     }
-  }
 
-  private void afterOpen() {
     //嗅探代理服务器启动
     proxyServer = new HttpDownProxyServer(
         new HttpDownProxyCACertFactory(HttpDownConstant.CA_CERT_PATH, HttpDownConstant.CA_PRI_PATH),
@@ -179,12 +167,19 @@ public class HttpDownApplication extends Application {
     new HttpDownProgressEventTask().start();
   }
 
+  private static boolean isSupportBrowser;
+
   @Override
   public void start(Stage stage) throws Exception {
     initHandle();
     this.stage = stage;
     Platform.setImplicitExit(false);
+    isSupportBrowser = isSupportBrowser();
     SwingUtilities.invokeLater(this::addTray);
+    //webview加载
+    if (ContentManager.CONFIG.get().getUiModel() == 1 && isSupportBrowser) {
+      initBrowser();
+    }
     stage.setTitle("proxyee-down-" + version);
     Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
     stage.setX(primaryScreenBounds.getMinX());
@@ -197,10 +192,6 @@ public class HttpDownApplication extends Application {
       event.consume();
       close();
     });
-    beforeOpen();
-//    open();
-//    close();
-    afterOpen();
   }
 
   public void open() {
@@ -332,7 +323,7 @@ public class HttpDownApplication extends Application {
         guiItem.setName("1");
         CheckboxMenuItem browserItem = new CheckboxMenuItem("浏览器");
         browserItem.setName("2");
-        if (isSupportGUI) {
+        if (isSupportBrowser) {
           uiMenu.add(guiItem);
         } else {
           ContentManager.CONFIG.get().setUiModel(2);
@@ -390,20 +381,24 @@ public class HttpDownApplication extends Application {
       LOGGER.error("addTray error:", e);
       showMsg("托盘初始化失败");
     }
+    afterTrayInit();
   }
 
   private void initBrowser() {
-    try {
-      if (this.browser == null) {
-        this.browser = new Browser();
-        stage.setScene(new Scene(browser));
-      }
-      browser.load(this.url);
-    } catch (Exception e) {
-      LOGGER.error("initBrowser error", e);
-      isSupportGUI = false;
+    if (this.browser == null) {
+      this.browser = new Browser();
+      stage.setScene(new Scene(browser));
     }
+    browser.load(this.url);
+  }
 
+  private boolean isSupportBrowser() {
+    try {
+      new WebView();
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   private void destroyBrowser() {
