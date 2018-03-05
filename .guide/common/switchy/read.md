@@ -1,5 +1,5 @@
 ## SwitchyOmega插件安装与设置
-  注：windows系统中如果使用插件，需把pd的嗅探模式关闭。
+  注：如果使用插件，最好把pd的嗅探模式设为关闭。
 ### 下载
 [官方下载](https://www.switchyomega.com/download.html)，目前该插件只支持Chrome和Firefox内核的浏览器，请根据自己的浏览器下载对应的版本并按照官网对应的指导进行安装。
 ## 设置
