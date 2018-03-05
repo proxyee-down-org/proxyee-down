@@ -127,7 +127,8 @@ public class HttpDownApplication extends Application {
                 .getEncoded());
         if (OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
           //重新生成卸载之前的证书
-          if (OsUtil.isWindows() && OsUtil.existsWindowsCert(HttpDownConstant.CA_SUBJECT,false)) { //admin权限静默卸载
+          if (OsUtil.isWindows() && OsUtil
+              .existsWindowsCert(HttpDownConstant.CA_SUBJECT, false)) { //admin权限静默卸载
             showMsg("检测到系统存在旧的证书，请按确定再根据引导进行删除");
           }
           OsUtil.uninstallCert(HttpDownConstant.CA_SUBJECT);
@@ -282,17 +283,21 @@ public class HttpDownApplication extends Application {
           mig.add(globalProxyItem);
           mig.add(bdyProxyItem);
           mig.add(disableProxyItem);
-          //默认选中
-          if (ContentManager.CONFIG.get().getSniffModel() == 1) {
-            mig.selectItem(globalProxyItem);
-            OsUtil.enabledHTTPProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
-          } else if (ContentManager.CONFIG.get().getSniffModel() == 2) {
-            mig.selectItem(bdyProxyItem);
-            OsUtil.enabledPACProxy(
-                "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
-                    + "/res/pd.pac?t=" + System.currentTimeMillis());
-          } else {
-            mig.selectItem(disableProxyItem);
+          try {
+            //默认选中
+            if (ContentManager.CONFIG.get().getSniffModel() == 1) {
+              mig.selectItem(globalProxyItem);
+              OsUtil.enabledHTTPProxy("127.0.0.1", ContentManager.CONFIG.get().getProxyPort());
+            } else if (ContentManager.CONFIG.get().getSniffModel() == 2) {
+              mig.selectItem(bdyProxyItem);
+              OsUtil.enabledPACProxy(
+                  "http://127.0.0.1:" + ConfigUtil.getValue("tomcat.server.port")
+                      + "/res/pd.pac?t=" + System.currentTimeMillis());
+            } else {
+              mig.selectItem(disableProxyItem);
+            }
+          } catch (Exception e) {
+            LOGGER.error("set proxy error", e);
           }
           mig.addActionListener(event -> {
             try {
