@@ -87,7 +87,6 @@
       }
     },
     components: {
-      ElCheckbox,
       FileChoose
     },
     methods: {

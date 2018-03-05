@@ -27,7 +27,11 @@ public class OpenController {
       } else {
         taskForm.setFileName(taskInfo.getFileName());
       }
-      taskForm.setFilePath(createTaskForm.getFilePath());
+      if(!StringUtils.isEmpty(taskInfo.getFilePath())){
+        taskForm.setFilePath(taskInfo.getFilePath());
+      }else{
+        taskForm.setFilePath(createTaskForm.getFilePath());
+      }
       taskForm.setUnzip(createTaskForm.getUnzipFlag() == 1);
       taskForm.setUnzipPath(createTaskForm.getUnzipPath());
       taskForm.setConnections(createTaskForm.getConnections());
