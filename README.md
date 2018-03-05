@@ -26,6 +26,8 @@
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)
 ### 火狐浏览器证书安装
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/firefox-ca/read.md)
+### 开放接口
+[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/api/read.md)
 ### QQ群
 1群**11352304**(已满)、2群**20236964**
 
