@@ -256,7 +256,8 @@ public class OsUtil {
    */
   public static boolean existsCert(String name) throws IOException {
     if (OsUtil.isWindows()) {
-      if (findCertList(name, true).indexOf("=====") != -1) {
+      if (isAdmin()
+          && findCertList(name, true).indexOf("=====") != -1) {
         return true;
       } else {
         if (findCertList(name, false).indexOf("=====") != -1) {
@@ -301,18 +302,9 @@ public class OsUtil {
    */
   public static void uninstallCert(String name) throws IOException {
     if (isWindows()) {
-      String certList = findCertList(name, true);
       Pattern pattern = Pattern.compile("(?i)\\(sha1\\):\\s(.*)\r?\n");
+      String certList = findCertList(name, false);
       Matcher matcher = pattern.matcher(certList);
-      while (matcher.find()) {
-        String hash = matcher.group(1);
-        Runtime.getRuntime().exec("certutil "
-            + "-delstore "
-            + "root "
-            + hash);
-      }
-      certList = findCertList(name, false);
-      matcher = pattern.matcher(certList);
       while (matcher.find()) {
         String hash = matcher.group(1);
         Runtime.getRuntime().exec("certutil "
@@ -320,6 +312,17 @@ public class OsUtil {
             + "-user "
             + "root "
             + hash);
+      }
+      if (isAdmin()) {
+        certList = findCertList(name, true);
+        matcher = pattern.matcher(certList);
+        while (matcher.find()) {
+          String hash = matcher.group(1);
+          Runtime.getRuntime().exec("certutil "
+              + "-delstore "
+              + "root "
+              + hash);
+        }
       }
     } else if (isMac()) {
       String certList = findCertList(name);
