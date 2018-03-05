@@ -127,7 +127,7 @@ public class HttpDownApplication extends Application {
                 .getEncoded());
         if (OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
           //重新生成卸载之前的证书
-          if (OsUtil.isWindows() && !OsUtil.isAdmin()) { //admin权限静默卸载
+          if (OsUtil.isWindows() && OsUtil.existsWindowsCert(HttpDownConstant.CA_SUBJECT,false)) { //admin权限静默卸载
             showMsg("检测到系统存在旧的证书，请按确定再根据引导进行删除");
           }
           OsUtil.uninstallCert(HttpDownConstant.CA_SUBJECT);

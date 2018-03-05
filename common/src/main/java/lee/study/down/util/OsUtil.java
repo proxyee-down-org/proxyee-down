@@ -257,10 +257,10 @@ public class OsUtil {
   public static boolean existsCert(String name) throws IOException {
     if (OsUtil.isWindows()) {
       if (isAdmin()
-          && findCertList(name, true).indexOf("=====") != -1) {
+          && existsWindowsCert(name, true)) {
         return true;
       } else {
-        if (findCertList(name, false).indexOf("=====") != -1) {
+        if (existsWindowsCert(name, false)) {
           return true;
         }
       }
@@ -273,6 +273,13 @@ public class OsUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * 判断证书是否存在
+   */
+  public static boolean existsWindowsCert(String name, boolean isAdmin) throws IOException {
+    return findCertList(name, isAdmin).indexOf("=====") != -1;
   }
 
   /**
