@@ -39,6 +39,7 @@ public class HttpDownProxyServer {
   public void start(int port) {
     LOGGER.debug("HttpDownProxyServer listen " + port + "\tproxyConfig:" + proxyConfig);
     //监听http下载请求
+    proxyServer.proxyConfig(proxyConfig);
     proxyServer.proxyInterceptInitializer(new HttpProxyInterceptInitializer() {
       @Override
       public void init(HttpProxyInterceptPipeline pipeline) {

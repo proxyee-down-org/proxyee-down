@@ -6,6 +6,12 @@
     <el-form-item label="解压目录" prop="toPath">
       <file-choose v-model="form.toPath"></file-choose>
     </el-form-item>
+    <el-form-item label="忽略错误" prop="ignore">
+      <el-checkbox v-model="ignore"></el-checkbox>
+      <el-tooltip class="item" content="忽略不是百度云批量下载zip文件的错误提示" placement="right">
+        <i class="el-icon-question" style="position: relative;top:-15px;"></i>
+      </el-tooltip>
+    </el-form-item>
     <div v-if="unzip">
       <el-form-item prop="toPath">
         <el-progress
@@ -32,6 +38,7 @@
   export default {
     data() {
       return {
+        ignore: false,
         load: false,
         unzip: false,
         taskId: '',
@@ -80,6 +87,7 @@
       }
     },
     components: {
+      ElCheckbox,
       FileChoose
     },
     methods: {
@@ -88,7 +96,7 @@
           if (valid) {
             this.load = true;
             this.taskId = Util.uuid();
-            this.$http.post('api/bdyUnzip?id=' + this.taskId, this.form)
+            this.$http.post('api/bdyUnzip?id=' + this.taskId+'&ignore='+this.ignore, this.form)
             .then(result => {
             }).catch(() => {
               this.load = false

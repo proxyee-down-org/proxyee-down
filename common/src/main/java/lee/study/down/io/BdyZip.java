@@ -192,7 +192,10 @@ public class BdyZip {
         callback.onStart();
       }
       File zipFile = new File(path);
-      File toDir = FileUtil.createDirSmart(toPath);
+      File toDir = new File(toPath);
+      if (!FileUtil.exists(toPath)) {
+        FileUtil.createDirSmart(toPath);
+      }
       try (
           FileChannel fileChannel = new RandomAccessFile(zipFile, "rw").getChannel()
       ) {

@@ -396,7 +396,7 @@ public class HttpDownApplication extends Application {
     try {
       new WebView();
       return true;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       return false;
     }
   }

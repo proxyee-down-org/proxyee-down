@@ -92,6 +92,8 @@
                      :class="iconClass(task)"
                      @click="controlTask(task)"></i>
                   <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
+                  <i v-if="task.status==7" class="el-icon-task-folder"
+                     @click="openTaskDir(task)"></i>
                 </div>
                 <div v-else>
                   <i class="el-icon-loading"></i>
@@ -296,6 +298,12 @@
             this.$store.commit("tasks/delTask", task.id);
           }).catch(() => {
           });
+        }).catch(() => {
+        });
+      },
+      openTaskDir(task) {
+        this.$http.get('api/openTaskDir?id=' + task.id)
+        .then(() => {
         }).catch(() => {
         });
       },
