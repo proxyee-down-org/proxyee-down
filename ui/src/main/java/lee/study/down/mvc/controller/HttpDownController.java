@@ -194,8 +194,8 @@ public class HttpDownController {
       if (!unzipForm.getFilePath().equalsIgnoreCase(unzipForm.getToPath())) {
         if (ignore || BdyZip.isBdyZip(unzipForm.getFilePath())) {
           UnzipInfo unzipInfo = new UnzipInfo().setId(id);
-          if(!FileUtil.exists(unzipForm.getToPath())){
-            FileUtil.createFileSmart(unzipForm.getToPath());
+          if (!FileUtil.exists(unzipForm.getToPath())) {
+            FileUtil.createDirSmart(unzipForm.getToPath());
           }
           if (!FileUtil.canWrite(unzipForm.getToPath())) {
             resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("无权访问解压路径，请修改路径或开放目录写入权限");
