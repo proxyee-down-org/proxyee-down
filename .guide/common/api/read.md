@@ -3,8 +3,9 @@
 选项 | 值
 ---|---
 url | http://127.0.0.1:26339/open/createTask
-method | POST
-请求
+method | POST  
+
+### 请求
 ```
 {
     "request": {
@@ -29,7 +30,7 @@ filePath | 下载路径 | √ |
 connections | 分段数 | × | 配置的分段数
 unzipFlag | 是否自动解压(1.是 0.否) | × | 1
 unzipPath | 自动解压的路径 | × | 下载路径+文件名去后缀
-响应
+### 响应
 ```
 {
     "status": 200,
