@@ -233,16 +233,19 @@ public class OsUtil {
    */
   public static boolean existsCert(String name, String sha1) throws IOException {
     if (OsUtil.isWindows()) {
-      if (findCertList(name, true).toUpperCase().indexOf(": " + sha1.toUpperCase()) != -1) {
+      if (findCertList(name, true).toUpperCase().replaceAll("\\s", "")
+          .indexOf(":" + sha1.toUpperCase()) != -1) {
         return true;
       } else {
-        if (findCertList(name, false).toUpperCase().indexOf(": " + sha1.toUpperCase()) != -1) {
+        if (findCertList(name, false).toUpperCase().replaceAll("\\s", "")
+            .indexOf(":" + sha1.toUpperCase()) != -1) {
           return true;
         }
       }
       return false;
     } else if (OsUtil.isMac()) {
-      if (findCertList(name).toUpperCase().indexOf(": " + sha1.toUpperCase()) != -1) {
+      if (findCertList(name).toUpperCase().replaceAll("\\s", "").indexOf(":" + sha1.toUpperCase())
+          != -1) {
         return true;
       } else {
         return false;
@@ -313,7 +316,7 @@ public class OsUtil {
       String certList = findCertList(name, false);
       Matcher matcher = pattern.matcher(certList);
       while (matcher.find()) {
-        String hash = matcher.group(1);
+        String hash = matcher.group(1).replaceAll("\\s", "");
         Runtime.getRuntime().exec("certutil "
             + "-delstore "
             + "-user "

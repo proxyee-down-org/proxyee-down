@@ -154,13 +154,38 @@ public class BdyZip {
             ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
     BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
         zipEntry.getFileStartPosition() + fixedSize);
-    //修复长度后下个文件目录没对上
-    if (!Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_DIR_HEARD, 0, 4))
-        && !isRight(dirList, nextEntry)) {
-      return fixedEntrySize(fileChannel, zipEntry, fixedSize + ZIP_ENTRY_FILE_HEARD.length,
-          dirList, callback);
+    //修复长度后下个文件没对上
+    if (!isRight(dirList, nextEntry)) {
+      while (fixedSize != -1) {
+        long nextSize = fixedSize + ZIP_ENTRY_FILE_HEARD.length;
+        if (callback != null) {
+          callback.onFix(fileChannel.size(), zipEntry.getFileStartPosition() + nextSize);
+        }
+        fixedSize = ByteUtil
+            .getNextTokenSize(fileChannel, zipEntry.getFileStartPosition(),
+                zipEntry.getFileStartPosition() + nextSize,
+                ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
+        nextEntry = getNextBdyZipEntry(fileChannel,
+            zipEntry.getFileStartPosition() + fixedSize);
+        if (isRight(dirList, nextEntry)) {
+          break;
+        }
+      }
+      return fixedSize;
     } else {
       return fixedSize;
+    }
+  }
+
+  private static boolean isRight(List<String> dirList, BdyZipEntry nextEntry) {
+    if (Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_DIR_HEARD, 0, 4))) {
+      return true;
+    } else {
+      if (nextEntry.isDir()) {
+        return inDirList(dirList, nextEntry.getFileName());
+      } else {
+        return nextEntry.getFileName().matches("^" + dirList.get(dirList.size() - 1) + "[^/]*$");
+      }
     }
   }
 
@@ -196,14 +221,6 @@ public class BdyZip {
       }
     }
     return false;
-  }
-
-  private static boolean isRight(List<String> dirList, BdyZipEntry nextEntry) {
-    if (nextEntry.isDir()) {
-      return inDirList(dirList, nextEntry.getFileName());
-    } else {
-      return nextEntry.getFileName().matches("^" + dirList.get(dirList.size() - 1) + "[^/]*$");
-    }
   }
 
   public static void unzip(String path, String toPath, BdyUnzipCallback callback)
@@ -268,7 +285,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws IOException {
-    unzip("f:/down/test2测试.zip", "f:/down/test2测试", new TestUnzipCallback());
+    unzip("f:/down/win7pack.zip", "f:/down/win7pack", new TestUnzipCallback());
   }
 
   /**
@@ -342,7 +359,7 @@ public class BdyZip {
 
     @Override
     public void onDone() {
-
+      System.out.println("onDone");
     }
 
     @Override
