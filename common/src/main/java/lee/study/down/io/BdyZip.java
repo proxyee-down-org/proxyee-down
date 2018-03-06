@@ -101,6 +101,12 @@ public class BdyZip {
       BdyUnzipCallback callback)
       throws IOException {
     BdyZipEntry zipEntry = getNextBdyZipEntry(fileChannel);
+    if (!zipEntry.isDir()) {
+      int index = zipEntry.getFileName().lastIndexOf("/");
+      if (index != -1) {
+        addDirIfNotExists(dirList, zipEntry.getFileName().substring(0, index + 1));
+      }
+    }
     boolean fixFlag = false;
     if (ByteUtil
         .matchToken(fileChannel,
@@ -114,6 +120,9 @@ public class BdyZip {
             zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
             ZIP_ENTRY_FILE_HEARD)) {
       long fixedSize = fixedEntrySize(fileChannel, zipEntry, _4G, dirList, callback);
+      if (fixedSize == -1) {
+        throw new RuntimeException("修复失败,文件损坏请重新下载");
+      }
       zipEntry.setUnCompressedSize(fixedSize);
       zipEntry.setCompressedSize(fixedSize);
       if (ByteUtil
@@ -146,7 +155,7 @@ public class BdyZip {
     BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
         zipEntry.getFileStartPosition() + fixedSize);
     //修复长度后下个文件目录没对上
-    if (!Arrays.equals(nextEntry.getHeader(), ZIP_ENTRY_DIR_HEARD)
+    if (!Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_DIR_HEARD, 0, 4))
         && !isRight(dirList, nextEntry)) {
       return fixedEntrySize(fileChannel, zipEntry, fixedSize + ZIP_ENTRY_FILE_HEARD.length,
           dirList, callback);
@@ -164,22 +173,34 @@ public class BdyZip {
       BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, dirList, callback);
       list.add(entry);
       if (entry.isEnd()) {
-        callback.onFixDone(list);
+        if (callback != null) {
+          callback.onFixDone(list);
+        }
         return list;
       } else if (entry.isDir()) {
-        dirList.add(entry.getFileName());
+        addDirIfNotExists(dirList, entry.getFileName());
       }
     }
   }
 
+  private static void addDirIfNotExists(List<String> dirList, String dir) {
+    if (!inDirList(dirList, dir)) {
+      dirList.add(dir);
+    }
+  }
+
+  private static boolean inDirList(List<String> dirList, String dir) {
+    for (String temp : dirList) {
+      if (dir.matches("^" + temp + "[^/]*$")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static boolean isRight(List<String> dirList, BdyZipEntry nextEntry) {
     if (nextEntry.isDir()) {
-      for (String dir : dirList) {
-        if (nextEntry.getFileName().matches("^" + dir + "[^/]*$")) {
-          return true;
-        }
-      }
-      return false;
+      return inDirList(dirList, nextEntry.getFileName());
     } else {
       return nextEntry.getFileName().matches("^" + dirList.get(dirList.size() - 1) + "[^/]*$");
     }
@@ -247,7 +268,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws IOException {
-    unzip("f:/down/pack13.zip", "f:/down/pack13", new TestUnzipCallback());
+    unzip("f:/down/test2测试.zip", "f:/down/test2测试", new TestUnzipCallback());
   }
 
   /**
