@@ -258,7 +258,7 @@ public class HttpDownController {
                   ContentManager.WS.sendMsg(new WsForm(WsDataType.UNZIP_ING, unzipInfo));
                 }
               });
-            } catch (IOException e) {
+            } catch (Exception e) {
               LOGGER.error("unzip error:", e);
             }
           }).start();
