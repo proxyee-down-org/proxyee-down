@@ -7,7 +7,7 @@
 <details>
   <summary>运行时提示证书安装失败？</summary>
   
-  **请按照教程里的[手动安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/README.md)步骤进行安装**
+  **请按照教程里的[手动安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/read.md)步骤进行安装**
 </details>
 <details>
   <summary>百度云下载速度太慢？</summary>

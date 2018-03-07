@@ -25,9 +25,7 @@
 ### SwitchyOmega插件安装与设置
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)
 ### 手动安装证书
-[windows安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/windows/read.md)
-[mac安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/mac/read.md)
-[火狐安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/firefox/read.md)
+[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/read.md)
 ### 开放接口
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/api/read.md)
 ### QQ群
