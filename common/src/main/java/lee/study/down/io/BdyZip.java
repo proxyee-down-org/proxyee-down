@@ -11,10 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.FileUtil;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 public class BdyZip {
 
@@ -26,9 +23,6 @@ public class BdyZip {
   private static final long _512M = 1024 * 1024 * 521L;
 
   @Data
-  @AllArgsConstructor
-  @NoArgsConstructor
-  @Accessors(chain = true)
   public static class BdyZipEntry {
 
     private byte[] header = new byte[4];
@@ -181,11 +175,7 @@ public class BdyZip {
     if (Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_DIR_HEARD, 0, 4))) {
       return true;
     } else {
-      if (nextEntry.isDir()) {
-        return inDirList(dirList, nextEntry.getFileName());
-      } else {
-        return nextEntry.getFileName().matches("^" + dirList.get(dirList.size() - 1) + "[^/]*$");
-      }
+      return inDirList(dirList, nextEntry.getFileName(), nextEntry.isDir());
     }
   }
 
@@ -202,8 +192,6 @@ public class BdyZip {
           callback.onFixDone(list);
         }
         return list;
-      } else if (entry.isDir()) {
-        addDirIfNotExists(dirList, entry.getFileName());
       }
     }
   }
@@ -215,8 +203,15 @@ public class BdyZip {
   }
 
   private static boolean inDirList(List<String> dirList, String dir) {
+    return inDirList(dirList, dir, false);
+  }
+
+  private static boolean inDirList(List<String> dirList, String dir, boolean tree) {
+    if (dirList.size() > 1 && !tree && dir.indexOf("/") == -1) {
+      return false;
+    }
     for (String temp : dirList) {
-      if (dir.matches("^" + temp + "[^/]*$")) {
+      if (dir.matches("^" + temp + "[^/]" + (tree ? "+/" : "*") + "$")) {
         return true;
       }
     }
@@ -285,7 +280,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws IOException {
-    unzip("f:/down/win7pack.zip", "f:/down/win7pack", new TestUnzipCallback());
+    unzip(args[0], args[1], new TestUnzipCallback());
   }
 
   /**
@@ -368,3 +363,4 @@ public class BdyZip {
     }
   }
 }
+

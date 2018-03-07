@@ -1,5 +1,15 @@
 ### 常见问题
 <details>
+  <summary>安装完后进入百度云页面没有显示proxyee-down标记？</summary>
+  
+  **如果是校内网或家用宽带拨号上网的，请[安装switchy插件](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)进行下载**
+</details>
+<details>
+  <summary>运行时提示证书安装失败？</summary>
+  
+  **请按照教程里的[手动安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/README.md)步骤进行安装**
+</details>
+<details>
   <summary>百度云下载速度太慢？</summary>
   
   **调大分段数，若还是下载慢可能单文件下载被百度云10kb限速了，请尝试批量下载(选中文件夹或多个文件一起下载)**

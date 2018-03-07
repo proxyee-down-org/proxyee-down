@@ -12,9 +12,9 @@
 2. 导入bak文件  
 ![](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/switchy/imgs/2-1-2.png)  
 3. 切换情景模式  
-嗅探全站下载请求，勾选**proxyee-down下载**  
+- 嗅探**全站**下载请求，勾选**proxyee-down下载**  
 ![](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/switchy/imgs/2-2-3.png)   
-只嗅探百度云下载请求，勾选**pd自动切换**  
+- 嗅探**百度云**下载请求，勾选**pd自动切换**  
 ![](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/switchy/imgs/3-3.png) 
 ### 手动设置
 1. 创建下载代理情景模式  
