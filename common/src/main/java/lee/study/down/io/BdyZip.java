@@ -95,6 +95,8 @@ public class BdyZip {
       BdyUnzipCallback callback)
       throws IOException {
     BdyZipEntry zipEntry = getNextBdyZipEntry(fileChannel);
+    System.out.println(
+        ByteUtil.btsToHex(zipEntry.getDate()) + "\t" + ByteUtil.btsToHex(zipEntry.getTime()));
     if (!zipEntry.isDir()) {
       int index = zipEntry.getFileName().lastIndexOf("/");
       if (index != -1) {
@@ -211,15 +213,30 @@ public class BdyZip {
       return false;
     }
     for (String temp : dirList) {
-      if (dir.matches("^" + temp + "[^/]" + (tree ? "+/" : "*") + "$")) {
+      if (matchPath(temp, dir, tree)) {
         return true;
       }
     }
     return false;
   }
 
+  private static boolean matchPath(String dir, String path, boolean tree) {
+    int index = path.indexOf(dir);
+    if (index == 0) {
+      String child = path.substring(dir.length());
+      int count = 0;
+      for (int i = 0; i < child.length(); i++) {
+        if (child.charAt(i) == '/') {
+          count++;
+        }
+      }
+      return tree ? count == 1 : count == 0;
+    }
+    return false;
+  }
+
   public static void unzip(String path, String toPath, BdyUnzipCallback callback)
-      throws IOException {
+      throws Exception {
     try {
       if (callback != null) {
         callback.onStart();
@@ -275,12 +292,39 @@ public class BdyZip {
 
 
   public static void unzip(String path, String toPath)
-      throws IOException {
+      throws Exception {
     unzip(path, toPath, null);
   }
 
-  public static void main(String[] args) throws IOException {
-    unzip(args[0], args[1], new TestUnzipCallback());
+  public static void main(String[] args) throws Exception {
+//    unzip(args[0], args[1], new TestUnzipCallback());
+//    unzip("f:/down/packbu7t.zip","f:/down/packbu7t", new TestUnzipCallback());
+    FileChannel fileChannel = new RandomAccessFile("f:/down/aaa.zip", "rw")
+        .getChannel();
+    ByteBuffer byteBuffer = ByteBuffer.allocate(12);
+    fileChannel.position(fileChannel.size() - byteBuffer.capacity());
+    fileChannel.read(byteBuffer);
+    byteBuffer.flip();
+    byte[] bts4 = new byte[4];
+    byte[] bts2 = new byte[2];
+    byteBuffer.get(bts2);
+    int entryCount = (int) ByteUtil.btsToNumForSmall(bts2);
+    byteBuffer.get(bts2);
+    long centralSize = ByteUtil.btsToNumForSmall(bts2);
+    ByteBuffer centralBuffer = ByteBuffer.allocate(4);
+    fileChannel.position(fileChannel.size() - centralSize - 22);
+    fileChannel.read(centralBuffer);
+    centralBuffer.flip();
+    centralBuffer.get(bts4);
+    System.out.println(ByteUtil.btsToHex(bts4));
+    /*for (int i = 1; i <= entryCount; i++) {
+      centralBuffer.clear();
+      fileChannel.position(fileChannel.size() - (i * centralBuffer.capacity() + 22));
+      fileChannel.read(centralBuffer);
+      centralBuffer.flip();
+      centralBuffer.get(bts4);
+      System.out.println(ByteUtil.btsToHex(bts4));
+    }*/
   }
 
   /**
