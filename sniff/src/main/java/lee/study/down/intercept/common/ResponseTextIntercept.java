@@ -86,7 +86,8 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
   protected boolean isHtml(HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {
     String accept = pipeline.getHttpRequest().headers().get(HttpHeaderNames.ACCEPT);
     String contentType = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE);
-    return accept != null && accept.matches("^.*text/html.*$") && contentType != null && contentType
+    return httpResponse.status().code() == 200 && accept != null && accept
+        .matches("^.*text/html.*$") && contentType != null && contentType
         .matches("^text/html.*$");
   }
 
