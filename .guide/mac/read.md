@@ -8,6 +8,6 @@
 ## safari浏览器
 safari浏览器不支持百度云破解插件，建议使用chrome浏览器。
 ## 火狐浏览器
-由于火狐浏览器的特殊性，需要自行安装根证书，查看[安装步骤](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/firefox-ca/read.md)。
+由于火狐浏览器的特殊性，需要自行安装根证书，查看[安装步骤](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/firefox/read.md)。
 ## 完成
 打开浏览器,选择要下载的资源进行下载就会弹出下载页面了。    
