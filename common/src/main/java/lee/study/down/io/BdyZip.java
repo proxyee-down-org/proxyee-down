@@ -259,7 +259,7 @@ public class BdyZip {
           if (callback != null) {
             callback.onEntryStart(zipEntry);
           }
-          /*long fileSize = zipEntry.getCompressedSize();
+          long fileSize = zipEntry.getCompressedSize();
           if (zipEntry.isDir()) {
             FileUtil.createDirSmart(toPath + File.separator + zipEntry.getFileName());
             if (callback != null) {
@@ -281,7 +281,7 @@ public class BdyZip {
               }
             }
             unzipChannel.close();
-          }*/
+          }
         }
         if (callback != null) {
           callback.onDone();
@@ -302,47 +302,7 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws Exception {
-//    unzip(args[0], args[1], new TestUnzipCallback());
-    unzip("f:/down/packbu7t.zip", "f:/down/packbu7t", new TestUnzipCallback());
-    unzip("f:/down/pack13.zip", "f:/down/pack13", new TestUnzipCallback());
-    unzip("f:/down/win7double.zip", "f:/down/win7double", new TestUnzipCallback());
-    unzip("f:/idm/测试解压4G以上.zip", "f:/idm/测试解压4G以上", new TestUnzipCallback());
-    unzip("f:/idm/鬼子来了.zip", "f:/idm/鬼子来了", new TestUnzipCallback());
-    /*FileChannel fileChannel = new RandomAccessFile("f:/idm/win7pack.zip", "rw")
-        .getChannel();
-    ByteBuffer byteBuffer = ByteBuffer.allocate(12);
-    fileChannel.position(fileChannel.size() - byteBuffer.capacity());
-    fileChannel.read(byteBuffer);
-    byteBuffer.flip();
-    byte[] bts4 = new byte[4];
-    byte[] bts2 = new byte[2];
-    byteBuffer.get(bts2);
-    int entryCount = (int) ByteUtil.btsToNumForSmall(bts2);
-    byteBuffer.get(bts2);
-    long centralSize = ByteUtil.btsToNumForSmall(bts2);
-    ByteBuffer centralBuffer = ByteBuffer.allocate(46);
-    fileChannel.position(fileChannel.size() - centralSize - 22);
-    for (int i = 1; i <= entryCount; i++) {
-      fileChannel.read(centralBuffer);
-      centralBuffer.flip();
-      int skipSize = printBuffer(centralBuffer,
-          new int[]{4, 2, 2, 2, 2, 2, 2, 4, 4, 4, 2, 2, 2, 2, 2, 4, 4});
-      ByteBuffer nameBuffer = ByteBuffer.allocate(skipSize);
-      fileChannel.read(nameBuffer);
-      nameBuffer.flip();
-      System.out.println(Charset.forName("GB18030").decode(nameBuffer));
-      centralBuffer.clear();
-    }*/
-   /* FileChannel fileChannel = new RandomAccessFile("f:/idm/win7pack.zip", "rw").getChannel();
-    getCentralList(fileChannel);*/
-    /*BdyZipEntry entry;
-    while ((entry = getNextBdyZipEntry(fileChannel)) != null) {
-      fileChannel.position(fileChannel.position() + entry.getCompressedSize());
-      System.out.println(entry.getFileName());
-      if (entry.isEnd()) {
-        break;
-      }
-    }*/
+    unzip(args[0], args[1], new TestUnzipCallback());
   }
 
   private static int printBuffer(ByteBuffer byteBuffer, int[] array) {
