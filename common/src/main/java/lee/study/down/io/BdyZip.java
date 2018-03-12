@@ -91,18 +91,11 @@ public class BdyZip {
     return getNextBdyZipEntry(fileChannel, -1);
   }
 
-  public static BdyZipEntry getNextFixedBdyZipEntry(FileChannel fileChannel, List<String> dirList,
+  public static BdyZipEntry getNextFixedBdyZipEntry(FileChannel fileChannel,
+      List<String> centralList,
       BdyUnzipCallback callback)
       throws IOException {
     BdyZipEntry zipEntry = getNextBdyZipEntry(fileChannel);
-    System.out.println(
-        ByteUtil.btsToHex(zipEntry.getDate()) + "\t" + ByteUtil.btsToHex(zipEntry.getTime()));
-    if (!zipEntry.isDir()) {
-      int index = zipEntry.getFileName().lastIndexOf("/");
-      if (index != -1) {
-        addDirIfNotExists(dirList, zipEntry.getFileName().substring(0, index + 1));
-      }
-    }
     boolean fixFlag = false;
     if (ByteUtil
         .matchToken(fileChannel,
@@ -115,7 +108,7 @@ public class BdyZip {
             zipEntry.getFileStartPosition(),
             zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
             ZIP_ENTRY_FILE_HEARD)) {
-      long fixedSize = fixedEntrySize(fileChannel, zipEntry, _4G, dirList, callback);
+      long fixedSize = fixedEntrySize(fileChannel, zipEntry, centralList, callback);
       if (fixedSize == -1) {
         throw new RuntimeException("修复失败,文件损坏请重新下载");
       }
@@ -138,32 +131,33 @@ public class BdyZip {
     return zipEntry;
   }
 
-  private static long fixedEntrySize(FileChannel fileChannel, BdyZipEntry zipEntry, long skipSize,
-      List<String> dirList, BdyUnzipCallback callback)
+  private static long fixedEntrySize(FileChannel fileChannel, BdyZipEntry fixEntry,
+      List<String> centralList, BdyUnzipCallback callback)
       throws IOException {
+    long skipSize = _4G;
     if (callback != null) {
-      callback.onFix(fileChannel.size(), zipEntry.getFileStartPosition() + skipSize);
+      callback.onFix(fileChannel.size(), fixEntry.getFileStartPosition() + skipSize);
     }
     long fixedSize = ByteUtil
-        .getNextTokenSize(fileChannel, zipEntry.getFileStartPosition(),
-            zipEntry.getFileStartPosition() + skipSize,
+        .getNextTokenSize(fileChannel, fixEntry.getFileStartPosition(),
+            fixEntry.getFileStartPosition() + skipSize,
             ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
     BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
-        zipEntry.getFileStartPosition() + fixedSize);
+        fixEntry.getFileStartPosition() + fixedSize);
     //修复长度后下个文件没对上
-    if (!isRight(dirList, nextEntry)) {
+    if (!isRight(centralList, fixEntry, nextEntry)) {
       while (fixedSize != -1) {
         long nextSize = fixedSize + ZIP_ENTRY_FILE_HEARD.length;
         if (callback != null) {
-          callback.onFix(fileChannel.size(), zipEntry.getFileStartPosition() + nextSize);
+          callback.onFix(fileChannel.size(), fixEntry.getFileStartPosition() + nextSize);
         }
         fixedSize = ByteUtil
-            .getNextTokenSize(fileChannel, zipEntry.getFileStartPosition(),
-                zipEntry.getFileStartPosition() + nextSize,
+            .getNextTokenSize(fileChannel, fixEntry.getFileStartPosition(),
+                fixEntry.getFileStartPosition() + nextSize,
                 ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
         nextEntry = getNextBdyZipEntry(fileChannel,
-            zipEntry.getFileStartPosition() + fixedSize);
-        if (isRight(dirList, nextEntry)) {
+            fixEntry.getFileStartPosition() + fixedSize);
+        if (isRight(centralList, fixEntry, nextEntry)) {
           break;
         }
       }
@@ -173,21 +167,29 @@ public class BdyZip {
     }
   }
 
-  private static boolean isRight(List<String> dirList, BdyZipEntry nextEntry) {
+  private static boolean isRight(List<String> centralList, BdyZipEntry fixEntry,
+      BdyZipEntry nextEntry) {
     if (Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_DIR_HEARD, 0, 4))) {
       return true;
     } else {
-      return inDirList(dirList, nextEntry.getFileName(), nextEntry.isDir());
+      for (int i = 0; i < centralList.size(); i++) {
+        if (i + 1 < centralList.size()
+            && centralList.get(i).equals(fixEntry.getFileName())
+            && centralList.get(i + 1).equals(nextEntry.getFileName())) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
   public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
       BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
-    List<String> dirList = new ArrayList<>();
-    dirList.add("");
+    List<String> centralList = getCentralList(fileChannel);
+    fileChannel.position(0);
     while (true) {
-      BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, dirList, callback);
+      BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, centralList, callback);
       list.add(entry);
       if (entry.isEnd()) {
         if (callback != null) {
@@ -198,41 +200,44 @@ public class BdyZip {
     }
   }
 
-  private static void addDirIfNotExists(List<String> dirList, String dir) {
-    if (!inDirList(dirList, dir)) {
-      dirList.add(dir);
-    }
-  }
+  private final static int EOCD_SIZE = 22;
+  private final static int CENTRAL_COUNT_OFFSET = 10;
+  private final static int CENTRAL_SIZE = 46;
+  private final static int CENTRAL_NAME_OFFSET = 28;
 
-  private static boolean inDirList(List<String> dirList, String dir) {
-    return inDirList(dirList, dir, false);
-  }
-
-  private static boolean inDirList(List<String> dirList, String dir, boolean tree) {
-    if (dirList.size() > 1 && !tree && dir.indexOf("/") == -1) {
-      return false;
+  /**
+   * 取zip中所有文件和文件夹信息 doc https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.2.0.txt
+   */
+  private static List<String> getCentralList(FileChannel fileChannel) throws IOException {
+    List<String> centralList = new ArrayList<>();
+    //read EOCD
+    ByteBuffer byteBuffer = ByteBuffer.allocate(4);
+    fileChannel.position(fileChannel.size() - EOCD_SIZE + CENTRAL_COUNT_OFFSET);
+    fileChannel.read(byteBuffer);
+    byteBuffer.flip();
+    byte[] bts2 = new byte[2];
+    //offset 10
+    byteBuffer.get(bts2);
+    int centralCount = (int) ByteUtil.btsToNumForSmall(bts2);
+    //offset 12
+    byteBuffer.get(bts2);
+    long centralSize = ByteUtil.btsToNumForSmall(bts2);
+    fileChannel.position(fileChannel.size() - centralSize - EOCD_SIZE);
+    //read Central directory list
+    ByteBuffer centralBuffer = ByteBuffer.allocate(CENTRAL_SIZE);
+    for (int i = 0; i < centralCount; i++) {
+      centralBuffer.clear();
+      fileChannel.read(centralBuffer);
+      centralBuffer.flip();
+      //read Central name size
+      centralBuffer.position(CENTRAL_NAME_OFFSET);
+      centralBuffer.get(bts2);
+      int nameSize = (int) ByteUtil.btsToNumForSmall(bts2);
+      ByteBuffer nameBuffer = ByteBuffer.allocate(nameSize);
+      fileChannel.read(nameBuffer);
+      centralList.add(new String(nameBuffer.array(), "GB18030"));
     }
-    for (String temp : dirList) {
-      if (matchPath(temp, dir, tree)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean matchPath(String dir, String path, boolean tree) {
-    int index = path.indexOf(dir);
-    if (index == 0) {
-      String child = path.substring(dir.length());
-      int count = 0;
-      for (int i = 0; i < child.length(); i++) {
-        if (child.charAt(i) == '/') {
-          count++;
-        }
-      }
-      return tree ? count == 1 : count == 0;
-    }
-    return false;
+    return centralList;
   }
 
   public static void unzip(String path, String toPath, BdyUnzipCallback callback)
@@ -297,34 +302,31 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws Exception {
-//    unzip(args[0], args[1], new TestUnzipCallback());
-//    unzip("f:/down/packbu7t.zip","f:/down/packbu7t", new TestUnzipCallback());
-    FileChannel fileChannel = new RandomAccessFile("f:/down/aaa.zip", "rw")
-        .getChannel();
-    ByteBuffer byteBuffer = ByteBuffer.allocate(12);
-    fileChannel.position(fileChannel.size() - byteBuffer.capacity());
-    fileChannel.read(byteBuffer);
-    byteBuffer.flip();
-    byte[] bts4 = new byte[4];
-    byte[] bts2 = new byte[2];
-    byteBuffer.get(bts2);
-    int entryCount = (int) ByteUtil.btsToNumForSmall(bts2);
-    byteBuffer.get(bts2);
-    long centralSize = ByteUtil.btsToNumForSmall(bts2);
-    ByteBuffer centralBuffer = ByteBuffer.allocate(4);
-    fileChannel.position(fileChannel.size() - centralSize - 22);
-    fileChannel.read(centralBuffer);
-    centralBuffer.flip();
-    centralBuffer.get(bts4);
-    System.out.println(ByteUtil.btsToHex(bts4));
-    /*for (int i = 1; i <= entryCount; i++) {
-      centralBuffer.clear();
-      fileChannel.position(fileChannel.size() - (i * centralBuffer.capacity() + 22));
-      fileChannel.read(centralBuffer);
-      centralBuffer.flip();
-      centralBuffer.get(bts4);
-      System.out.println(ByteUtil.btsToHex(bts4));
-    }*/
+    unzip(args[0], args[1], new TestUnzipCallback());
+  }
+
+  private static int printBuffer(ByteBuffer byteBuffer, int[] array) {
+    int offset = 0;
+    int n = 0;
+    int m = 0;
+    int k = 0;
+    for (int size : array) {
+      byte[] bts = new byte[size];
+      byteBuffer.get(bts);
+      if (offset == 42) {
+      }
+      if (offset == 28) {
+        n = (int) ByteUtil.btsToNumForSmall(bts);
+      }
+      if (offset == 30) {
+        m = (int) ByteUtil.btsToNumForSmall(bts);
+      }
+      if (offset == 32) {
+        k = (int) ByteUtil.btsToNumForSmall(bts);
+      }
+      offset += size;
+    }
+    return n + m + k;
   }
 
   /**
