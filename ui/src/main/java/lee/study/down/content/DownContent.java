@@ -230,7 +230,11 @@ public class DownContent {
             } else if (taskInfo.getStatus() != HttpDownStatus.FAIL) {
               //设置为暂停状态
               taskInfo.setStatus(HttpDownStatus.PAUSE);
-              taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setStatus(HttpDownStatus.PAUSE));
+              taskInfo.getChunkInfoList().forEach((chunk) -> {
+                if (chunk.getStatus() != HttpDownStatus.DONE) {
+                  chunk.setStatus(HttpDownStatus.PAUSE);
+                }
+              });
             }
           }
           putBoot(bootstrap);

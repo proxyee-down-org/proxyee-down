@@ -17,9 +17,9 @@ public class BdyZip {
 
   private static final byte[] ZIP_ENTRY_FILE_HEARD = new byte[]{0x50, 0x4B, 0x03, 0x04, 0x0A,
       0x00, 0x00, 0x00, 0x00, 0x00};
-  private static final byte[] ZIP_ENTRY_DIR_HEARD = new byte[]{0x50, 0x4B, 0x01, 0x02, 0x00,
+  private static final byte[] ZIP_ENTRY_CENTRAL_HEARD = new byte[]{0x50, 0x4B, 0x01, 0x02, 0x00,
       0x00, 0x0A, 0x00, 0x00, 0x00};
-  private static final long _4G = 1024 * 1024 * 1024 * 4L - 1;
+  private static final long _4G = 0xFFFFFFFFL + 1;
   private static final long _512M = 1024 * 1024 * 521L;
 
   @Data
@@ -101,7 +101,7 @@ public class BdyZip {
         .matchToken(fileChannel,
             zipEntry.getFileStartPosition(),
             zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
-            ZIP_ENTRY_DIR_HEARD)) {
+            ZIP_ENTRY_CENTRAL_HEARD)) {
       zipEntry.setEnd(true);
     } else if (!ByteUtil
         .matchToken(fileChannel,
@@ -116,7 +116,7 @@ public class BdyZip {
       zipEntry.setCompressedSize(fixedSize);
       if (ByteUtil
           .matchToken(fileChannel, zipEntry.getFileStartPosition() + zipEntry.getCompressedSize(),
-              ZIP_ENTRY_DIR_HEARD)) {
+              ZIP_ENTRY_CENTRAL_HEARD)) {
         zipEntry.setEnd(true);
         fixFlag = true;
       }
@@ -134,42 +134,29 @@ public class BdyZip {
   private static long fixedEntrySize(FileChannel fileChannel, BdyZipEntry fixEntry,
       List<String> centralList, BdyUnzipCallback callback)
       throws IOException {
-    long skipSize = _4G;
-    if (callback != null) {
-      callback.onFix(fileChannel.size(), fixEntry.getFileStartPosition() + skipSize);
-    }
-    long fixedSize = ByteUtil
-        .getNextTokenSize(fileChannel, fixEntry.getFileStartPosition(),
-            fixEntry.getFileStartPosition() + skipSize,
-            ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
-    BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
-        fixEntry.getFileStartPosition() + fixedSize);
-    //修复长度后下个文件没对上
-    if (!isRight(centralList, fixEntry, nextEntry)) {
-      while (fixedSize != -1) {
-        long nextSize = fixedSize + ZIP_ENTRY_FILE_HEARD.length;
-        if (callback != null) {
-          callback.onFix(fileChannel.size(), fixEntry.getFileStartPosition() + nextSize);
-        }
-        fixedSize = ByteUtil
-            .getNextTokenSize(fileChannel, fixEntry.getFileStartPosition(),
-                fixEntry.getFileStartPosition() + nextSize,
-                ZIP_ENTRY_FILE_HEARD, ZIP_ENTRY_DIR_HEARD);
-        nextEntry = getNextBdyZipEntry(fileChannel,
+    long fixedSize = fixEntry.getCompressedSize();
+    while (fixEntry.getFileStartPosition() + fixedSize <= fileChannel.size()) {
+      fixedSize += _4G;
+      if (callback != null) {
+        callback.onFix(fileChannel.size(), fixEntry.getFileStartPosition() + fixedSize);
+      }
+      if (ByteUtil
+          .matchToken(fileChannel, fixEntry.getFileStartPosition(),
+              fixEntry.getFileStartPosition() + fixedSize, ZIP_ENTRY_FILE_HEARD,
+              ZIP_ENTRY_CENTRAL_HEARD)) {
+        BdyZipEntry nextEntry = getNextBdyZipEntry(fileChannel,
             fixEntry.getFileStartPosition() + fixedSize);
         if (isRight(centralList, fixEntry, nextEntry)) {
-          break;
+          return fixedSize;
         }
       }
-      return fixedSize;
-    } else {
-      return fixedSize;
     }
+    return -1;
   }
 
   private static boolean isRight(List<String> centralList, BdyZipEntry fixEntry,
       BdyZipEntry nextEntry) {
-    if (Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_DIR_HEARD, 0, 4))) {
+    if (Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_CENTRAL_HEARD, 0, 4))) {
       return true;
     } else {
       for (int i = 0; i < centralList.size(); i++) {
@@ -186,7 +173,14 @@ public class BdyZip {
   public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
       BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
-    List<String> centralList = getCentralList(fileChannel);
+    List<String> centralList;
+    try {
+      centralList = getCentralList(fileChannel);
+    } catch (IllegalArgumentException e) {
+      centralList = new ArrayList<>();
+    } catch (IOException e) {
+      throw e;
+    }
     fileChannel.position(0);
     while (true) {
       BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, centralList, callback);
@@ -208,7 +202,8 @@ public class BdyZip {
   /**
    * 取zip中所有文件和文件夹信息 doc https://pkware.cachefly.net/webdocs/APPNOTE/APPNOTE-6.2.0.txt
    */
-  private static List<String> getCentralList(FileChannel fileChannel) throws IOException {
+  private static List<String> getCentralList(FileChannel fileChannel)
+      throws IOException, IllegalArgumentException {
     List<String> centralList = new ArrayList<>();
     //read EOCD
     ByteBuffer byteBuffer = ByteBuffer.allocate(4);
@@ -259,7 +254,7 @@ public class BdyZip {
           if (callback != null) {
             callback.onEntryStart(zipEntry);
           }
-          long fileSize = zipEntry.getCompressedSize();
+          /*long fileSize = zipEntry.getCompressedSize();
           if (zipEntry.isDir()) {
             FileUtil.createDirSmart(toPath + File.separator + zipEntry.getFileName());
             if (callback != null) {
@@ -281,7 +276,7 @@ public class BdyZip {
               }
             }
             unzipChannel.close();
-          }
+          }*/
         }
         if (callback != null) {
           callback.onDone();
@@ -302,7 +297,17 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws Exception {
-    unzip(args[0], args[1], new TestUnzipCallback());
+//    unzip(args[0], args[1], new TestUnzipCallback());
+    unzip("f:/down/pack13.zip", "f:/down/【批量下载】幻月完整开区端等", null);
+    /*
+    77b67000
+377b67000
+     */
+    /*System.out.println(Long.toHexString(0x377b67000L - 0x77b67000L));
+    System.out.println(
+        Long.toHexString(0x77b67000L + 0xFFFFFFFFL + 1 + 0xFFFFFFFFL + 1 + 0xFFFFFFFFL + 1));
+    System.out.println(_4G);
+    System.out.println(0xFFFFFFFFL);*/
   }
 
   private static int printBuffer(ByteBuffer byteBuffer, int[] array) {
@@ -339,7 +344,7 @@ public class BdyZip {
       byte[] speHeard = new byte[10];
       raf.read(speHeard);
       if (Arrays.equals(speHeard, ZIP_ENTRY_FILE_HEARD)
-          || Arrays.equals(speHeard, ZIP_ENTRY_DIR_HEARD)) {
+          || Arrays.equals(speHeard, ZIP_ENTRY_CENTRAL_HEARD)) {
         return true;
       }
     }

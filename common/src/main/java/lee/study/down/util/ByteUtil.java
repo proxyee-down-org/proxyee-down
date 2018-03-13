@@ -294,10 +294,10 @@ public class ByteUtil {
     return matchToken(fileChannel, -1, position, bts);
   }
 
-  public static boolean matchToken(FileChannel fileChannel, long start, long position, byte[] bts)
+  public static boolean matchToken(FileChannel fileChannel, long start, long position, byte[]... btsArr)
       throws IOException {
     boolean ret;
-    ByteBuffer buffer = ByteBuffer.allocate(bts.length);
+    ByteBuffer buffer = ByteBuffer.allocate(btsArr[0].length);
     long rawPosition;
     if (start >= 0) {
       rawPosition = start;
@@ -309,7 +309,7 @@ public class ByteUtil {
     }
     fileChannel.read(buffer);
     buffer.flip();
-    ret = findBytes(buffer, bts) == 0;
+    ret = findBytes(buffer, btsArr) == 0;
     fileChannel.position(rawPosition);
     return ret;
   }
