@@ -19,7 +19,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down">@官方教程</native-a>
+                    href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">GitHub@proxyee-down/README.md</native-a>
         </span>
       </el-col>
     </el-row>
@@ -50,7 +50,7 @@
         <span>QQ群</span>
       </el-col>
       <el-col :span="16">
-        <span>11352304(已满)、20236964</span>
+        <span>11352304(已满)、20236964(已满)、20233754</span>
       </el-col>
     </el-row>
     <h1 class="title">软件升级</h1>
