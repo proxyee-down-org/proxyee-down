@@ -32,7 +32,7 @@
 ### 开放接口
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/api/read.md)
 ### QQ群
-1群**11352304**(已满)、2群**20236964**
+1群**11352304**(已满)、2群**20236964**(已满)、3群**20233754**
 
 # 开发
 本项目依赖[proxyee](https://github.com/monkeyWie/proxyee)，因为还没上传maven中央仓库，需自行编译打包至本地仓库。
