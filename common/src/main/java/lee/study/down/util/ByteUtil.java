@@ -3,7 +3,6 @@ package lee.study.down.util;
 import io.netty.buffer.ByteBuf;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,19 +16,14 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
-import java.util.UUID;
-import lee.study.down.constant.HttpDownStatus;
-import lee.study.down.model.ChunkInfo;
-import lee.study.down.model.TaskInfo;
 
 public class ByteUtil {
 
   /**
    * 大端序
    */
-  public static byte[] longToBtsForBig(long num) {
-    //long 8字节
-    byte[] bts = new byte[8];
+  public static byte[] numToBtsForBig(long num, int len) {
+    byte[] bts = new byte[len];
     for (int i = 0; i < bts.length; i++) {
       bts[bts.length - i - 1] = (byte) ((num >> 8 * i) & 0xFF);
     }
@@ -39,7 +33,15 @@ public class ByteUtil {
   /**
    * 大端序
    */
-  public static long btsToLongForBig(byte[] bts) {
+  public static byte[] numToBtsForBig(long num) {
+    //long 8字节
+    return numToBtsForBig(num, 8);
+  }
+
+  /**
+   * 大端序
+   */
+  public static long btsToNumForBig(byte[] bts) {
     //int 4字节
     long num = 0;
     for (int i = 0; i < bts.length; i++) {
@@ -294,7 +296,8 @@ public class ByteUtil {
     return matchToken(fileChannel, -1, position, bts);
   }
 
-  public static boolean matchToken(FileChannel fileChannel, long start, long position, byte[]... btsArr)
+  public static boolean matchToken(FileChannel fileChannel, long start, long position,
+      byte[]... btsArr)
       throws IOException {
     boolean ret;
     ByteBuffer buffer = ByteBuffer.allocate(btsArr[0].length);
@@ -312,38 +315,6 @@ public class ByteUtil {
     ret = findBytes(buffer, btsArr) == 0;
     fileChannel.position(rawPosition);
     return ret;
-  }
-
-  public static void main(String[] args) throws IOException {
-    /*String file = args[0];
-    long totalSize = Long.parseLong(args[1]);*/
-    String file = "F:\\【批量下载】c  .part7等.zip";
-    long totalSize = 12312;
-    File downFile = new File(file);
-    File[] chunks = new File(
-        downFile.getParentFile().getAbsolutePath() + File.separator + "." + downFile.getName()
-            + "_cks").listFiles();
-    TaskInfo taskInfo = new TaskInfo()
-        .setId(UUID.randomUUID().toString())
-        .setFilePath(downFile.getParentFile().getAbsolutePath())
-        .setFileName(downFile.getName())
-        .setConnections(chunks.length)
-        .setSupportRange(true)
-        .setStatus(HttpDownStatus.RUNNING)
-        .setTotalSize(totalSize)
-        .setStartTime(System.currentTimeMillis())
-        .buildChunkInfoList();
-    long downSize = 0;
-    for (int i = 0; i < chunks.length; i++) {
-      downSize += chunks[i].length();
-      ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
-      chunkInfo.setDownSize(chunks[i].length());
-      chunkInfo.setStatus(HttpDownStatus.RUNNING);
-      chunkInfo.setStartTime(System.currentTimeMillis());
-      chunkInfo.setIndex(i);
-    }
-    taskInfo.setDownSize(downSize);
-    serialize(taskInfo, taskInfo.buildTaskRecordFilePath(), taskInfo.buildTaskRecordBakFilePath());
   }
 
   public static String getCertHash(X509Certificate certificate) throws Exception {

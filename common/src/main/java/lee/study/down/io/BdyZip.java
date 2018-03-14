@@ -206,17 +206,18 @@ public class BdyZip {
       throws IOException, IllegalArgumentException {
     List<String> centralList = new ArrayList<>();
     //read EOCD
-    ByteBuffer byteBuffer = ByteBuffer.allocate(4);
+    ByteBuffer byteBuffer = ByteBuffer.allocate(6);
     fileChannel.position(fileChannel.size() - EOCD_SIZE + CENTRAL_COUNT_OFFSET);
     fileChannel.read(byteBuffer);
     byteBuffer.flip();
     byte[] bts2 = new byte[2];
-    //offset 10
+    //offset:10 bytes:2
     byteBuffer.get(bts2);
     int centralCount = (int) ByteUtil.btsToNumForSmall(bts2);
-    //offset 12
-    byteBuffer.get(bts2);
-    long centralSize = ByteUtil.btsToNumForSmall(bts2);
+    //offset 12 bytes:4
+    byte[] bts4 = new byte[4];
+    byteBuffer.get(bts4);
+    long centralSize = ByteUtil.btsToNumForSmall(bts4);
     fileChannel.position(fileChannel.size() - centralSize - EOCD_SIZE);
     //read Central directory list
     ByteBuffer centralBuffer = ByteBuffer.allocate(CENTRAL_SIZE);
@@ -254,7 +255,7 @@ public class BdyZip {
           if (callback != null) {
             callback.onEntryStart(zipEntry);
           }
-          /*long fileSize = zipEntry.getCompressedSize();
+          long fileSize = zipEntry.getCompressedSize();
           if (zipEntry.isDir()) {
             FileUtil.createDirSmart(toPath + File.separator + zipEntry.getFileName());
             if (callback != null) {
@@ -276,7 +277,7 @@ public class BdyZip {
               }
             }
             unzipChannel.close();
-          }*/
+          }
         }
         if (callback != null) {
           callback.onDone();
@@ -297,42 +298,9 @@ public class BdyZip {
   }
 
   public static void main(String[] args) throws Exception {
-//    unzip(args[0], args[1], new TestUnzipCallback());
-    unzip("f:/down/pack13.zip", "f:/down/【批量下载】幻月完整开区端等", null);
-    /*
-    77b67000
-377b67000
-     */
-    /*System.out.println(Long.toHexString(0x377b67000L - 0x77b67000L));
-    System.out.println(
-        Long.toHexString(0x77b67000L + 0xFFFFFFFFL + 1 + 0xFFFFFFFFL + 1 + 0xFFFFFFFFL + 1));
-    System.out.println(_4G);
-    System.out.println(0xFFFFFFFFL);*/
+    unzip(args[0], args[1], new TestUnzipCallback());
   }
 
-  private static int printBuffer(ByteBuffer byteBuffer, int[] array) {
-    int offset = 0;
-    int n = 0;
-    int m = 0;
-    int k = 0;
-    for (int size : array) {
-      byte[] bts = new byte[size];
-      byteBuffer.get(bts);
-      if (offset == 42) {
-      }
-      if (offset == 28) {
-        n = (int) ByteUtil.btsToNumForSmall(bts);
-      }
-      if (offset == 30) {
-        m = (int) ByteUtil.btsToNumForSmall(bts);
-      }
-      if (offset == 32) {
-        k = (int) ByteUtil.btsToNumForSmall(bts);
-      }
-      offset += size;
-    }
-    return n + m + k;
-  }
 
   /**
    * 检查是否为百度云合并下载ZIP
