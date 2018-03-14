@@ -173,14 +173,7 @@ public class BdyZip {
   public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
       BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
-    List<String> centralList;
-    try {
-      centralList = getCentralList(fileChannel);
-    } catch (IllegalArgumentException e) {
-      centralList = new ArrayList<>();
-    } catch (IOException e) {
-      throw e;
-    }
+    List<String> centralList = getCentralList(fileChannel);
     fileChannel.position(0);
     while (true) {
       BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, centralList, callback);
