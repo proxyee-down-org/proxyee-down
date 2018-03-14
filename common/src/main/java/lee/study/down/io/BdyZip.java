@@ -214,7 +214,7 @@ public class BdyZip {
     //offset:10 bytes:2
     byteBuffer.get(bts2);
     int centralCount = (int) ByteUtil.btsToNumForSmall(bts2);
-    //offset 12 bytes:4
+    //offset:12 bytes:4
     byte[] bts4 = new byte[4];
     byteBuffer.get(bts4);
     long centralSize = ByteUtil.btsToNumForSmall(bts4);
