@@ -74,8 +74,15 @@ public class HttpDownApplication extends Application {
     int viewPort = Integer.parseInt(ConfigUtil.getValue("view.server.port"));
     int tomcatPort = Integer.parseInt(ConfigUtil.getValue("tomcat.server.port"));
     if ("prd".equalsIgnoreCase(ConfigUtil.getValue("spring.profiles.active"))) {
-      if (OsUtil.isBusyPort(tomcatPort)) {
-        tomcatPort = OsUtil.getFreePort(tomcatPort + 1);
+      try {
+        if (OsUtil.isBusyPort(tomcatPort)) {
+          tomcatPort = OsUtil.getFreePort(tomcatPort + 1);
+        }
+      } catch (Exception e) {
+        LOGGER.error("getFreePort:", e);
+        JOptionPane.showMessageDialog(null, "系统异常，请尝试在命令行中执行netsh winsock reset，再运行软件", "运行警告",
+            JOptionPane.ERROR_MESSAGE);
+        throw e;
       }
       viewPort = tomcatPort;
       ConfigUtil.setValue("view.server.port", viewPort);
