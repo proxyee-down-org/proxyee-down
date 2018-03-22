@@ -2,7 +2,7 @@
 <details>
   <summary>安装完后进入百度云页面没有显示proxyee-down标记？</summary>
   
-  **如果是校内网或家用宽带拨号上网的，请[安装switchy插件](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)进行下载**
+  **如果是校内网或宽带拨号上网的，请[安装switchy插件](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)进行下载**
 </details>
 <details>
   <summary>运行时提示证书安装失败？</summary>

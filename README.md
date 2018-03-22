@@ -1,5 +1,5 @@
 # HTTP下载器
-使用本地http代理服务器方式嗅探下载请求，支持所有操作系统和大部分主流浏览器(不支持safari),支持分段下载和断点下载。
+使用本地http代理服务器方式嗅探下载请求，支持所有操作系统和大部分主流浏览器,支持分段下载和断点下载。
 ## 使用教程
 ### 下载
 - [百度云](https://pan.baidu.com/s/1fgBnWJ0gl6ZkneGkVDIEfQ) 提取码:d92x
@@ -9,10 +9,12 @@
 2. [MAC安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/mac/read.md)
 3. [Linux安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/linux/read.md)
 ### 安装成功
-在安装成功之后，浏览器下载资源时会跳转到创建任务页面，然后选择保存的路径和分段数进行创建下载任务。    
+在安装成功之后，**进入浏览器**下载资源时会跳转到创建任务页面，然后选择保存的路径和分段数进行创建下载任务。    
 ![新建任务](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/new-task.png)
 ## 常见问题(**必看**)
 在开始使用前务必看一遍[常见问题列表](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md)，可以解决你使用proxyee-down下载遇到的绝大多数问题。
+## 设置说明
+- 
 ## 常用功能
 ### 手动创建任务
 可以根据链接来创建一个任务，支持自定义请求头和请求体，具体请[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/create/read.md)。

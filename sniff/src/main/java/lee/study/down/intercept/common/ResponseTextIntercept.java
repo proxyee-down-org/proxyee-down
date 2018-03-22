@@ -41,6 +41,7 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
         }
         contentBuf = PooledByteBufAllocator.DEFAULT.buffer();
       }
+      httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE,"text/html;charset=utf-8");
       //直接调用默认拦截器，跳过下载拦截器
       pipeline.getDefault()
           .afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
