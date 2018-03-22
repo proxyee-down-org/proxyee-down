@@ -3,7 +3,6 @@
 ## 使用教程
 ### 下载
 - [百度云](https://pan.baidu.com/s/1fgBnWJ0gl6ZkneGkVDIEfQ) 提取码:d92x
-- [github](https://github.com/monkeyWie/proxyee-down/releases)
 ### 安装
 1. [Windows安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/windows/read.md)
 2. [MAC安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/mac/read.md)
