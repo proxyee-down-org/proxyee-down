@@ -1,6 +1,11 @@
 package lee.study.down.content;
 
+import com.alibaba.fastjson.JSON;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import lee.study.down.boot.TimeoutCheckTask;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.model.ConfigInfo;
@@ -29,7 +34,7 @@ public class ConfigContent {
   public void save() {
     synchronized (configContent) {
       try {
-        ByteUtil.serialize(configContent, HttpDownConstant.CONFIG_PATH);
+        JSON.writeJSONString(new FileOutputStream(HttpDownConstant.CONFIG_PATH), configContent);
       } catch (IOException e) {
         LOGGER.error("写入配置文件失败：", e);
       }
@@ -39,7 +44,7 @@ public class ConfigContent {
   public void init() {
     if (FileUtil.exists(HttpDownConstant.CONFIG_PATH)) {
       try {
-        set((ConfigInfo) ByteUtil.deserialize(HttpDownConstant.CONFIG_PATH));
+        set(JSON.parseObject(new FileInputStream(HttpDownConstant.CONFIG_PATH), ConfigInfo.class));
       } catch (Exception e) {
         LOGGER.error("加载配置文件失败：", e);
       }

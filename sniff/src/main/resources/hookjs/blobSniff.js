@@ -1,3 +1,4 @@
+//1.0
 if (self.fetch) {
   var _proxyee_down_oriFetch = window.fetch;
   Object.defineProperty(window, 'fetch', {

@@ -92,28 +92,24 @@ public class ByteUtil {
 
   public static void serialize(Serializable object, String path, boolean isHidden)
       throws IOException {
+    serialize(object, path, null, isHidden);
+  }
+
+  public static void serialize(Serializable object, String path, String bakPath, boolean isHidden)
+      throws IOException {
     FileUtil.initFile(path, isHidden);
     try (
         RandomAccessFile raf = new RandomAccessFile(path, "rw")
     ) {
       raf.write(objToBts(object));
     }
-  }
-
-  public static void serialize(Serializable object, String path, String bakPath, boolean isHidden)
-      throws IOException {
-    FileUtil.initFile(path, isHidden);
-    byte[] bts = objToBts(object);
-    try (
-        RandomAccessFile raf = new RandomAccessFile(path, "rw")
-    ) {
-      raf.write(bts);
-    }
-    FileUtil.initFile(bakPath, isHidden);
-    try (
-        RandomAccessFile raf2 = new RandomAccessFile(bakPath, "rw")
-    ) {
-      raf2.write(bts);
+    if (bakPath != null) {
+      FileUtil.initFile(bakPath, isHidden);
+      try (
+          RandomAccessFile raf2 = new RandomAccessFile(bakPath, "rw")
+      ) {
+        raf2.write(objToBts(object));
+      }
     }
   }
 

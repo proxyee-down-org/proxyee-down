@@ -1,3 +1,4 @@
+//1.0
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -159,6 +160,7 @@ var initHookInterval = setInterval(function () {
       //监视地址栏#标签的变化
       function registerHashChange() {
         window.addEventListener('hashchange', function (e) {
+          obFlag = false;
           refreshListGridStatus();
           if (getCurrentPage() == 'all') {
             if (currentPage == getCurrentPage()) {
@@ -238,9 +240,9 @@ var initHookInterval = setInterval(function () {
           });
         } else {
           var checkInterval = setInterval(function () {
-            if ($('a.g-button[title=下载]>span').length > 1) {
+            if ($('a.g-button[title^=下载]>span').length > 1) {
               clearInterval(checkInterval);
-              $('a.g-button[title=下载]>span').unbind('click')
+              $('a.g-button[title^=下载]>span').unbind('click')
               .click(function (e) {
                 linkClick(e, isGrid);
                 e.preventDefault();
@@ -251,12 +253,17 @@ var initHookInterval = setInterval(function () {
         }
       }
 
+      var obFlag = false;
+
       //监视文件列表显示变化
       function createObserver() {
         var options = {
           'childList': true,
         };
-        observer = new MutationObserver(function (mutations) {
+        var downButtonObServer = new MutationObserver(function (mutations) {
+          registerDownButton(false);
+        });
+        var observer = new MutationObserver(function (mutations) {
           if (mutations.length == 1
               && mutations[0].addedNodes
               && mutations[0].addedNodes.length > 0
@@ -264,7 +271,13 @@ var initHookInterval = setInterval(function () {
               == 'context-menu') {
             registerDownButton(true);
           } else {
-            registerDownButton(false);
+            if (!obFlag) {
+              obFlag = true;
+              $('div.' + wordMap['list-view'] + ' div.operate').each(
+                  function () {
+                    downButtonObServer.observe(this, options);
+                  });
+            }
           }
         });
 
@@ -296,22 +309,22 @@ var initHookInterval = setInterval(function () {
             }
           });
         } else {
-          $('span.' + wordMap['checkbox']).parent().filter(
-              '.zbmh0WQ7').find('div.file-name').find('div.text>a').each(
-              function () {
-                var _this = $(this);
-                $.each(fileList, function (i, file) {
-                  if (file.server_filename == _this.text()) {
-                    selectFileList.push({
-                      filename: file.server_filename,
-                      path: file.path,
-                      fs_id: file.fs_id,
-                      isdir: file.isdir
-                    });
-                    return false;
-                  }
-                });
+          $('span.' + wordMap['checkbox']).parent().each(function () {
+            if ($(this).attr('class').split(' ').length > 3) {
+              var fileName = $(this).find('div.file-name div.text>a').text();
+              $.each(fileList, function (i, file) {
+                if (file.server_filename == fileName) {
+                  selectFileList.push({
+                    filename: file.server_filename,
+                    path: file.path,
+                    fs_id: file.fs_id,
+                    isdir: file.isdir
+                  });
+                  return false;
+                }
               });
+            }
+          });
         }
         var downloadType;
         var downloadLink;
@@ -353,7 +366,7 @@ var initHookInterval = setInterval(function () {
           alert("发生错误！");
           return;
         }
-        window.location.href = downloadLink;
+        window.open(downloadLink)
       }
 
       function getSign() {
@@ -574,6 +587,7 @@ var initHookInterval = setInterval(function () {
           registerEventListener();
           createObserver();
         }
+        registerDownButton();
       };
 
       function initParams() {
@@ -663,7 +677,6 @@ var initHookInterval = setInterval(function () {
       function registerEventListener() {
         registerHashChange();
         registerListGridStatus();
-        registerDownButton();
       }
 
       //监视地址栏#标签变化
@@ -703,8 +716,8 @@ var initHookInterval = setInterval(function () {
 
       //监视文件选择框
       function registerDownButton() {
-        $('a.g-button[title=下载]>span').unbind('click');
-        $('a.g-button[title=下载]>span').click(function (e) {
+        $('a.g-button[title^=下载]>span').unbind('click');
+        $('a.g-button[title^=下载]>span').click(function (e) {
           linkButtonClick(e);
           e.preventDefault();
           e.stopPropagation();
@@ -828,7 +841,7 @@ var initHookInterval = setInterval(function () {
           } else {
             link = result.dlink;
           }
-          window.location.href = link
+          window.open(link)
         } else {
           alert('发生错误！');
           return;
@@ -860,21 +873,31 @@ var initHookInterval = setInterval(function () {
             }
           });
         } else {
-          $('span.' + wordMap['checkbox']).parent().filter(
-              '.JS-item-active').find('a.filename').each(function () {
-            var _this = $(this);
-            $.each(fileList, function (i, file) {
-              if (file.server_filename == _this.text()) {
-                selectFileList.push({
-                  filename: file.server_filename,
-                  path: file.path,
-                  fs_id: file.fs_id,
-                  isdir: file.isdir
-                });
-                return false;
-              }
+          var fileInfo = yunData.FILEINFO[0];
+          if(fileInfo.isdir==0){
+            selectFileList.push({
+              filename: fileInfo.server_filename,
+              path: fileInfo.path,
+              fs_id: fileInfo.fs_id,
+              isdir: fileInfo.isdir
             });
-          });
+          }else{
+            $('span.' + wordMap['checkbox']).parent().filter(
+                '.JS-item-active').find('a.filename').each(function () {
+              var _this = $(this);
+              $.each(fileList, function (i, file) {
+                if (file.server_filename == _this.text()) {
+                  selectFileList.push({
+                    filename: file.server_filename,
+                    path: file.path,
+                    fs_id: file.fs_id,
+                    isdir: file.isdir
+                  });
+                  return false;
+                }
+              });
+            });
+          }
         }
         if (selectFileList.length === 0) {
           alert('没有选中文件，请重试');
@@ -917,7 +940,7 @@ var initHookInterval = setInterval(function () {
               }
             }
           });
-          window.location.href = link;
+          window.open(link)
         } else {
           alert('获取下载链接失败！');
           return;

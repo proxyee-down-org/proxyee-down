@@ -13,6 +13,7 @@ import lee.study.down.intercept.common.HttpDownInterceptFactory;
 import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
+import lee.study.down.util.HttpUtil;
 import lee.study.proxyee.intercept.HttpProxyIntercept;
 import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 import lee.study.proxyee.proxy.ProxyConfig;
@@ -43,7 +44,12 @@ public class HttpDownHandleInterceptFactory implements HttpDownInterceptFactory 
         httpResponse.setStatus(HttpResponseStatus.OK);
         httpResponse.headers().clear();
         httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-        byte[] content = "<script>window.history.go(-1);</script>".getBytes();
+        byte[] content;
+        if (HttpUtil.checkHead(httpRequest, HttpHeaderNames.HOST, "^.*\\.baidupcs\\.com.*$")) {
+          content = "<script>window.close();</script>".getBytes();
+        }else{
+          content = "<script>window.history.go(-1);</script>".getBytes();
+        }
         httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, content.length);
         clientChannel.writeAndFlush(httpResponse);
         HttpContent httpContent = new DefaultLastHttpContent();

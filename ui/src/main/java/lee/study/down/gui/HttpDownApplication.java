@@ -37,8 +37,11 @@ import lee.study.down.ca.HttpDownProxyCACertFactory;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
+import lee.study.down.model.ConfigInfo;
 import lee.study.down.mvc.HttpDownSpringBoot;
+import lee.study.down.plug.PluginContent;
 import lee.study.down.task.HttpDownProgressEventTask;
+import lee.study.down.task.PluginUpdateCheckTask;
 import lee.study.down.util.ByteUtil;
 import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.FileUtil;
@@ -101,6 +104,8 @@ public class HttpDownApplication extends Application {
         .run(args.toArray(new String[args.size()]));
     //上下文加载
     ContentManager.init();
+    //插件加载
+    PluginContent.init();
     //程序退出监听
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
@@ -117,9 +122,7 @@ public class HttpDownApplication extends Application {
     try {
       //根证书生成
       if (!FileUtil.exists(HttpDownConstant.CA_PRI_PATH)
-          || !FileUtil.exists(HttpDownConstant.CA_CERT_PATH)
-          || !OsUtil.existsCert(HttpDownConstant.CA_SUBJECT,
-          ByteUtil.getCertHash(CertUtil.loadCert(HttpDownConstant.CA_CERT_PATH)))) {
+          || !FileUtil.exists(HttpDownConstant.CA_CERT_PATH)) {
         //生成ca证书和私钥
         KeyPair keyPair = CertUtil.genKeyPair();
         File priKeyFile = FileUtil.createFile(HttpDownConstant.CA_PRI_PATH, true);
@@ -132,6 +135,11 @@ public class HttpDownApplication extends Application {
                 new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(3650)),
                 keyPair)
                 .getEncoded());
+      }
+      //启动检查证书安装
+      if (ContentManager.CONFIG.get().isCheckCa() &&
+          !OsUtil.existsCert(HttpDownConstant.CA_SUBJECT,
+              ByteUtil.getCertHash(CertUtil.loadCert(HttpDownConstant.CA_CERT_PATH)))) {
         if (OsUtil.existsCert(HttpDownConstant.CA_SUBJECT)) {
           //重新生成卸载之前的证书
           if (OsUtil.isWindows() && OsUtil
@@ -146,6 +154,8 @@ public class HttpDownApplication extends Application {
         OsUtil.installCert(HttpDownConstant.CA_CERT_PATH);
       }
     } catch (Exception e) {
+      ContentManager.CONFIG.get().setCheckCa(false);
+      ContentManager.CONFIG.save();
       showMsg("证书安装失败，请手动安装");
       LOGGER.error("cert handle error", e);
     }
@@ -173,6 +183,7 @@ public class HttpDownApplication extends Application {
 
     //启动线程
     new HttpDownProgressEventTask().start();
+    new PluginUpdateCheckTask().start();
   }
 
   private static boolean isSupportBrowser;
@@ -189,11 +200,12 @@ public class HttpDownApplication extends Application {
       initBrowser();
     }
     stage.setTitle("proxyee-down-" + version);
-    Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-    stage.setX(primaryScreenBounds.getMinX());
-    stage.setY(primaryScreenBounds.getMinY());
-    stage.setWidth(primaryScreenBounds.getWidth());
-    stage.setHeight(primaryScreenBounds.getHeight());
+    Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+    ConfigInfo cf = ContentManager.CONFIG.get();
+    stage.setX(cf.getGuiX() != -1 ? cf.getGuiX() : bounds.getMinX());
+    stage.setY(cf.getGuiY() != -1 ? cf.getGuiY() : bounds.getMinY());
+    stage.setWidth(cf.getGuiWidth() != -1 ? cf.getGuiWidth() : bounds.getWidth());
+    stage.setHeight(cf.getGuiHeight() != -1 ? cf.getGuiHeight() : bounds.getHeight());
     stage.getIcons().add(new Image(
         Thread.currentThread().getContextClassLoader().getResourceAsStream("favicon.png")));
     stage.setOnCloseRequest(event -> {
@@ -375,7 +387,15 @@ public class HttpDownApplication extends Application {
         }));
 
         MenuItem closeItem = new MenuItem("退出");
-        closeItem.addActionListener(event -> System.exit(0));
+        closeItem.addActionListener(event -> {
+          //记录窗口信息
+          ContentManager.CONFIG.get().setGuiX(stage.getX());
+          ContentManager.CONFIG.get().setGuiY(stage.getY());
+          ContentManager.CONFIG.get().setGuiHeight(stage.getHeight());
+          ContentManager.CONFIG.get().setGuiWidth(stage.getWidth());
+          ContentManager.CONFIG.save();
+          System.exit(0);
+        });
 
         popupMenu.add(tasksItem);
         popupMenu.addSeparator();
