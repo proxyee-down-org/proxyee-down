@@ -32,7 +32,7 @@
     </el-form-item>
     <el-form-item label="检查证书">
       <el-switch v-model="form.checkCa"></el-switch>
-      <el-tooltip class="item" content="每次启动时自动检查证书安装情况(火狐浏览器用户建议关闭)" placement="right">
+      <el-tooltip class="item" content="启动时是否检查证书安装情况（当证书没有正确安装时会引导安装证书）" placement="right">
         <i class="el-icon-question"></i>
       </el-tooltip>
     </el-form-item>

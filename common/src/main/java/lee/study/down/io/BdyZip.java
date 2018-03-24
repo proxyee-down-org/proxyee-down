@@ -159,6 +159,9 @@ public class BdyZip {
     if (Arrays.equals(nextEntry.getHeader(), Arrays.copyOfRange(ZIP_ENTRY_CENTRAL_HEARD, 0, 4))) {
       return true;
     } else {
+      if (centralList == null) {
+        return true;
+      }
       for (int i = 0; i < centralList.size(); i++) {
         if (i + 1 < centralList.size()
             && centralList.get(i).equals(fixEntry.getFileName())
@@ -173,7 +176,11 @@ public class BdyZip {
   public static List<BdyZipEntry> getFixedEntryList(FileChannel fileChannel,
       BdyUnzipCallback callback) throws IOException {
     List<BdyZipEntry> list = new ArrayList<>();
-    List<String> centralList = getCentralList(fileChannel);
+    List<String> centralList = null;
+    try {
+      centralList = getCentralList(fileChannel);
+    } catch (IllegalArgumentException e) {//获取失败尝试强行修复
+    }
     fileChannel.position(0);
     while (true) {
       BdyZipEntry entry = getNextFixedBdyZipEntry(fileChannel, centralList, callback);

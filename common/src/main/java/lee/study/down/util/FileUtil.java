@@ -2,7 +2,6 @@ package lee.study.down.util;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,7 +9,6 @@ import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
 import java.nio.MappedByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Stack;
 import java.util.UUID;
@@ -173,13 +171,7 @@ public class FileUtil {
    */
   public static long getDiskFreeSize(String path) {
     File file = new File(path);
-    while (true) {
-      if (file.getParent() == null) {
-        return file.getFreeSpace();
-      } else {
-        file = file.getParentFile();
-      }
-    }
+    return file.getFreeSpace();
   }
 
   public static void unmap(MappedByteBuffer mappedBuffer) throws IOException {

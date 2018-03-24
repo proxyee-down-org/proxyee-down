@@ -25,17 +25,6 @@
     </el-row>
     <el-row>
       <el-col :span="3">
-        <span>软件下载</span>
-      </el-col>
-      <el-col :span="16">
-        <span>
-          <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down/releases</native-a>
-        </span>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="3">
         <span>BUG提交</span>
       </el-col>
       <el-col :span="16">
@@ -43,14 +32,6 @@
           <native-a target="_blank"
                     href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down/issue</native-a>
         </span>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="3">
-        <span>QQ群</span>
-      </el-col>
-      <el-col :span="16">
-        <span>11352304(已满)、20236964(已满)、20233754</span>
       </el-col>
     </el-row>
     <h1 class="title">软件升级</h1>
@@ -88,7 +69,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down">spring</native-a>
+                    href="http://spring.io/">spring</native-a>
         </span>
       </el-col>
     </el-row>
@@ -96,7 +77,7 @@
       <el-col :span="16">
         <span>
           <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down">netty</native-a>
+                    href="http://netty.io/">netty</native-a>
         </span>
       </el-col>
     </el-row>
@@ -104,7 +85,7 @@
       <el-col :span="16">
         <span>
            <native-a target="_blank"
-                     href="https://github.com/monkeyWie/proxyee-down">vue.js</native-a>
+                     href="https://cn.vuejs.org/">vue.js</native-a>
         </span>
       </el-col>
     </el-row>
@@ -112,7 +93,7 @@
       <el-col :span="16">
         <span>
            <native-a target="_blank"
-                     href="https://github.com/monkeyWie/proxyee-down">Element UI</native-a>
+                     href="http://element.eleme.io">Element UI</native-a>
         </span>
       </el-col>
     </el-row>

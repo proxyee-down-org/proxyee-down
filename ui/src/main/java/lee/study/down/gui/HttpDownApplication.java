@@ -171,7 +171,7 @@ public class HttpDownApplication extends Application {
                 + "vue.$store.commit('tasks/setNewTaskId','" + taskId + "');"
                 + "vue.$store.commit('tasks/setNewTaskStatus',2);");
           }
-          open();
+          open(false);
         }))
     );
     int sniffProxyPort = ContentManager.CONFIG.get().getProxyPort();
@@ -214,7 +214,7 @@ public class HttpDownApplication extends Application {
     });
   }
 
-  public void open() {
+  public void open(boolean isTray) {
     if (browser == null || ContentManager.CONFIG.get().getUiModel() == 2) {
       try {
         OsUtil.openBrowse(url);
@@ -223,28 +223,21 @@ public class HttpDownApplication extends Application {
       }
       return;
     }
-    boolean openFlag = false;
+    boolean isFront = false;
     if (stage.isShowing()) {
       if (stage.isIconified()) {
         stage.setIconified(false);
       } else {
-        if (!OsUtil.isWindows()) {
-          stage.toFront();
-        } else {
-          openFlag = true;
-        }
+        isFront = true;
+        stage.toFront();
       }
     } else {
-      if (!OsUtil.isWindows()) {
-        stage.show();
-        stage.toFront();
-      } else {
-        openFlag = true;
-      }
-    }
-    if (openFlag) {
+      isFront = true;
       stage.show();
       stage.toFront();
+    }
+    //避免有时候窗口不弹出
+    if (isFront && !isTray && OsUtil.isWindows()) {
       stage.setIconified(true);
       stage.setIconified(false);
     }
@@ -270,11 +263,11 @@ public class HttpDownApplication extends Application {
         systemTray.add(trayIcon);
         trayIcon.setImageAutoSize(true);
         // 托盘双击事件
-        trayIcon.addActionListener(event -> Platform.runLater(() -> open()));
+        trayIcon.addActionListener(event -> Platform.runLater(() -> open(true)));
         // 创建弹出菜单
         PopupMenu popupMenu = new PopupMenu();
         MenuItem tasksItem = new MenuItem("显示");
-        tasksItem.addActionListener(event -> Platform.runLater(() -> open()));
+        tasksItem.addActionListener(event -> Platform.runLater(() -> open(true)));
 
         MenuItem crtItem = new MenuItem("证书目录");
         crtItem.addActionListener(event -> {
@@ -373,7 +366,7 @@ public class HttpDownApplication extends Application {
               destroyBrowser();
               stage.close();
             }
-            open();
+            open(true);
             ContentManager.CONFIG.save();
           });
         });
@@ -383,7 +376,7 @@ public class HttpDownApplication extends Application {
           if (ContentManager.CONFIG.get().getUiModel() == 1) {
             browser.webEngine.executeScript("vue.$children[0].openTabHandle('/about');");
           }
-          open();
+          open(true);
         }));
 
         MenuItem closeItem = new MenuItem("退出");

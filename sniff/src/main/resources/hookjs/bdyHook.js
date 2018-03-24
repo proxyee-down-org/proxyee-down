@@ -1,4 +1,4 @@
-//1.0
+//1.1
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -81,6 +81,20 @@ var initHookInterval = setInterval(function () {
           return;
       }
     });
+
+    //检查下载的文件中是否包含带+名称的文件夹
+    function checkFileName(list) {
+      var ret = true;
+      if (list && list.length > 0) {
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].isdir == 1 && list[i].filename.indexOf("+") != -1) {
+            ret = false;
+            break;
+          }
+        }
+      }
+      return ret;
+    }
 
     //网盘页面的下载助手
     function PanHelper() {
@@ -339,6 +353,10 @@ var initHookInterval = setInterval(function () {
           }
         } else if (selectFileList.length > 1) {
           downloadType = 'batch';
+        }
+        if (!checkFileName(selectFileList)) {
+          alert("文件夹名称不能包含+号，请修改名称后再下载");
+          return;
         }
         fid_list = getFidList(selectFileList);
         var result = getDownloadLinkWithPanAPI(downloadType);
@@ -874,14 +892,14 @@ var initHookInterval = setInterval(function () {
           });
         } else {
           var fileInfo = yunData.FILEINFO[0];
-          if(fileInfo.isdir==0){
+          if (fileInfo.isdir == 0) {
             selectFileList.push({
               filename: fileInfo.server_filename,
               path: fileInfo.path,
               fs_id: fileInfo.fs_id,
               isdir: fileInfo.isdir
             });
-          }else{
+          } else {
             $('span.' + wordMap['checkbox']).parent().filter(
                 '.JS-item-active').find('a.filename').each(function () {
               var _this = $(this);
@@ -901,6 +919,10 @@ var initHookInterval = setInterval(function () {
         }
         if (selectFileList.length === 0) {
           alert('没有选中文件，请重试');
+          return;
+        }
+        if (!checkFileName(selectFileList)) {
+          alert("文件夹名称不能包含+号，请修改名称后再下载");
           return;
         }
         buttonTarget = 'link';
