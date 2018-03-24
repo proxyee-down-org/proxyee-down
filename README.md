@@ -12,8 +12,6 @@
 ![新建任务](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/new-task.png)
 ## 常见问题(**必看**)
 在开始使用前务必看一遍[常见问题列表](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md)，可以解决你使用proxyee-down下载遇到的绝大多数问题。
-## 设置说明
-- 
 ## 常用功能
 ### 手动创建任务
 可以根据链接来创建一个任务，支持自定义请求头和请求体，具体请[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/create/read.md)。
