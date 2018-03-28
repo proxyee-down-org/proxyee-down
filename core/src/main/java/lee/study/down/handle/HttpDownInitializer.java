@@ -12,6 +12,8 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
 public class HttpDownInitializer extends ChannelInitializer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownInitializer.class);
+  private static Executor executor = Executors.newFixedThreadPool(4);
 
   private boolean isSsl;
   private AbstractHttpDownBootstrap bootstrap;
@@ -122,9 +125,20 @@ public class HttpDownInitializer extends ChannelInitializer {
               if (HttpUtil
                   .checkUrl(bootstrap.getHttpDownInfo().getRequest(), "^.*.baidupcs.com.*$")
                   && httpResponse.status().code() == 400) {
+                executor.execute(() -> {
+                  safeClose(ctx.channel());
+                  chunkInfo.setStatus(HttpDownStatus.CONNECTING_NORMAL);
+                  try {
+                    Thread.sleep(2000);
+                    bootstrap.retryChunkDown(chunkInfo);
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                  }
+                });
                 return;
+              } else {
+                chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
               }
-              chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
               throw new RuntimeException("http down response error:" + httpResponse);
             }
             realContentSize = HttpDownUtil.getDownContentSize(httpResponse.headers());
