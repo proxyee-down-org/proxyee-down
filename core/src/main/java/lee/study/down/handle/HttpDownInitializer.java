@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
+import java.io.Closeable;
 import java.io.IOException;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
@@ -17,6 +18,7 @@ import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
+import lee.study.down.util.HttpUtil;
 import lee.study.proxyee.proxy.ProxyHandleFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +53,7 @@ public class HttpDownInitializer extends ChannelInitializer {
         .addLast("httpCodec", new HttpClientCodec());
     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
+      private Closeable closeable;
       private TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
       private HttpDownCallback callback = bootstrap.getCallback();
 
@@ -75,8 +78,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                   if (callback != null) {
                     callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
                   }
-                } else {
-                  return;
                 }
               } else {
                 safeClose(ctx.channel());
@@ -117,6 +118,12 @@ public class HttpDownInitializer extends ChannelInitializer {
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
             if ((httpResponse.status().code() + "").indexOf("20") != 0) {
+              //应对百度近期同一时段多个连接返回400的问题
+              if (HttpUtil
+                  .checkUrl(bootstrap.getHttpDownInfo().getRequest(), "^.*.baidupcs.com.*$")
+                  && httpResponse.status().code() == 400) {
+                return;
+              }
               chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
               throw new RuntimeException("http down response error:" + httpResponse);
             }
@@ -131,6 +138,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                         + "]" + chunkInfo);
                 chunkInfo
                     .setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
+                closeable = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
                 if (callback != null) {
                   callback.onChunkConnected(bootstrap.getHttpDownInfo(), chunkInfo);
@@ -169,7 +177,7 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       private void safeClose(Channel channel) {
         try {
-          HttpDownUtil.safeClose(channel);
+          HttpDownUtil.safeClose(channel, closeable);
         } catch (IOException e) {
           LOGGER.error("safeClose fail:", e);
         }

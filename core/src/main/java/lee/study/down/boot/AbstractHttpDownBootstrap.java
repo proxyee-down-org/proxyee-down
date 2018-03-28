@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.ssl.SslContext;
 import io.netty.resolver.NoopAddressResolverGroup;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -40,7 +41,7 @@ public abstract class AbstractHttpDownBootstrap {
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractHttpDownBootstrap.class);
 
   protected static final String ATTR_CHANNEL = "channel";
-  protected static final String ATTR_FILE_CHANNELS = "fileChannels";
+  protected static final String ATTR_FILE_CLOSEABLE = "fileCloseable";
 
   private HttpDownInfo httpDownInfo;
   private int retryCount;
@@ -239,6 +240,10 @@ public abstract class AbstractHttpDownBootstrap {
       if (!attr.containsKey(chunkInfo.getIndex())) {
         return;
       }
+      Closeable closeable = (Closeable) getAttr(chunkInfo, ATTR_FILE_CLOSEABLE);
+      if (closeable != null) {
+        closeable.close();
+      }
       Channel channel = getChannel(chunkInfo);
       LOGGER.debug(
           "下载连接关闭：channelId[" + (channel != null ? channel.id() : "null") + "]\t" + chunkInfo);
@@ -308,4 +313,8 @@ public abstract class AbstractHttpDownBootstrap {
 
   public abstract int doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer)
       throws IOException;
+
+  public Closeable initFileWriter(ChunkInfo chunkInfo) throws Exception {
+    return null;
+  }
 }

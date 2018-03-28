@@ -29,7 +29,8 @@ public class PluginUpdateCheckTask extends Thread {
         URLConnection connection = url.openConnection();
         PluginBean pluginBean = PluginUtil
             .checkAndUpdateLocalPlugin(name, connection.getInputStream());
-        if (pluginBean != null) {
+        PluginBean current = PluginContent.get(name);
+        if (current != null && pluginBean.getVersion() > current.getVersion()) {
           PluginContent.set(name, pluginBean);
         }
       }

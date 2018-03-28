@@ -78,8 +78,6 @@ public class PluginUtil {
             outputStream.write((line + "\r\n").getBytes("UTF-8"));
           }
         }
-      } else {
-        return null;
       }
     }
     return getPluginBean(new FileInputStream(localFile));
