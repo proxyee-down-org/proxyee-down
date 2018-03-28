@@ -269,7 +269,6 @@ public abstract class AbstractHttpDownBootstrap {
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
       if (delFile) {
-        FileUtil.deleteIfExists(taskInfo.buildChunksPath());
         FileUtil.deleteIfExists(taskInfo.buildTaskFilePath());
       }
       if (callback != null) {
