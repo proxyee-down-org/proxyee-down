@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.HPos;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
@@ -202,12 +204,13 @@ public class HttpDownApplication extends Application {
     stage.setTitle("proxyee-down-" + version);
     Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
     ConfigInfo cf = ContentManager.CONFIG.get();
-    stage.setX(cf.getGuiX() != -1 ? cf.getGuiX() : bounds.getMinX());
-    stage.setY(cf.getGuiY() != -1 ? cf.getGuiY() : bounds.getMinY());
-    stage.setWidth(cf.getGuiWidth() != -1 ? cf.getGuiWidth() : bounds.getWidth());
-    stage.setHeight(cf.getGuiHeight() != -1 ? cf.getGuiHeight() : bounds.getHeight());
+    stage.setX(cf.getGuiX() >= 0 ? cf.getGuiX() : bounds.getMinX());
+    stage.setY(cf.getGuiY() >= 0 ? cf.getGuiY() : bounds.getMinY());
+    stage.setWidth(cf.getGuiWidth() >= 0 ? cf.getGuiWidth() : bounds.getWidth());
+    stage.setHeight(cf.getGuiHeight() >= 0 ? cf.getGuiHeight() : bounds.getHeight());
     stage.getIcons().add(new Image(
         Thread.currentThread().getContextClassLoader().getResourceAsStream("favicon.png")));
+    //关闭窗口监听
     stage.setOnCloseRequest(event -> {
       event.consume();
       close();

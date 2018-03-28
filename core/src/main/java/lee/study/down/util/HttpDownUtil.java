@@ -56,6 +56,7 @@ public class HttpDownUtil {
       httpResponse = getResponse(httpRequest, proxyConfig, clientSslCtx, loopGroup);
       //处理重定向
       if ((httpResponse.status().code() + "").indexOf("30") == 0) {
+        //TODO 302重定向乱码 https://link.gimhoy.com/googledrive/aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL29wZW4/aWQ9MThlVmNKeEhwaE40RUpGTUowSk10bWNXOVhCcWJhVE1k.jpg
         String redirectUrl = httpResponse.headers().get(HttpHeaderNames.LOCATION);
         HttpRequestInfo requestInfo = (HttpRequestInfo) httpRequest;
         requestInfo.headers().remove("Host");

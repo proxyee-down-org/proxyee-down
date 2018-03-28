@@ -10,10 +10,8 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
-import java.io.Closeable;
 import java.io.IOException;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
-import lee.study.down.boot.X86HttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
@@ -53,7 +51,6 @@ public class HttpDownInitializer extends ChannelInitializer {
         .addLast("httpCodec", new HttpClientCodec());
     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
-      private Closeable[] fileChannels;
       private TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
       private HttpDownCallback callback = bootstrap.getCallback();
 
@@ -71,14 +68,6 @@ public class HttpDownInitializer extends ChannelInitializer {
               if (chunkInfo.getStatus() == HttpDownStatus.RUNNING
                   && nowChannel == ctx.channel()) {
                 int readableBytes = bootstrap.doFileWriter(chunkInfo, byteBuf.nioBuffer());
-                if (bootstrap instanceof X86HttpDownBootstrap) {
-                  X86HttpDownBootstrap x86Bootstrap = (X86HttpDownBootstrap) bootstrap;
-                  long downSize = chunkInfo.getDownSize() + x86Bootstrap.getCacheSize(chunkInfo);
-                  //下载完成
-                  if (isDone(downSize, httpContent) || isContinue(downSize)) {
-                    readableBytes = x86Bootstrap.cacheFlush(chunkInfo);
-                  }
-                }
                 if (readableBytes > 0) {
                   //文件已下载大小
                   chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
@@ -87,7 +76,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                     callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
                   }
                 } else {
-
                   return;
                 }
               } else {
@@ -111,9 +99,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                   if (!taskInfo.isSupportRange()) {  //chunked编码最后更新文件大小
                     taskInfo.setTotalSize(taskInfo.getDownSize());
                     taskInfo.getChunkInfoList().get(0).setTotalSize(taskInfo.getDownSize());
-                  }
-                  if (taskInfo.getChunkInfoList().size() > 1) {
-                    bootstrap.merge();
                   }
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
@@ -146,7 +131,6 @@ public class HttpDownInitializer extends ChannelInitializer {
                         + "]" + chunkInfo);
                 chunkInfo
                     .setDownSize(chunkInfo.getNowStartPosition() - chunkInfo.getOriStartPosition());
-                fileChannels = bootstrap.initFileWriter(chunkInfo);
                 chunkInfo.setStatus(HttpDownStatus.RUNNING);
                 if (callback != null) {
                   callback.onChunkConnected(bootstrap.getHttpDownInfo(), chunkInfo);
@@ -185,7 +169,7 @@ public class HttpDownInitializer extends ChannelInitializer {
 
       private void safeClose(Channel channel) {
         try {
-          HttpDownUtil.safeClose(channel, fileChannels);
+          HttpDownUtil.safeClose(channel);
         } catch (IOException e) {
           LOGGER.error("safeClose fail:", e);
         }

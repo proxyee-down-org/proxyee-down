@@ -462,6 +462,8 @@ public class HttpDownController {
       resultInfo.setData(taskInfo.getId());
     } catch (MalformedURLException e) {
       resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("链接格式不正确");
+    } catch (TimeoutException e) {
+      resultInfo.setStatus(ResultStatus.BAD.getCode()).setMsg("连接超时，请重试");
     } catch (Exception e) {
       throw new RuntimeException("buildTask error:" + form.toString(), e);
     }

@@ -28,13 +28,13 @@ public class PluginUpdateCheckTask extends Thread {
         URL url = new URL(HOST + name);
         URLConnection connection = url.openConnection();
         PluginBean pluginBean = PluginUtil
-            .getPluginBean(connection.getInputStream(), PluginContent.get(name).getVersion());
+            .getPluginBean(name, connection.getInputStream(), PluginContent.get(name).getVersion());
         if (pluginBean != null) {
-          PluginContent.update(name, pluginBean);
+          PluginContent.set(name, pluginBean);
         }
       }
     } catch (IOException e) {
-      LOGGER.error("plugin update error", e);
+      LOGGER.error("plugin set error", e);
     }
   }
 }

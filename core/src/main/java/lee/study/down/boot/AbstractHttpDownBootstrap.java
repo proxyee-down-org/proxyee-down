@@ -11,9 +11,9 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.ssl.SslContext;
 import io.netty.resolver.NoopAddressResolverGroup;
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +67,12 @@ public abstract class AbstractHttpDownBootstrap {
     if (new File(taskInfo.buildTaskFilePath()).exists()) {
       throw new BootstrapException("文件名已存在，请修改文件名");
     }
-    initBoot();
+    //创建文件
+    try (
+        RandomAccessFile randomAccessFile = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
+    ) {
+      randomAccessFile.setLength(taskInfo.getTotalSize());
+    }
     //文件下载开始回调
     taskInfo.reset();
     taskInfo.setStatus(HttpDownStatus.RUNNING);
@@ -81,6 +86,7 @@ public abstract class AbstractHttpDownBootstrap {
     if (callback != null) {
       callback.onStart(httpDownInfo);
     }
+    afterStart();
   }
 
   protected void startChunkDown(ChunkInfo chunkInfo, int updateStatus) throws Exception {
@@ -200,13 +206,17 @@ public abstract class AbstractHttpDownBootstrap {
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
-      if (continueDownHandle()) {
+      if (!FileUtil.exists(taskInfo.buildTaskFilePath())) {
+        close();
+        startDown();
+      } else {
         taskInfo.setStatus(HttpDownStatus.RUNNING);
         taskInfo.getChunkInfoList().forEach((chunk) -> chunk.setErrorCount(0));
         long curTime = System.currentTimeMillis();
         taskInfo.setPauseTime(
             taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
         taskInfo.setLastTime(curTime);
+        afterStart();
         for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
           synchronized (chunkInfo) {
             if (chunkInfo.getStatus() == HttpDownStatus.PAUSE
@@ -224,21 +234,16 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  protected abstract boolean continueDownHandle() throws Exception;
-
-  public abstract void merge() throws Exception;
-
   public void close(ChunkInfo chunkInfo) {
     try {
       if (!attr.containsKey(chunkInfo.getIndex())) {
         return;
       }
       Channel channel = getChannel(chunkInfo);
-      Closeable[] fileChannels = getFileWriter(chunkInfo);
       LOGGER.debug(
           "下载连接关闭：channelId[" + (channel != null ? channel.id() : "null") + "]\t" + chunkInfo);
       attr.remove(chunkInfo.getIndex());
-      HttpDownUtil.safeClose(channel, fileChannels);
+      HttpDownUtil.safeClose(channel);
     } catch (Exception e) {
       LOGGER.error("closeChunk error", e);
     }
@@ -299,14 +304,9 @@ public abstract class AbstractHttpDownBootstrap {
     return (Channel) getAttr(chunkInfo, ATTR_CHANNEL);
   }
 
-  protected abstract void initBoot() throws Exception;
-
-  public abstract Closeable[] initFileWriter(ChunkInfo chunkInfo) throws Exception;
+  protected void afterStart() throws Exception {
+  }
 
   public abstract int doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer)
       throws IOException;
-
-  protected Closeable[] getFileWriter(ChunkInfo chunkInfo) {
-    return (Closeable[]) getAttr(chunkInfo, ATTR_FILE_CHANNELS);
-  }
 }

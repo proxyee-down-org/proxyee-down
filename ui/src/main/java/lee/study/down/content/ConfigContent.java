@@ -2,6 +2,7 @@ package lee.study.down.content;
 
 import com.alibaba.fastjson.JSON;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,6 +50,13 @@ public class ConfigContent {
       ) {
         set(JSON.parseObject(inputStream, ConfigInfo.class));
       } catch (Exception e) {
+        if (!(e instanceof FileNotFoundException)) {
+          try {
+            FileUtil.deleteIfExists(HttpDownConstant.CONFIG_PATH);
+          } catch (IOException e1) {
+            e1.printStackTrace();
+          }
+        }
         LOGGER.error("加载配置文件失败：", e);
       }
     }
