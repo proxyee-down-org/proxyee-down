@@ -18,5 +18,10 @@
       <artifactId>proxyee-down-common</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.xerial.larray</groupId>
+      <artifactId>larray_2.12</artifactId>
+      <version>0.4.0</version>
+    </dependency>
   </dependencies>
 </project>

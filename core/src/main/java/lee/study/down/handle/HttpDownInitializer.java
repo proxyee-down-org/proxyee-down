@@ -13,6 +13,7 @@ import io.netty.util.ReferenceCountUtil;
 import java.io.Closeable;
 import java.io.IOException;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
+import lee.study.down.boot.X86HttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
@@ -65,25 +66,36 @@ public class HttpDownInitializer extends ChannelInitializer {
             }
             HttpContent httpContent = (HttpContent) msg;
             ByteBuf byteBuf = httpContent.content();
-            int readableBytes = byteBuf.readableBytes();
             synchronized (chunkInfo) {
               Channel nowChannel = bootstrap.getChannel(chunkInfo);
               if (chunkInfo.getStatus() == HttpDownStatus.RUNNING
-                  && nowChannel == ctx.channel()
-                  && bootstrap.doFileWriter(chunkInfo, byteBuf.nioBuffer())) {
-                //文件已下载大小
-                chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
-                taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
-                if (callback != null) {
-                  callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
+                  && nowChannel == ctx.channel()) {
+                int readableBytes = bootstrap.doFileWriter(chunkInfo, byteBuf.nioBuffer());
+                if (bootstrap instanceof X86HttpDownBootstrap) {
+                  X86HttpDownBootstrap x86Bootstrap = (X86HttpDownBootstrap) bootstrap;
+                  long downSize = chunkInfo.getDownSize() + x86Bootstrap.getCacheSize(chunkInfo);
+                  //下载完成
+                  if (isDone(downSize, httpContent) || isContinue(downSize)) {
+                    readableBytes = x86Bootstrap.cacheFlush(chunkInfo);
+                  }
+                }
+                if (readableBytes > 0) {
+                  //文件已下载大小
+                  chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
+                  taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
+                  if (callback != null) {
+                    callback.onProgress(bootstrap.getHttpDownInfo(), chunkInfo);
+                  }
+                } else {
+
+                  return;
                 }
               } else {
                 safeClose(ctx.channel());
                 return;
               }
             }
-            if (chunkInfo.getDownSize() == chunkInfo.getTotalSize()
-                || (!taskInfo.isSupportRange() && msg instanceof LastHttpContent)) {
+            if (isDone(chunkInfo.getDownSize(), httpContent)) {
               LOGGER.debug("分段下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
               bootstrap.close(chunkInfo);
               //分段下载完成回调
@@ -106,16 +118,13 @@ public class HttpDownInitializer extends ChannelInitializer {
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
                   LOGGER.debug("下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
+                  bootstrap.close();
                   if (callback != null) {
                     callback.onDone(bootstrap.getHttpDownInfo());
                   }
                 }
               }
-            } else if (realContentSize
-                == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
-                .getNowStartPosition() || (realContentSize - 1)
-                == chunkInfo.getDownSize() + chunkInfo.getOriStartPosition() - chunkInfo
-                .getNowStartPosition()) {  //百度响应做了手脚，会少一个字节
+            } else if (isContinue(chunkInfo.getDownSize())) {  //百度响应做了手脚，会少一个字节
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
               LOGGER.debug("继续下载：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
               bootstrap.retryChunkDown(chunkInfo, HttpDownStatus.CONNECTING_CONTINUE);
@@ -182,6 +191,17 @@ public class HttpDownInitializer extends ChannelInitializer {
         }
       }
 
+      private boolean isDone(long downSize, HttpContent content) {
+        return downSize == chunkInfo.getTotalSize()
+            || (!taskInfo.isSupportRange() && content instanceof LastHttpContent);
+      }
+
+      private boolean isContinue(long downSize) {
+        long downChunkSize =
+            downSize + chunkInfo.getOriStartPosition() - chunkInfo.getNowStartPosition();
+        return realContentSize == downChunkSize
+            || (realContentSize - 1) == downChunkSize;
+      }
     });
   }
 

@@ -14,10 +14,7 @@ import io.netty.resolver.NoopAddressResolverGroup;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import lee.study.down.constant.HttpDownStatus;
@@ -40,7 +37,7 @@ import org.slf4j.LoggerFactory;
 @AllArgsConstructor
 public abstract class AbstractHttpDownBootstrap {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractHttpDownBootstrap.class);
+  protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractHttpDownBootstrap.class);
 
   protected static final String ATTR_CHANNEL = "channel";
   protected static final String ATTR_FILE_CHANNELS = "fileChannels";
@@ -86,7 +83,7 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  public void startChunkDown(ChunkInfo chunkInfo, int updateStatus) throws Exception {
+  protected void startChunkDown(ChunkInfo chunkInfo, int updateStatus) throws Exception {
     HttpRequestInfo requestInfo = (HttpRequestInfo) httpDownInfo.getRequest();
     RequestProto requestProto = requestInfo.requestProto();
     LOGGER.debug("开始下载：" + chunkInfo);
@@ -184,12 +181,12 @@ public abstract class AbstractHttpDownBootstrap {
       taskInfo.setStatus(HttpDownStatus.PAUSE);
       for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
         synchronized (chunkInfo) {
-          close(chunkInfo);
           if (chunkInfo.getStatus() != HttpDownStatus.DONE) {
             chunkInfo.setStatus(HttpDownStatus.PAUSE);
           }
         }
       }
+      close();
     }
     if (callback != null) {
       callback.onPause(httpDownInfo);
@@ -227,12 +224,15 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  public abstract boolean continueDownHandle() throws Exception;
+  protected abstract boolean continueDownHandle() throws Exception;
 
   public abstract void merge() throws Exception;
 
   public void close(ChunkInfo chunkInfo) {
     try {
+      if (!attr.containsKey(chunkInfo.getIndex())) {
+        return;
+      }
       Channel channel = getChannel(chunkInfo);
       Closeable[] fileChannels = getFileWriter(chunkInfo);
       LOGGER.debug(
@@ -291,7 +291,7 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  public void setChannel(ChunkInfo chunkInfo, Channel channel) {
+  protected void setChannel(ChunkInfo chunkInfo, Channel channel) {
     setAttr(chunkInfo, ATTR_CHANNEL, channel);
   }
 
@@ -299,13 +299,14 @@ public abstract class AbstractHttpDownBootstrap {
     return (Channel) getAttr(chunkInfo, ATTR_CHANNEL);
   }
 
-  public abstract void initBoot() throws Exception;
+  protected abstract void initBoot() throws Exception;
 
   public abstract Closeable[] initFileWriter(ChunkInfo chunkInfo) throws Exception;
 
-  public abstract boolean doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer) throws IOException;
+  public abstract int doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer)
+      throws IOException;
 
-  public Closeable[] getFileWriter(ChunkInfo chunkInfo) {
+  protected Closeable[] getFileWriter(ChunkInfo chunkInfo) {
     return (Closeable[]) getAttr(chunkInfo, ATTR_FILE_CHANNELS);
   }
 }

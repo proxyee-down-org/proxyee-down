@@ -35,5 +35,9 @@ public class PathUtil {
     if (OsUtil.isWindows() && ROOT_PATH.indexOf("/") == 0) {
       ROOT_PATH = ROOT_PATH.substring(1);
     }
+    if (ROOT_PATH.lastIndexOf("/") != ROOT_PATH.length() - 1
+        && ROOT_PATH.lastIndexOf("\\") != ROOT_PATH.length() - 1) {
+      ROOT_PATH += "/";
+    }
   }
 }
