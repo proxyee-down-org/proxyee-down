@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import lee.study.down.model.PluginBean;
+import lee.study.down.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,9 @@ public class PluginContent {
   }
 
   public static void set(String key, PluginBean value) {
-    content.put(key, value);
+    if (value != null) {
+      content.put(key, value);
+    }
   }
 
   public static PluginBean get(String key) {

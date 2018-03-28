@@ -13,12 +13,11 @@ import lee.study.down.util.PathUtil;
 
 public class PluginUtil {
 
-  private static final String PLUG_PATH = PathUtil.ROOT_PATH + "plugs";
+  public static final String PLUG_PATH = PathUtil.ROOT_PATH + "plugs";
 
-  public static PluginBean getPluginBean(String key, InputStream inputStream, float currentVersion)
+  public static PluginBean getPluginBean(InputStream inputStream)
       throws IOException {
     PluginBean pluginBean = new PluginBean();
-    FileOutputStream outputStream = null;
     try (
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))
     ) {
@@ -29,32 +28,15 @@ public class PluginUtil {
         if (num == 1) {
           //版本号
           float newVersion = Float.parseFloat(line.substring(2));
-          if (newVersion > currentVersion) {
-            pluginBean.setVersion(newVersion);
-            String localFile = PLUG_PATH + File.separator + key;
-            FileUtil.createFileSmart(localFile);
-            outputStream = new FileOutputStream(localFile);
-          } else {
-            return null;
-          }
+          pluginBean.setVersion(newVersion);
           num++;
         }
         String temp = line + "\r\n";
         sb.append(temp);
-        outputStream.write(temp.getBytes("UTF-8"));
       }
       pluginBean.setContent(sb.toString());
-    } finally {
-      if (outputStream != null) {
-        outputStream.close();
-      }
     }
     return pluginBean;
-  }
-
-  private static PluginBean getPluginBean(InputStream inputStream)
-      throws IOException {
-    return getPluginBean(null, inputStream, -1F);
   }
 
   public static PluginBean checkAndUpdateLocalPlugin(String key, InputStream inputStream)
@@ -80,9 +62,15 @@ public class PluginUtil {
       float targetVersion = Float.parseFloat(str.substring(2));
       //plug需要更新
       if (targetVersion > localVersion) {
-        FileUtil.createFileSmart(localFile);
+        if (!FileUtil.exists(PLUG_PATH)) {
+          FileUtil.createDirSmart(PLUG_PATH);
+        }
+        if (FileUtil.exists(localFile)) {
+          new File(localFile).delete();
+        }
+        new File(localFile).createNewFile();
         try (
-            FileOutputStream outputStream = new FileOutputStream(localFile);
+            FileOutputStream outputStream = new FileOutputStream(localFile)
         ) {
           outputStream.write((str + "\r\n").getBytes("UTF-8"));
           String line;
@@ -90,6 +78,8 @@ public class PluginUtil {
             outputStream.write((line + "\r\n").getBytes("UTF-8"));
           }
         }
+      } else {
+        return null;
       }
     }
     return getPluginBean(new FileInputStream(localFile));
