@@ -27,7 +27,7 @@
       <el-slider
         v-model="form.connections"
         :min="2"
-        :max="256"
+        :max="128"
         :step="2"
         :disabled="!form.supportRange||!!form.oldId"
         show-input>

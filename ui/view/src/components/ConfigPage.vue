@@ -10,7 +10,7 @@
       <el-slider
         v-model="form.connections"
         :min="2"
-        :max="256"
+        :max="128"
         :step="2"
         show-input>
       </el-slider>
@@ -96,11 +96,11 @@
           ],
           timeout: [
             {required: true, message: '不能为空'},
-            {type: 'integer', min: 10, message: '请输入大于或等于10的数字'},
+            {type: 'integer', min: 5, message: '请输入大于或等于5的数字'},
           ],
           retryCount: [
             {required: true, message: '不能为空'},
-            {type: 'integer', min: 5, max: 30, message: '请输入5-30之间的数字'},
+            {type: 'integer', min: 5, max: 100, message: '请输入5-100之间的数字'},
           ]
         },
         proxyTypeOptions: [{

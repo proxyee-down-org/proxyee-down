@@ -35,11 +35,7 @@ public class HttpDownStatus {
    */
   public final static int DONE = 7;
   /**
-   * 合并文件
+   * 响应错误等待连接
    */
-  public final static int MERGE = 8;
-  /**
-   * 取消合并文件
-   */
-  public final static int MERGE_CANCEL = 9;
+  public final static int ERROR_WAIT_CONNECT = 8;
 }

@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 public class HttpDownInitializer extends ChannelInitializer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpDownInitializer.class);
-  private static Executor executor = Executors.newFixedThreadPool(4);
 
   private boolean isSsl;
   private AbstractHttpDownBootstrap bootstrap;
@@ -75,6 +74,8 @@ public class HttpDownInitializer extends ChannelInitializer {
                   && nowChannel == ctx.channel()) {
                 int readableBytes = bootstrap.doFileWriter(chunkInfo, byteBuf.nioBuffer());
                 if (readableBytes > 0) {
+                  //最后一次下载时间
+                  chunkInfo.setLastDownTime(System.currentTimeMillis());
                   //文件已下载大小
                   chunkInfo.setDownSize(chunkInfo.getDownSize() + readableBytes);
                   taskInfo.setDownSize(taskInfo.getDownSize() + readableBytes);
@@ -120,26 +121,15 @@ public class HttpDownInitializer extends ChannelInitializer {
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
-            if ((httpResponse.status().code() + "").indexOf("20") != 0) {
+            Integer responseCode = httpResponse.status().code();
+            if (responseCode.toString().indexOf("20") != 0) {
               //应对百度近期同一时段多个连接返回400的问题
-              if (HttpUtil
-                  .checkUrl(bootstrap.getHttpDownInfo().getRequest(), "^.*.baidupcs.com.*$")
-                  && httpResponse.status().code() == 400) {
-                executor.execute(() -> {
-                  safeClose(ctx.channel());
-                  chunkInfo.setStatus(HttpDownStatus.CONNECTING_NORMAL);
-                  try {
-                    Thread.sleep(2000);
-                    bootstrap.retryChunkDown(chunkInfo);
-                  } catch (Exception e) {
-                    e.printStackTrace();
-                  }
-                });
-                return;
-              } else {
-                chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
+              LOGGER.debug(
+                  "响应状态码异常：" + responseCode + "\t" + chunkInfo);
+              if (responseCode == 401 || responseCode == 403 || responseCode == 404) {
+                chunkInfo.setStatus(HttpDownStatus.ERROR_WAIT_CONNECT);
               }
-              throw new RuntimeException("http down response error:" + httpResponse);
+              return;
             }
             realContentSize = HttpDownUtil.getDownContentSize(httpResponse.headers());
             synchronized (chunkInfo) {

@@ -63,13 +63,13 @@ public class LargeMappedByteBuffer implements Closeable {
   @Override
   public void close() throws IOException {
     try {
-      fileChannel.close();
       Class<?> clazz = Class.forName("sun.nio.ch.FileChannelImpl");
       Method m = clazz.getDeclaredMethod("unmap", MappedByteBuffer.class);
       m.setAccessible(true);
       for (MappedByteBuffer mappedBuffer : bufferList) {
         m.invoke(clazz, mappedBuffer);
       }
+      fileChannel.close();
     } catch (Exception e) {
       throw new IOException("LargeMappedByteBuffer close", e);
     }

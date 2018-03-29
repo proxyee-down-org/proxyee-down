@@ -1,6 +1,5 @@
 package lee.study.down.boot;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +13,7 @@ public class TimeoutCheckTask extends Thread {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TimeoutCheckTask.class);
 
-  private static int seconds = 30;
+  private static volatile int seconds = 30;
   private static Map<String, AbstractHttpDownBootstrap> bootstrapContent = new ConcurrentHashMap<>();
 
   public synchronized static void setTimeout(int seconds) {
@@ -31,7 +30,6 @@ public class TimeoutCheckTask extends Thread {
 
   @Override
   public void run() {
-    Map<String, Long> flagMap = new HashMap<>();
     while (true) {
       try {
         for (AbstractHttpDownBootstrap bootstrap : bootstrapContent.values()) {
@@ -41,23 +39,23 @@ public class TimeoutCheckTask extends Thread {
               //30秒没有反应则重新建立连接下载
               if (taskInfo.getStatus() == HttpDownStatus.RUNNING
                   && chunkInfo.getStatus() != HttpDownStatus.DONE
+                  && chunkInfo.getStatus() != HttpDownStatus.WAIT
                   && chunkInfo.getStatus() != HttpDownStatus.PAUSE) {
-                String key = taskInfo.getId() + "_" + chunkInfo.getIndex();
-                Long downSize = flagMap.get(key);
-                //下载失败
-                if (downSize != null && downSize == chunkInfo.getDownSize()) {
+                long nowTime = System.currentTimeMillis();
+                if (nowTime - chunkInfo.getLastDownTime() > seconds * 1000) {
                   LOGGER.debug(seconds + "秒内无响应重试：" + chunkInfo);
-                  //避免同时下载
+                  if (chunkInfo.getStatus() == HttpDownStatus.ERROR_WAIT_CONNECT) {
+                    chunkInfo.setErrorCount(chunkInfo.getErrorCount() + 1);
+                  }
+                  //重试下载
                   bootstrap.retryChunkDown(chunkInfo);
-                } else {
-                  flagMap.put(key, chunkInfo.getDownSize());
                 }
               }
             }
           }
 
         }
-        TimeUnit.SECONDS.sleep(TimeoutCheckTask.seconds);
+        TimeUnit.MILLISECONDS.sleep(1000);
       } catch (Exception e) {
         LOGGER.error("checkTask:" + e);
       }

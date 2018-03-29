@@ -1,5 +1,6 @@
 package lee.study.down.mvc.controller;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -77,8 +78,6 @@ public class HttpDownController {
       List<HttpDownInfo> sameTasks = ContentManager.DOWN.getDownInfos().stream()
           .filter(downInfo -> HttpDownStatus.WAIT != downInfo.getTaskInfo().getStatus()
               && HttpDownStatus.DONE != downInfo.getTaskInfo().getStatus()
-              && HttpDownStatus.MERGE != downInfo.getTaskInfo().getStatus()
-              && HttpDownStatus.MERGE_CANCEL != downInfo.getTaskInfo().getStatus()
               && downInfo.getTaskInfo().getTotalSize() == taskInfo.getTotalSize()
           ).collect(Collectors.toList());
       data.put("sameTasks", NewTaskForm.parse(sameTasks));

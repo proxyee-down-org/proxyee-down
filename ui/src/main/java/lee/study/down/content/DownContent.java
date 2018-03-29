@@ -224,10 +224,7 @@ public class DownContent {
             } else {
               taskInfo.reset();
             }
-            if (taskInfo.getStatus() == HttpDownStatus.MERGE) {
-              //设置为合并取消状态
-              taskInfo.setStatus(HttpDownStatus.MERGE_CANCEL);
-            } else if (taskInfo.getStatus() != HttpDownStatus.FAIL) {
+            if (taskInfo.getStatus() != HttpDownStatus.FAIL) {
               //设置为暂停状态
               taskInfo.setStatus(HttpDownStatus.PAUSE);
               taskInfo.getChunkInfoList().forEach((chunk) -> {

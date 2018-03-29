@@ -14,7 +14,7 @@ public class HttpDownConstant {
 
   public final static String HOME_PATH = PathUtil.ROOT_PATH;
   public final static String TASK_RECORD_PATH = HOME_PATH + ".records.inf";
-  public final static String CONFIG_PATH = HOME_PATH + ".config.inf";
+  public final static String CONFIG_PATH = HOME_PATH + "config.inf";
 
   public final static String CA_SUBJECT = "ProxyeeRoot";
   public final static String SSL_PATH = HOME_PATH + "ssl" + File.separator;

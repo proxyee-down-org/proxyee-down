@@ -107,6 +107,8 @@ public abstract class AbstractHttpDownBootstrap {
     }
     ChannelFuture cf = bootstrap.connect(requestProto.getHost(), requestProto.getPort());
     chunkInfo.setStatus(updateStatus);
+    //重置最后下载时间
+    chunkInfo.setLastDownTime(System.currentTimeMillis());
     cf.addListener((ChannelFutureListener) future -> {
       if (future.isSuccess()) {
         synchronized (chunkInfo) {
@@ -237,18 +239,19 @@ public abstract class AbstractHttpDownBootstrap {
 
   public void close(ChunkInfo chunkInfo) {
     try {
+      chunkInfo.setStatus(HttpDownStatus.WAIT);
       if (!attr.containsKey(chunkInfo.getIndex())) {
         return;
-      }
-      Closeable closeable = (Closeable) getAttr(chunkInfo, ATTR_FILE_CLOSEABLE);
-      if (closeable != null) {
-        closeable.close();
       }
       Channel channel = getChannel(chunkInfo);
       LOGGER.debug(
           "下载连接关闭：channelId[" + (channel != null ? channel.id() : "null") + "]\t" + chunkInfo);
-      attr.remove(chunkInfo.getIndex());
       HttpDownUtil.safeClose(channel);
+      Closeable closeable = (Closeable) getAttr(chunkInfo, ATTR_FILE_CLOSEABLE);
+      if (closeable != null) {
+        closeable.close();
+      }
+      attr.remove(chunkInfo.getIndex());
     } catch (Exception e) {
       LOGGER.error("closeChunk error", e);
     }
@@ -257,6 +260,7 @@ public abstract class AbstractHttpDownBootstrap {
   public void close() {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
+      taskInfo.setStatus(HttpDownStatus.WAIT);
       for (ChunkInfo chunkInfo : httpDownInfo.getTaskInfo().getChunkInfoList()) {
         synchronized (chunkInfo) {
           close(chunkInfo);
@@ -266,11 +270,11 @@ public abstract class AbstractHttpDownBootstrap {
   }
 
   public void delete(boolean delFile) throws Exception {
-    close();
-    timeoutCheckTask.delBoot(httpDownInfo.getTaskInfo().getId());
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     //删除任务进度记录文件
     synchronized (taskInfo) {
+      close();
+      timeoutCheckTask.delBoot(httpDownInfo.getTaskInfo().getId());
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
       if (delFile) {

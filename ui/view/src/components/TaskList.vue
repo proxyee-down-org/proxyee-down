@@ -64,9 +64,11 @@
                     <b>{{leftTime(task)}}</b>
                     <el-tooltip v-show="task.status==6" class="item"
                                 placement="right">
-                      <div slot="content">下载链接失效，可尝试<a
-                        href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
-                        target="_blank" style="color: #3a8ee6">刷新下载链接</a>
+                      <div slot="content">下载链接失效，可尝试
+                        <native-a
+                          href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                          target="_blank" style="color: #3a8ee6">刷新下载链接
+                        </native-a>
                       </div>
                       <i class="el-icon-question"></i>
                     </el-tooltip>
@@ -113,6 +115,7 @@
 
 <script>
   import Util from '../common/util'
+  import NativeA from './base/NativeA'
   import BuildTask from './BuildTask'
   import NewTask from './NewTask'
   import TaskProgress from './base/TaskProgress'
@@ -122,7 +125,8 @@
     components: {
       BuildTask,
       NewTask,
-      TaskProgress
+      TaskProgress,
+      NativeA
     },
     computed: {
       newTaskTitle() {
@@ -219,12 +223,6 @@
         if (task.status == 7) {
           return '已完成';
         }
-        if (task.status == 8) {
-          return '合并中';
-        }
-        if (task.status == 9) {
-          return '待合并';
-        }
         if (task.status == 5) {
           return '暂停中';
         }
@@ -239,15 +237,13 @@
         switch (task.status) {
           case 7:
             return 'success';
-          case 8:
-            return 'merge';
           case 2:
           case 6:
             return 'exception';
           case 5:
-          case 9:
             return 'pause';
           case 1:
+          case 8:
             return 'ready';
           default:
             return null;
@@ -332,6 +328,12 @@
       .then(result => {
         this.buildTaskHandle(result);
       }).catch(() => {
+      });
+      this.$notify.info({
+        title: 'Tips',
+        position: 'bottom-right',
+        duration: 0,
+        message: '点击进度圈可以查看下载速度'
       });
     }
   }
