@@ -238,8 +238,14 @@ public abstract class AbstractHttpDownBootstrap {
   }
 
   public void close(ChunkInfo chunkInfo) {
+    close(chunkInfo, false);
+  }
+
+  public void close(ChunkInfo chunkInfo, boolean isDone) {
     try {
-      chunkInfo.setStatus(HttpDownStatus.WAIT);
+      if (!isDone) {
+        chunkInfo.setStatus(HttpDownStatus.WAIT);
+      }
       if (!attr.containsKey(chunkInfo.getIndex())) {
         return;
       }
@@ -257,16 +263,22 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  public void close() {
+  public void close(boolean isDone) {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
-      taskInfo.setStatus(HttpDownStatus.WAIT);
+      if (!isDone) {
+        taskInfo.setStatus(HttpDownStatus.WAIT);
+      }
       for (ChunkInfo chunkInfo : httpDownInfo.getTaskInfo().getChunkInfoList()) {
         synchronized (chunkInfo) {
-          close(chunkInfo);
+          close(chunkInfo, isDone);
         }
       }
     }
+  }
+
+  public void close() {
+    close(false);
   }
 
   public void delete(boolean delFile) throws Exception {
