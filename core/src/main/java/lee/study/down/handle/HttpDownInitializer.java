@@ -90,7 +90,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             }
             if (isDone(chunkInfo.getDownSize(), httpContent)) {
               LOGGER.debug("分段下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
-              bootstrap.close(chunkInfo, true);
+              bootstrap.close(chunkInfo);
               //分段下载完成回调
               chunkInfo.setStatus(HttpDownStatus.DONE);
               taskInfo.refresh(chunkInfo);
@@ -108,7 +108,7 @@ public class HttpDownInitializer extends ChannelInitializer {
                   //文件下载完成回调
                   taskInfo.setStatus(HttpDownStatus.DONE);
                   LOGGER.debug("下载完成：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
-                  bootstrap.close(true);
+                  bootstrap.close();
                   if (callback != null) {
                     callback.onDone(bootstrap.getHttpDownInfo());
                   }

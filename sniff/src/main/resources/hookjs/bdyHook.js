@@ -1,4 +1,4 @@
-//1.2
+//1.3
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -65,6 +65,11 @@ var initHookInterval = setInterval(function () {
       'list-tools': 'QDDOQB'
     };
     var wordMap = location.protocol == 'http:' ? wordMapHttp : wordMapHttps;
+
+    function getDefaultStyle(obj, attribute) {
+      return obj.currentStyle ? obj.currentStyle[attribute]
+          : document.defaultView.getComputedStyle(obj, false)[attribute];
+    }
 
     $(function () {
       switch (detectPage()) {
@@ -324,7 +329,8 @@ var initHookInterval = setInterval(function () {
           });
         } else {
           $('span.' + wordMap['checkbox']).parent().each(function () {
-            if ($(this).hasClass('mixjMpAl')) {
+            if (getDefaultStyle($(this).find(">span>span").get(0), 'display')
+                == 'block') {
               var fileName = $(this).find('div.file-name div.text>a').text();
               $.each(fileList, function (i, file) {
                 if (file.server_filename == fileName) {

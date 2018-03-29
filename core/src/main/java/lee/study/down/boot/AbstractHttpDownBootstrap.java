@@ -87,7 +87,6 @@ public abstract class AbstractHttpDownBootstrap {
     if (callback != null) {
       callback.onStart(httpDownInfo);
     }
-    afterStart();
   }
 
   protected void startChunkDown(ChunkInfo chunkInfo, int updateStatus) throws Exception {
@@ -219,7 +218,6 @@ public abstract class AbstractHttpDownBootstrap {
         taskInfo.setPauseTime(
             taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
         taskInfo.setLastTime(curTime);
-        afterStart();
         for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
           synchronized (chunkInfo) {
             if (chunkInfo.getStatus() == HttpDownStatus.PAUSE
@@ -238,13 +236,13 @@ public abstract class AbstractHttpDownBootstrap {
   }
 
   public void close(ChunkInfo chunkInfo) {
-    close(chunkInfo, false);
+    close(chunkInfo, -1);
   }
 
-  public void close(ChunkInfo chunkInfo, boolean isDone) {
+  public void close(ChunkInfo chunkInfo, int status) {
     try {
-      if (!isDone) {
-        chunkInfo.setStatus(HttpDownStatus.WAIT);
+      if (status != -1) {
+        chunkInfo.setStatus(status);
       }
       if (!attr.containsKey(chunkInfo.getIndex())) {
         return;
@@ -263,29 +261,29 @@ public abstract class AbstractHttpDownBootstrap {
     }
   }
 
-  public void close(boolean isDone) {
+  public void close(int status) {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
-      if (!isDone) {
-        taskInfo.setStatus(HttpDownStatus.WAIT);
+      if (status != -1) {
+        taskInfo.setStatus(status);
       }
       for (ChunkInfo chunkInfo : httpDownInfo.getTaskInfo().getChunkInfoList()) {
         synchronized (chunkInfo) {
-          close(chunkInfo, isDone);
+          close(chunkInfo, status);
         }
       }
     }
   }
 
   public void close() {
-    close(false);
+    close(-1);
   }
 
   public void delete(boolean delFile) throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     //删除任务进度记录文件
     synchronized (taskInfo) {
-      close();
+      close(HttpDownStatus.WAIT);
       timeoutCheckTask.delBoot(httpDownInfo.getTaskInfo().getId());
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordFilePath());
       FileUtil.deleteIfExists(taskInfo.buildTaskRecordBakFilePath());
@@ -322,9 +320,6 @@ public abstract class AbstractHttpDownBootstrap {
 
   public Channel getChannel(ChunkInfo chunkInfo) {
     return (Channel) getAttr(chunkInfo, ATTR_CHANNEL);
-  }
-
-  protected void afterStart() throws Exception {
   }
 
   public abstract int doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer)
