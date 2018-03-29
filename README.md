@@ -2,6 +2,7 @@
 使用本地http代理服务器方式嗅探下载请求，支持所有操作系统和大部分主流浏览器,支持分段下载和断点下载。
 ## 使用教程
 ### 下载
+- [Onedrive](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBLfmkrhLWhCJxAzmUoogLpw?e=4vRDW2)
 - [百度云](https://pan.baidu.com/s/1fgBnWJ0gl6ZkneGkVDIEfQ) 提取码:d92x
 ### 安装
 1. [Windows安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/windows/read.md)
@@ -34,9 +35,11 @@
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/api/read.md)
 ### QQ群
 1群**11352304**(已满)、2群**20236964**(已满)、3群**20233754**
-
+### 支持
+感谢[惶心|技术博客](https://tech.hxco.de)提供的下载服务
 # 开发
-本项目依赖[proxyee](https://github.com/monkeyWie/proxyee)，因为还没上传maven中央仓库，需自行编译打包至本地仓库。
+本项目依赖[proxyee](https://github.com/monkeyWie/proxyee)，因为还没上传maven中央仓库，需自行编译打包至本地仓库。  
+导入IDE里时需要安装lombok插件。
 ## 环境
   ![](https://img.shields.io/badge/JAVA-1.8%2B-brightgreen.svg) ![](https://img.shields.io/badge/maven-3.0%2B-brightgreen.svg) ![](https://img.shields.io/badge/node.js-8.0%2B-brightgreen.svg)
 ## 编译
