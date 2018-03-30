@@ -118,6 +118,12 @@ public class HttpDownInitializer extends ChannelInitializer {
               //真实响应字节小于要下载的字节，在下载完成后要继续下载
               LOGGER.debug("继续下载：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
               bootstrap.retryChunkDown(chunkInfo, HttpDownStatus.CONNECTING_CONTINUE);
+            } else if (chunkInfo.getDownSize() > chunkInfo.getTotalSize()) {
+              LOGGER.debug("分段下载异常：channelId[" + ctx.channel().id() + "]\t" + chunkInfo);
+              chunkInfo.setDownSize(0);
+              chunkInfo.setStartTime(System.currentTimeMillis());
+              chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
+              bootstrap.retryChunkDown(chunkInfo);
             }
           } else {
             HttpResponse httpResponse = (HttpResponse) msg;
