@@ -27,7 +27,6 @@ public class X86HttpDownBootstrap extends AbstractHttpDownBootstrap {
   @Override
   public int doFileWriter(ChunkInfo chunkInfo, ByteBuffer buffer) throws IOException {
     int ret = buffer.remaining();
-    System.out.println(ret);
     MappedByteBuffer mappedByteBuffer = null;
     try (
         FileChannel fileChannel = new RandomAccessFile(
