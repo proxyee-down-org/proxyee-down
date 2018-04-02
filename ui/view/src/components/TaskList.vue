@@ -237,12 +237,12 @@
         switch (task.status) {
           case 7:
             return 'success';
-          case 2:
           case 6:
             return 'exception';
           case 5:
             return 'pause';
           case 1:
+          case 2:
           case 8:
             return 'ready';
           default:

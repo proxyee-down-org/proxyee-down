@@ -1,9 +1,12 @@
 package lee.study.down.boot;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.RecvByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
@@ -39,6 +42,11 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractHttpDownBootstrap {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractHttpDownBootstrap.class);
+
+  //tcp bufferSize最大为128K
+  public static final int BUFFER_SIZE = 1024 * 128;
+  private static final RecvByteBufAllocator RECV_BYTE_BUF_ALLOCATOR = new AdaptiveRecvByteBufAllocator(
+      64, BUFFER_SIZE, BUFFER_SIZE);
 
   protected static final String ATTR_CHANNEL = "channel";
   protected static final String ATTR_FILE_CLOSEABLE = "fileCloseable";
@@ -95,6 +103,8 @@ public abstract class AbstractHttpDownBootstrap {
     LOGGER.debug("开始下载：" + chunkInfo);
     Bootstrap bootstrap = new Bootstrap()
         .channel(NioSocketChannel.class)
+        .option(ChannelOption.RCVBUF_ALLOCATOR, RECV_BYTE_BUF_ALLOCATOR)
+        .option(ChannelOption.SO_RCVBUF, BUFFER_SIZE)
         .group(clientLoopGroup)
         .handler(new HttpDownInitializer(requestProto.getSsl(), this, chunkInfo));
     if (httpDownInfo.getProxyConfig() != null) {

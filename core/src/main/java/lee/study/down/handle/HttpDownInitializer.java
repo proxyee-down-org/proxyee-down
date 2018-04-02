@@ -52,7 +52,8 @@ public class HttpDownInitializer extends ChannelInitializer {
       ch.pipeline().addLast(bootstrap.getClientSslContext().newHandler(ch.alloc()));
     }
     ch.pipeline()
-        .addLast("httpCodec", new HttpClientCodec());
+        .addLast("httpCodec",
+            new HttpClientCodec(4096, 8192, AbstractHttpDownBootstrap.BUFFER_SIZE));
     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
 
       private Closeable closeable;
@@ -130,7 +131,7 @@ public class HttpDownInitializer extends ChannelInitializer {
             Integer responseCode = httpResponse.status().code();
             if (responseCode.toString().indexOf("20") != 0) {
               //应对百度近期同一时段多个连接返回400的问题
-              LOGGER.debug(
+              LOGGER.warn(
                   "响应状态码异常：" + responseCode + "\t" + chunkInfo);
               if (responseCode == 401 || responseCode == 403 || responseCode == 404) {
                 chunkInfo.setStatus(HttpDownStatus.ERROR_WAIT_CONNECT);
