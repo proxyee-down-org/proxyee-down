@@ -1,8 +1,20 @@
 <template>
   <div>
-    <el-tooltip v-if="!initFlag" content="创建任务" placement="right">
-      <el-button class="el-icon-plus" @click="setNewTaskStatus(1)"></el-button>
-    </el-tooltip>
+    <el-row v-if="!initFlag">
+      <el-col :span="2">
+        <el-tooltip content="创建任务" placement="right">
+          <el-button class="el-icon-plus" @click="setNewTaskStatus(1)"></el-button>
+        </el-tooltip>
+      </el-col>
+      <el-col :span="2" :offset="20">
+        <el-tooltip content="视图模式" placement="right">
+          <el-radio-group v-model="view">
+            <el-radio-button label="list">列表</el-radio-button>
+            <el-radio-button label="grid">格子</el-radio-button>
+          </el-radio-group>
+        </el-tooltip>
+      </el-col>
+    </el-row>
     <el-dialog
       :title="newTaskTitle"
       :visible="newTaskStatus>0"
@@ -27,9 +39,50 @@
     <div v-else-if="tasks.length>0">
       <el-row type="flex" justify="center">
         <el-col :span="20">
-          <el-row v-for="row in Math.ceil(tasks.length/cellSize)" :key="row">
-            <el-col :span="8" v-for="task in rowTasks(row)" class="task-list-container"
-                    :key="task.id">
+          <el-row v-if="view=='list'"
+                  class="task-list-row"
+                  :gutter="20">
+            <el-col :span="2">
+              <el-checkbox border>全选</el-checkbox>
+            </el-col>
+            <el-col :span="6">
+              <b>名称</b>
+            </el-col>
+            <el-col :span="2">
+              <b>大小</b>
+            </el-col>
+            <el-col :span="8">
+              <b>进度</b>
+            </el-col>
+            <el-col :span="2">
+              <b>速度</b>
+            </el-col>
+            <el-col :span="2">
+              <b>状态</b>
+            </el-col>
+            <el-col :span="2">
+              <b>操作</b>
+            </el-col>
+          </el-row>
+          <el-row v-for="(task,index) in view=='list'?tasks:Math.ceil(tasks.length/cellSize)"
+                  :class="{'task-list-row':view=='list'}"
+                  :gutter="view=='list'?20:0"
+                  :key="index">
+            <template v-if="view=='list'">
+              <el-col :span="2">
+                <el-checkbox border>选择</el-checkbox>
+              </el-col>
+              <el-col :span="6">
+                <span>{{task.fileName}}</span>
+              </el-col>
+              <el-col :span="2">
+                <span>{{sizeFmt(task.totalSize, '未知大小')}}</span>
+              </el-col>
+            </template>
+            <el-col :span="8"
+                    v-for="task in view=='list'?[task]:rowTasks(index+1)"
+                    class="task-list-container"
+                    :key="task.id+view">
               <el-popover
                 placement="right-end"
                 title="下载详情"
@@ -82,14 +135,38 @@
                     <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
                   </li>
                 </ul>
-                <task-progress type="circle"
+                <task-progress v-if="view=='list'"
+                               :text-inside="true"
+                               :stroke-width="30"
                                :percentage="task.totalProgress||progress(task)"
                                :status="status(task)"
-                               :width="200"
                                slot="reference"></task-progress>
+                <task-progress v-else
+                               type="circle"
+                               :percentage="task.totalProgress||progress(task)"
+                               :status="status(task)"
+                               slot="reference"
+                               :width="200"></task-progress>
               </el-popover>
-              <div class="task-progress-icon">
-                <div v-if="task.status!=8">
+              <div v-if="view!='list'" class="task-grid-icon">
+                <i v-if="task.status!=7"
+                   :class="iconClass(task)"
+                   @click="controlTask(task)"></i>
+                <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
+                <i v-if="task.status==7" class="el-icon-task-folder"
+                   @click="openTaskDir(task)"></i>
+                <p>{{task.fileName}}</p>
+              </div>
+            </el-col>
+            <template v-if="view=='list'">
+              <el-col :span="2">
+                <span>{{sizeFmt(speedTask(task), '0B')}}/s</span>
+              </el-col>
+              <el-col :span="2">
+                <span>{{leftTime(task)}}</span>
+              </el-col>
+              <el-col :span="2">
+                <div class="task-list-icon">
                   <i v-if="task.status!=7"
                      :class="iconClass(task)"
                      @click="controlTask(task)"></i>
@@ -97,12 +174,8 @@
                   <i v-if="task.status==7" class="el-icon-task-folder"
                      @click="openTaskDir(task)"></i>
                 </div>
-                <div v-else>
-                  <i class="el-icon-loading"></i>
-                </div>
-              </div>
-              <p>{{task.fileName}}</p>
-            </el-col>
+              </el-col>
+            </template>
           </el-row>
         </el-col>
       </el-row>
@@ -120,13 +193,24 @@
   import NewTask from './NewTask'
   import TaskProgress from './base/TaskProgress'
   import {mapState, mapMutations} from 'vuex'
+  import ElCol from "element-ui/packages/col/src/col";
+  import ElRow from "element-ui/packages/row/src/row";
+  import ElCheckbox from "../../node_modules/element-ui/packages/checkbox/src/checkbox.vue";
 
   export default {
     components: {
+      ElCheckbox,
+      ElRow,
+      ElCol,
       BuildTask,
       NewTask,
       TaskProgress,
       NativeA
+    },
+    data() {
+      return {
+        view: 'list'
+      }
     },
     computed: {
       newTaskTitle() {
@@ -333,7 +417,7 @@
         title: 'Tips',
         position: 'bottom-right',
         duration: 0,
-        message: '点击进度圈可以查看下载速度'
+        message: '点击进度条可以查看任务下载详情'
       });
     }
   }
@@ -377,13 +461,51 @@
   }
 
   @import "../assets/icon/iconfont.css";
-  .task-progress-icon {
+
+  .task-grid-icon {
     height: 40px;
   }
 
-  .task-progress-icon i {
+  .task-grid-icon i {
     padding: 10px 30px;
     font-size: 30px;
     cursor: pointer;
+  }
+
+  .task-list-row {
+    padding-top: 30px;
+    text-align: center;
+  }
+
+  .task-list-icon {
+    height: 40px;
+    top: 0px;
+    left: 0px;
+  }
+
+  .task-list-icon i {
+    font-size: 30px;
+    cursor: pointer;
+    padding-left: 15px;
+  }
+
+  .task-list-file {
+    position: relative;
+    top: -25px;
+  }
+
+  .task-list-file > span {
+    display: block;
+    font-size: 18px;
+    padding-top: 10px;
+    color: #409eff;
+  }
+
+  .task-list-file-name {
+
+  }
+
+  .task-list-file-size {
+
   }
 </style>

@@ -859,13 +859,13 @@ var initHookInterval = setInterval(function () {
           vcodeDialog.open();
         } else if (result.errno === 0) {
           vcodeDialog.close();
-          var link;
+          var downloadLink;
           if (selectFileList.length == 1 && selectFileList[0].isdir === 0) {
-            link = result.list[0].dlink;
+            downloadLink = result.list[0].dlink;
           } else {
-            link = result.dlink;
+            downloadLink = result.dlink;
           }
-          window.open(link)
+          window.open(downloadLink)
         } else {
           alert('发生错误！');
           return;
@@ -924,7 +924,7 @@ var initHookInterval = setInterval(function () {
           }
         }
         if (selectFileList.length === 0) {
-          alert('没有选中文件，请重试');
+          alert('获取选中文件失败，请刷新重试');
           return;
         }
         if (!checkFileName(selectFileList)) {
@@ -932,24 +932,24 @@ var initHookInterval = setInterval(function () {
           return;
         }
         buttonTarget = 'link';
-        var downloadLink = getDownloadLink();
+        var downloadInfo = getDownloadLink();
 
-        if (downloadLink.errno == -20) {
+        if (downloadInfo.errno == -20) {
           vcode = getVCode();
           if (!vcode || vcode.errno !== 0) {
             alert('获取验证码失败！');
             return;
           }
           vcodeDialog.open(vcode);
-        } else if (downloadLink.errno == 112) {
+        } else if (downloadInfo.errno == 112) {
           alert('页面过期，请刷新重试');
           return;
-        } else if (downloadLink.errno === 0) {
-          var link;
+        } else if (downloadInfo.errno === 0) {
+          var downloadLink;
           if (selectFileList.length == 1 && selectFileList[0].isdir === 0) {
-            link = downloadLink.list[0].dlink;
+            downloadLink = downloadInfo.list[0].dlink;
           } else {
-            link = downloadLink.dlink;
+            downloadLink = downloadInfo.dlink;
           }
           if (selectFileList.length == 1) {
             $('#dialog-downloadlink').attr('href', link).text(link);
@@ -968,7 +968,7 @@ var initHookInterval = setInterval(function () {
               }
             }
           });
-          window.open(link)
+          window.open(downloadLink)
         } else {
           alert('获取下载链接失败！');
           return;
