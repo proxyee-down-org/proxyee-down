@@ -2,7 +2,7 @@
 使用本地http代理服务器方式嗅探下载请求，支持所有操作系统和大部分主流浏览器,支持分段下载和断点下载。
 ## 使用教程
 ### 下载
-- [Onedrive](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBLfmkrhLWhCJxAzmUoogLpw?e=4vRDW2)
+- [OneDrive](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)(推荐)
 - [百度云](https://pan.baidu.com/s/1fgBnWJ0gl6ZkneGkVDIEfQ) 提取码:d92x
 ### 安装
 1. [Windows安装教程](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/windows/read.md)
