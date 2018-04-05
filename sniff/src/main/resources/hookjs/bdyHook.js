@@ -1,4 +1,4 @@
-//1.3
+//1.5
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -898,7 +898,7 @@ var initHookInterval = setInterval(function () {
           });
         } else {
           var fileInfo = yunData.FILEINFO[0];
-          if (fileInfo.isdir == 0) {
+          if (yunData.FILEINFO.length == 1 && fileInfo.isdir == 0) {
             selectFileList.push({
               filename: fileInfo.server_filename,
               path: fileInfo.path,
