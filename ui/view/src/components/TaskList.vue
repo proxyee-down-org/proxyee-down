@@ -1,17 +1,18 @@
 <template>
   <div>
     <el-row v-if="!initFlag">
-      <el-col :span="2">
-        <el-tooltip content="创建任务" placement="right">
-          <el-button class="el-icon-plus" @click="setNewTaskStatus(1)"></el-button>
+      <el-col>
+        <el-tooltip content="创建任务">
+          <el-button class="el-icon-plus tool-button" @click="setNewTaskStatus(1)"></el-button>
         </el-tooltip>
-      </el-col>
-      <el-col :span="2" :offset="20">
-        <el-tooltip content="视图模式" placement="right">
-          <el-radio-group v-model="view">
-            <el-radio-button label="list">列表</el-radio-button>
-            <el-radio-button label="grid">格子</el-radio-button>
-          </el-radio-group>
+        <el-tooltip content="开始任务">
+          <el-button class="el-icon-task-start tool-button"></el-button>
+        </el-tooltip>
+        <el-tooltip content="暂停任务">
+          <el-button class="el-icon-task-pause tool-button"></el-button>
+        </el-tooltip>
+        <el-tooltip content="删除任务">
+          <el-button class="el-icon-task-delete tool-button"></el-button>
         </el-tooltip>
       </el-col>
     </el-row>
@@ -37,146 +38,127 @@
          element-loading-background="rgba(0, 0, 0, 0)">
     </div>
     <div v-else-if="tasks.length>0">
-      <el-row type="flex" justify="center">
-        <el-col :span="20">
-          <el-row v-if="view=='list'"
-                  class="task-list-row"
-                  :gutter="20">
-            <el-col :span="2">
-              <el-checkbox border>全选</el-checkbox>
-            </el-col>
-            <el-col :span="6">
-              <b>名称</b>
-            </el-col>
-            <el-col :span="2">
-              <b>大小</b>
-            </el-col>
-            <el-col :span="8">
-              <b>进度</b>
-            </el-col>
-            <el-col :span="2">
-              <b>速度</b>
-            </el-col>
-            <el-col :span="2">
-              <b>状态</b>
-            </el-col>
-            <el-col :span="2">
-              <b>操作</b>
-            </el-col>
-          </el-row>
-          <el-row v-for="(task,index) in view=='list'?tasks:Math.ceil(tasks.length/cellSize)"
-                  :class="{'task-list-row':view=='list'}"
-                  :gutter="view=='list'?20:0"
-                  :key="index">
-            <template v-if="view=='list'">
-              <el-col :span="2">
-                <el-checkbox border>选择</el-checkbox>
-              </el-col>
-              <el-col :span="6">
-                <span>{{task.fileName}}</span>
-              </el-col>
-              <el-col :span="2">
-                <span>{{sizeFmt(task.totalSize, '未知大小')}}</span>
-              </el-col>
-            </template>
-            <el-col :span="8"
-                    v-for="task in view=='list'?[task]:rowTasks(index+1)"
-                    class="task-list-container"
-                    :key="task.id+view">
-              <el-popover
-                placement="right-end"
-                title="下载详情"
-                width="400"
-                trigger="click">
-                <div class="file-detail">
-                  <p>
-                    <b style="display:block;height: 40px;overflow-y: auto">{{task.url}}</b>
-                  </p>
-                  <p>
-                    <span>名称：</span>
-                    <b>{{task.fileName}}</b>
-                  </p>
-                  <p>
-                    <span>路径：</span>
-                    <b>{{task.filePath}}</b>
-                  </p>
-                  <p>
-                    <span>大小：</span>
-                    <b>{{sizeFmt(task.totalSize, '未知大小')}}</b>
-                  </p>
-                  <p>
-                    <span>分段：</span>
-                    <b>{{task.connections}}</b>
-                  </p>
-                  <p>
-                    <span>速度：</span>
-                    <b>{{sizeFmt(speedTask(task), '0B')}}/s</b>
-                  </p>
-                  <p>
-                    <span>状态：</span>
-                    <b>{{leftTime(task)}}</b>
-                    <el-tooltip v-show="task.status==6" class="item"
-                                placement="right">
-                      <div slot="content">下载链接失效，可尝试
-                        <native-a
-                          href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
-                          target="_blank" style="color: #3a8ee6">刷新下载链接
-                        </native-a>
-                      </div>
-                      <i class="el-icon-question"></i>
-                    </el-tooltip>
-                  </p>
-                </div>
-                <ul :class="{'task-list':true,'task-list-scroll':task.chunkInfoList.length>=16}">
-                  <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
-                    <task-progress :text-inside="true" :stroke-width="18"
-                                   :percentage="task.totalProgress||progress(chunk)"
-                                   :status="status(chunk)"></task-progress>
-                    <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
-                  </li>
-                </ul>
-                <task-progress v-if="view=='list'"
-                               :text-inside="true"
-                               :stroke-width="30"
-                               :percentage="task.totalProgress||progress(task)"
-                               :status="status(task)"
-                               slot="reference"></task-progress>
-                <task-progress v-else
-                               type="circle"
-                               :percentage="task.totalProgress||progress(task)"
-                               :status="status(task)"
-                               slot="reference"
-                               :width="200"></task-progress>
-              </el-popover>
-              <div v-if="view!='list'" class="task-grid-icon">
-                <i v-if="task.status!=7"
-                   :class="iconClass(task)"
-                   @click="controlTask(task)"></i>
-                <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
-                <i v-if="task.status==7" class="el-icon-task-folder"
-                   @click="openTaskDir(task)"></i>
-                <p>{{task.fileName}}</p>
-              </div>
-            </el-col>
-            <template v-if="view=='list'">
-              <el-col :span="2">
-                <span>{{sizeFmt(speedTask(task), '0B')}}/s</span>
-              </el-col>
-              <el-col :span="2">
-                <span>{{leftTime(task)}}</span>
-              </el-col>
-              <el-col :span="2">
-                <div class="task-list-icon">
-                  <i v-if="task.status!=7"
-                     :class="iconClass(task)"
-                     @click="controlTask(task)"></i>
-                  <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
-                  <i v-if="task.status==7" class="el-icon-task-folder"
-                     @click="openTaskDir(task)"></i>
-                </div>
-              </el-col>
-            </template>
-          </el-row>
+      <el-row class="task-list-row task-list-row-title"
+              :gutter="20">
+        <el-col :span="2">
+          <el-checkbox @change="checkAllHandle" v-model="checkAll" :indeterminate="checkSome">
+            &nbsp;
+          </el-checkbox>
+        </el-col>
+        <el-col :span="7">
+          <b>名称</b>
+        </el-col>
+        <el-col :span="2">
+          <b>大小</b>
+        </el-col>
+        <el-col :span="6">
+          <b>进度</b>
+        </el-col>
+        <el-col :span="2">
+          <b>速度</b>
+        </el-col>
+        <el-col :span="2">
+          <b>状态</b>
+        </el-col>
+        <el-col :span="3">
+          <b>操作</b>
+        </el-col>
+      </el-row>
+      <el-row v-for="(task,index) in tasks"
+              class="task-list-row"
+              :gutter="20"
+              :key="task.id">
+        <el-col :span="2">
+          <el-checkbox v-model="checkTasks" :label="task.id" @change="checkHandle">&nbsp;
+          </el-checkbox>
+        </el-col>
+        <el-col :span="7">
+          <el-tooltip :content="task.fileName">
+            <p>{{task.fileName}}</p>
+          </el-tooltip>
+        </el-col>
+        <el-col :span="2">
+          <p>{{sizeFmt(task.totalSize, '未知大小')}}</p>
+        </el-col>
+        <el-col :span="6"
+                class="task-list-container">
+          <el-popover
+            placement="right-end"
+            title="下载详情"
+            width="400"
+            trigger="click">
+            <div class="file-detail">
+              <el-tooltip :content="task.url">
+                <p style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+                  {{task.url}}
+                </p>
+              </el-tooltip>
+              <p>
+                <span>名称：</span>
+                <b>{{task.fileName}}</b>
+              </p>
+              <p>
+                <span>路径：</span>
+                <b>{{task.filePath}}</b>
+              </p>
+              <p>
+                <span>大小：</span>
+                <b>{{sizeFmt(task.totalSize, '未知大小')}}</b>
+              </p>
+              <p>
+                <span>分段：</span>
+                <b>{{task.connections}}</b>
+              </p>
+              <p>
+                <span>速度：</span>
+                <b>{{sizeFmt(speedTask(task), '0B')}}/s</b>
+              </p>
+              <p>
+                <span>状态：</span>
+                <b>{{leftTime(task)}}</b>
+                <el-tooltip v-show="task.status==6" class="item"
+                            placement="right">
+                  <div slot="content">下载链接失效，可尝试
+                    <native-a
+                      href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                      target="_blank" style="color: #3a8ee6">刷新下载链接
+                    </native-a>
+                  </div>
+                  <i class="el-icon-question"></i>
+                </el-tooltip>
+              </p>
+            </div>
+            <ul
+              :class="{'task-detail-list':true,'task-detail-list-scroll':task.chunkInfoList.length>=16}">
+              <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
+                <task-progress :text-inside="true" :stroke-width="18"
+                               :percentage="task.totalProgress||progress(chunk)"
+                               :status="status(chunk)"></task-progress>
+                <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
+              </li>
+            </ul>
+            <task-progress :text-inside="true"
+                           :stroke-width="30"
+                           :percentage="task.totalProgress||progress(task)"
+                           :status="status(task)"
+                           slot="reference"></task-progress>
+          </el-popover>
+        </el-col>
+        <el-col :span="2">
+          <p>{{sizeFmt(speedTask(task), '0B')}}/s</p>
+        </el-col>
+        <el-col :span="2">
+          <p>{{leftTime(task)}}</p>
+        </el-col>
+        <el-col :span="3">
+          <div class="task-list-icon">
+            <i v-if="task.status!=7"
+               :class="iconClass(task)"
+               @click="controlTask(task)"></i>
+            <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
+            <i v-if="task.status==7" class="el-icon-task-folder"
+               @click="openTaskDir(task)"></i>
+          </div>
         </el-col>
       </el-row>
     </div>
@@ -209,7 +191,9 @@
     },
     data() {
       return {
-        view: 'list'
+        checkTasks: [],
+        checkAll: false,
+        checkSome: false,
       }
     },
     computed: {
@@ -240,16 +224,17 @@
       }
     },
     methods: {
-      rowTasks(row) {
-        let ret = [];
-        let start = (row - 1) * this.cellSize;
-        for (let i = 0; i < this.cellSize; i++) {
-          if (start + i == this.tasks.length) {
-            break;
-          }
-          ret.push(this.tasks[start + i]);
+      checkAllHandle(isCheck) {
+        if (isCheck) {
+          this.checkTasks = this.tasks.map(task => task.id);
+          this.checkSome = false;
+        } else {
+          this.checkTasks = [];
         }
-        return ret;
+      },
+      checkHandle() {
+        this.checkAll = this.checkTasks.length == this.tasks.length;
+        this.checkSome = !this.checkAll && this.checkTasks.length > 0;
       },
       progress(task) {
         let fileDownSize = task.downSize;
@@ -425,32 +410,37 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+  .tool-button {
+    font-size: 14px;
+    padding-right: 20px;
+  }
+
   .task-list-container {
     padding-bottom: 30px;
     text-align: center;
   }
 
-  .task-list {
+  .task-detail-list {
     margin: 0px;
     padding: 0px;
   }
 
-  .task-list-scroll {
+  .task-detail-list-scroll {
     overflow-y: auto;
     height: 448px;
   }
 
-  .task-list li {
+  .task-detail-list li {
     list-style: none;
     padding-bottom: 8px;
   }
 
-  .task-list li > div {
+  .task-detail-list li > div {
     display: inline-block;
     width: 70%;
   }
 
-  .task-list li > span {
+  .task-detail-list li > span {
     padding-left: 20px;
     padding-right: 5px;
     float: right;
@@ -473,8 +463,20 @@
   }
 
   .task-list-row {
-    padding-top: 30px;
     text-align: center;
+  }
+
+  .task-list-row-title {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+
+  .task-list-row p {
+    position: relative;
+    top: -16px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .task-list-icon {
@@ -487,25 +489,5 @@
     font-size: 30px;
     cursor: pointer;
     padding-left: 15px;
-  }
-
-  .task-list-file {
-    position: relative;
-    top: -25px;
-  }
-
-  .task-list-file > span {
-    display: block;
-    font-size: 18px;
-    padding-top: 10px;
-    color: #409eff;
-  }
-
-  .task-list-file-name {
-
-  }
-
-  .task-list-file-size {
-
   }
 </style>
