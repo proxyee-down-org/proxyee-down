@@ -1,4 +1,4 @@
-//1.5
+//1.6
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -950,11 +950,6 @@ var initHookInterval = setInterval(function () {
             downloadLink = downloadInfo.list[0].dlink;
           } else {
             downloadLink = downloadInfo.dlink;
-          }
-          if (selectFileList.length == 1) {
-            $('#dialog-downloadlink').attr('href', link).text(link);
-          } else {
-            $('#dialog-downloadlink').attr('href', link).text(link);
           }
           var filename = '';
           $.each(selectFileList, function (index, element) {

@@ -25,6 +25,17 @@
     </el-row>
     <el-row>
       <el-col :span="3">
+        <span>常见问题(必看)</span>
+      </el-col>
+      <el-col :span="16">
+        <span>
+          <native-a target="_blank"
+                    href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md">GitHub@proxyee-down/FQA.md</native-a>
+        </span>
+      </el-col>
+    </el-row>
+    <el-row>
+      <el-col :span="3">
         <span>BUG提交</span>
       </el-col>
       <el-col :span="16">
