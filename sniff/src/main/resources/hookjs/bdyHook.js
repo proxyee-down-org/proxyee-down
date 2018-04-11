@@ -1,4 +1,4 @@
-//1.6
+//1.7
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -897,8 +897,13 @@ var initHookInterval = setInterval(function () {
             }
           });
         } else {
-          var fileInfo = yunData.FILEINFO[0];
-          if (yunData.FILEINFO.length == 1 && fileInfo.isdir == 0) {
+          var fileInfo = yunData.FILEINFO[0] || {
+            server_filename: yunData.FILENAME,
+            path: yunData.PATH,
+            fs_id: yunData.FS_ID,
+            isdir: 0
+          };
+          if (yunData.FILEINFO.length <= 1 && fileInfo.isdir == 0) {
             selectFileList.push({
               filename: fileInfo.server_filename,
               path: fileInfo.path,
