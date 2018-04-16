@@ -196,6 +196,9 @@ public abstract class AbstractHttpDownBootstrap {
   public void pauseDown() throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
+      if (taskInfo.getStatus() == HttpDownStatus.PAUSE) {
+        return;
+      }
       taskInfo.setStatus(HttpDownStatus.PAUSE);
       for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
         synchronized (chunkInfo) {
@@ -218,6 +221,9 @@ public abstract class AbstractHttpDownBootstrap {
       throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
     synchronized (taskInfo) {
+      if (taskInfo.getStatus() == HttpDownStatus.RUNNING) {
+        return;
+      }
       if (!FileUtil.exists(taskInfo.buildTaskFilePath())) {
         close();
         startDown();

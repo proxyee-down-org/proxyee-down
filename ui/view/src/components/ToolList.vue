@@ -2,11 +2,19 @@
   <el-row v-if="!selected" type="flex" justify="center">
     <el-col :span="20">
       <el-row>
-        <el-col v-for="(tool,index) in tools" :key="index" :span="8">
+        <el-col v-for="(tool,index) in tools"
+                :key="index"
+                :xs="10"
+                :sm="8"
+                :md="6"
+                :lg="4"
+                :xl="2">
           <el-tooltip class="item"
                       :content="tool.desc"
                       placement="right">
-            <el-button type="success" round
+            <el-button type="success"
+                       round
+                       style="width: 100%"
                        @click="selected=tool.name">
               {{tool.title}}
             </el-button>

@@ -5,14 +5,14 @@
         <el-tooltip content="创建任务">
           <el-button class="el-icon-plus tool-button" @click="setNewTaskStatus(1)"></el-button>
         </el-tooltip>
-        <el-tooltip content="开始任务">
-          <el-button class="el-icon-task-start tool-button"></el-button>
+        <el-tooltip content="继续任务">
+          <el-button class="el-icon-task-start tool-button" @click="continueAllHandle"></el-button>
         </el-tooltip>
         <el-tooltip content="暂停任务">
-          <el-button class="el-icon-task-pause tool-button"></el-button>
+          <el-button class="el-icon-task-pause tool-button" @click="pauseAllHandle"></el-button>
         </el-tooltip>
         <el-tooltip content="删除任务">
-          <el-button class="el-icon-task-delete tool-button"></el-button>
+          <el-button class="el-icon-task-delete tool-button" @click="deleteAllHandle"></el-button>
         </el-tooltip>
       </el-col>
     </el-row>
@@ -34,10 +34,10 @@
     </el-dialog>
     <div v-if="initFlag"
          v-loading="initFlag"
-         style="height: 500px"
-         element-loading-background="rgba(0, 0, 0, 0)">
+         style="height: 500px">
     </div>
-    <div v-else-if="tasks.length>0">
+    <div v-else-if="tasks.length>0"
+         v-loading="loadFlag">
       <el-row class="task-list-row task-list-row-title"
               :gutter="20">
         <el-col :span="2">
@@ -148,7 +148,7 @@
           <p>{{sizeFmt(speedTask(task), '0B')}}/s</p>
         </el-col>
         <el-col :span="2">
-          <p>{{leftTime(task)}}</p>
+          <el-tag :type="statusType(task)">{{leftTime(task)}}</el-tag>
         </el-col>
         <el-col :span="3">
           <div class="task-list-icon">
@@ -194,6 +194,7 @@
         checkTasks: [],
         checkAll: false,
         checkSome: false,
+        loadFlag: false,
       }
     },
     computed: {
@@ -286,14 +287,14 @@
         return 0;
       },
       leftTime(task) {
+        if (task.status == 5) {
+          return '暂停中';
+        }
         if (task.status == 6) {
           return '失败';
         }
         if (task.status == 7) {
           return '已完成';
-        }
-        if (task.status == 5) {
-          return '暂停中';
         }
         let speed = this.speedTask(task);
         if (speed) {
@@ -301,6 +302,21 @@
         } else {
           return '未知';
         }
+      },
+      statusType(task) {
+        if (task.status == 5) {
+          return 'info';
+        }
+        if (task.status == 6) {
+          return 'danger';
+        }
+        if (task.status == 7) {
+          return 'success';
+        }
+        if (!this.speedTask(task)) {
+          return 'warning';
+        }
+        return null;
       },
       status(task) {
         switch (task.status) {
@@ -329,41 +345,30 @@
         }
       },
       controlTask(task) {
+        this.loadFlag = true;
         if (task.status == 5 || task.status == 6 || task.status == 9) {
           this.$http.get('api/continueTask?id=' + task.id)
           .then(() => {
+            this.loadFlag = false;
           }).catch(() => {
           });
         } else {
           this.$http.get('api/pauseTask?id=' + task.id)
           .then(() => {
+            this.loadFlag = false;
           }).catch(() => {
           });
         }
       },
       deleteTask(task) {
-        const check = document.getElementById("task-delete");
-        if (check) {
-          document.getElementById("task-delete").checked = false;
-        }
-        this.$confirm(
-          '<label>' +
-          '<input id="task-delete" type="checkbox" style="height:18px;width:18px;vertical-align:middle;">'
-          +
-          '<span>删除任务和文件</span>' +
-          '</label>',
-          '提示', {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            dangerouslyUseHTMLString: true
-          }).then(() => {
-          this.$http.get('api/deleteTask?id=' + task.id + "&delFile=" + document.getElementById(
-            "task-delete").checked)
+        this.deleteConfirm(checked => {
+          this.loadFlag = true;
+          this.$http.get('api/deleteTask?id=' + task.id + "&delFile=" + checked)
           .then(() => {
             this.$store.commit("tasks/delTask", task.id);
+            this.loadFlag = false;
           }).catch(() => {
           });
-        }).catch(() => {
         });
       },
       openTaskDir(task) {
@@ -379,6 +384,66 @@
         if (result.data) {
           this.setNewTaskId(result.data);
           this.setNewTaskStatus(2);
+        }
+      },
+      deleteConfirm(call) {
+        const check = document.getElementById("task-delete");
+        if (check) {
+          document.getElementById("task-delete").checked = false;
+        }
+        this.$confirm(
+          '<label>' +
+          '<input id="task-delete" type="checkbox" style="height:18px;width:18px;vertical-align:middle;">'
+          +
+          '<span>删除任务和文件</span>' +
+          '</label>',
+          '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            dangerouslyUseHTMLString: true
+          }).then(() => {
+          call(document.getElementById("task-delete").checked);
+        }).catch(() => {
+        });
+      },
+      hasChecked() {
+        if (this.checkTasks.length == 0) {
+          this.$message({showClose: true, message: '请选择任务'});
+          return false;
+        }
+        return true;
+      },
+      continueAllHandle() {
+        if (this.hasChecked()) {
+          this.loadFlag = true;
+          this.$http.post('api/continueAllTask', this.checkTasks)
+          .then(() => {
+            this.loadFlag = false;
+          }).catch(() => {
+          });
+        }
+      },
+      pauseAllHandle() {
+        if (this.hasChecked()) {
+          this.loadFlag = true;
+          this.$http.post('api/pauseAllTask', this.checkTasks)
+          .then(() => {
+            this.loadFlag = false;
+          }).catch(() => {
+          });
+        }
+      },
+      deleteAllHandle() {
+        if (this.hasChecked()) {
+          this.deleteConfirm(checked => {
+            this.loadFlag = true;
+            this.$http.post('api/deleteAllTask?delFile=' + checked, this.checkTasks)
+            .then(() => {
+              this.checkTasks.forEach(taskId => this.$store.commit("tasks/delTask", taskId));
+              this.loadFlag = false;
+            }).catch(() => {
+            });
+          });
         }
       },
       ...mapMutations('tasks', [
