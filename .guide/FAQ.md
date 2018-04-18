@@ -17,7 +17,7 @@
 <details>
   <summary>百度云下载卡在99%？</summary>
   
-  **参考[#246](https://github.com/monkeyWie/proxyee-down/issues/246)**
+  **参考[#246](https://github.com/monkeyWie/proxyee-down/issues/246#issuecomment-378516262)**
 </details>
 <details>
   <summary>百度云下载没有弹出下载页面？</summary>
