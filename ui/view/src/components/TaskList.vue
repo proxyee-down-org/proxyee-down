@@ -36,8 +36,7 @@
          v-loading="initFlag"
          style="height: 500px">
     </div>
-    <div v-else-if="tasks.length>0"
-         v-loading="loadFlag">
+    <div v-else-if="tasks.length>0">
       <el-row class="task-list-row task-list-row-title"
               :gutter="20">
         <el-col :span="2">
@@ -175,15 +174,9 @@
   import NewTask from './NewTask'
   import TaskProgress from './base/TaskProgress'
   import {mapState, mapMutations} from 'vuex'
-  import ElCol from "element-ui/packages/col/src/col";
-  import ElRow from "element-ui/packages/row/src/row";
-  import ElCheckbox from "../../node_modules/element-ui/packages/checkbox/src/checkbox.vue";
 
   export default {
     components: {
-      ElCheckbox,
-      ElRow,
-      ElCol,
       BuildTask,
       NewTask,
       TaskProgress,
@@ -194,7 +187,6 @@
         checkTasks: [],
         checkAll: false,
         checkSome: false,
-        loadFlag: false,
       }
     },
     computed: {
@@ -345,28 +337,28 @@
         }
       },
       controlTask(task) {
-        this.loadFlag = true;
+        let load = this.$loading();
         if (task.status == 5 || task.status == 6 || task.status == 9) {
           this.$http.get('api/continueTask?id=' + task.id)
           .then(() => {
-            this.loadFlag = false;
+            load.close();
           }).catch(() => {
           });
         } else {
           this.$http.get('api/pauseTask?id=' + task.id)
           .then(() => {
-            this.loadFlag = false;
+            load.close();
           }).catch(() => {
           });
         }
       },
       deleteTask(task) {
         this.deleteConfirm(checked => {
-          this.loadFlag = true;
+          let load = this.$loading();
           this.$http.get('api/deleteTask?id=' + task.id + "&delFile=" + checked)
           .then(() => {
             this.$store.commit("tasks/delTask", task.id);
-            this.loadFlag = false;
+            load.close();
           }).catch(() => {
           });
         });
@@ -415,20 +407,20 @@
       },
       continueAllHandle() {
         if (this.hasChecked()) {
-          this.loadFlag = true;
+          let load = this.$loading();
           this.$http.post('api/continueAllTask', this.checkTasks)
           .then(() => {
-            this.loadFlag = false;
+            load.close();
           }).catch(() => {
           });
         }
       },
       pauseAllHandle() {
         if (this.hasChecked()) {
-          this.loadFlag = true;
+          let load = this.$loading();
           this.$http.post('api/pauseAllTask', this.checkTasks)
           .then(() => {
-            this.loadFlag = false;
+            load.close();
           }).catch(() => {
           });
         }

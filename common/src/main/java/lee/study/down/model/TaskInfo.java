@@ -70,11 +70,12 @@ public class TaskInfo implements Serializable {
   }
 
   public void reset() {
-    startTime = lastTime = pauseTime = 0;
+    startTime = lastTime = pauseTime = downSize = 0;
     chunkInfoList.forEach((chunkInfo) -> {
       chunkInfo.setStartTime(0);
       chunkInfo.setLastTime(0);
       chunkInfo.setPauseTime(0);
+      chunkInfo.setDownSize(0);
       chunkInfo.setErrorCount(0);
     });
   }

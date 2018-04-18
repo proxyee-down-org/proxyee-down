@@ -344,7 +344,7 @@ public class BdyZip {
     void onError(Exception e);
   }
 
-  static class TestUnzipCallback implements BdyUnzipCallback {
+  public static class TestUnzipCallback implements BdyUnzipCallback {
 
     @Override
     public void onStart() {

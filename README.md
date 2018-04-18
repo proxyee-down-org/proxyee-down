@@ -25,7 +25,7 @@
 百度云大文件、合并下载限制突破,成功安装下载器后，打开百度云页面会有如下提示，然后在选择文件后点击下载按钮即可调用proxyee-down下载    
 ![百度云破解](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/bdy-hook.png)
 ### 百度云解压工具
-在下载器工具页面里进入百度云解压工具，选择百度云批量下载的文件进行解压  
+由于百度批量下载的zip压缩包不是zip64格式，在压缩包里有超过4G文件的时候普通的解压工具并不能正确的识别文件大小从而导致压缩失败，遇到这种情况时可以在下载器左侧**工具**栏目里找到百度云解压工具进行解压 
 ![百度云解压](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/bdy-unzip.png)
 ## 其他
 ### SwitchyOmega插件安装与设置

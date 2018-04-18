@@ -145,19 +145,27 @@ public class OsUtil {
   }
 
   static {
-    Preferences prefs = Preferences.systemRoot();
-    PrintStream systemErr = System.err;
-    synchronized (systemErr) {    // better synchroize to avoid problems with other threads that access System.err
-      System.setErr(null);
+    if (isWindows()) {
+      Preferences prefs = Preferences.systemRoot();
+      PrintStream systemErr = System.err;
+      synchronized (systemErr) {    // better synchroize to avoid problems with other threads that access System.err
+        System.setErr(null);
+        try {
+          prefs.put("pd_test", "1"); // SecurityException on Windows
+          prefs.remove("pd_test");
+          prefs.flush(); // BackingStoreException on Linux
+          isAdmin = true;
+        } catch (Exception e) {
+          isAdmin = false;
+        } finally {
+          System.setErr(systemErr);
+        }
+      }
+    } else {
       try {
-        prefs.put("pd_test", "1"); // SecurityException on Windows
-        prefs.remove("pd_test");
-        prefs.flush(); // BackingStoreException on Linux
-        isAdmin = true;
-      } catch (Exception e) {
+        isAdmin = "0".equals(getProcessPrint("id -u").trim());
+      } catch (IOException e) {
         isAdmin = false;
-      } finally {
-        System.setErr(systemErr);
       }
     }
   }

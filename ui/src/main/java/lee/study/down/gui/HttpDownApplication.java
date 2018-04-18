@@ -178,7 +178,7 @@ public class HttpDownApplication extends Application {
     );
     int sniffProxyPort = ContentManager.CONFIG.get().getProxyPort();
     if (OsUtil.isBusyPort(sniffProxyPort)) {
-      showMsg("端口(" + sniffProxyPort + ")被占用，请关闭占用端口的软件或设置新的端口号");
+      showMsg("端口(" + sniffProxyPort + ")被占用，请勿重复启动本软件！若无重复启动，请关闭占用端口的软件或设置新的端口号");
     } else {
       new Thread(() -> proxyServer.start(ContentManager.CONFIG.get().getProxyPort())).start();
     }

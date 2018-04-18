@@ -1,4 +1,4 @@
-//1.7
+//1.8
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -18,7 +18,7 @@ var initHookInterval = setInterval(function () {
           " ")[0];
       $('.module-header-wrapper dl:first').find('dd:first').append(
           '<span class="' + pd_parent_span_class + ' find-light">'
-          + '<a href="https://github.com/monkeyWie/proxyee-down" target="_blank" title="百度云下载插件加载成功">proxyee-down</a>'
+          + '<a href="javascript:alert(\'请在网盘中选择文件再点击下载按钮(此按钮非下载按钮，仅用于提示)\')">proxyee-down</a>'
           + '<span class="' + pd_child_span_class + '"></span>'
           + '<i class="find-light-icon"></i>'
           + '</span>');
