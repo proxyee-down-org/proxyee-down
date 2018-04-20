@@ -1,5 +1,6 @@
 ## 火狐浏览器安装证书
-1. 右击软件托盘，点证书目录会跳转到对应目录
+1. 右击软件托盘，点证书目录会跳转到对应目录，目录中的**ca.crt**文件为下载器的证书，记住证书的路径以备火狐浏览器导入。
+
 ![](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/common/ca/firefox/imgs/1-1.png)    
 ### 安装证书
 1. 打开火狐浏览器并进入设置页面  
