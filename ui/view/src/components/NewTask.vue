@@ -40,7 +40,7 @@
       <el-switch
         v-model="form.unzip">
       </el-switch>
-      <el-tooltip class="item" content="百度云批量下载完成后自动解压" placement="right">
+      <el-tooltip class="item" content="当检测到任务为百度云批量下载打包的zip文件时，会在完成后会自动解压" placement="right">
         <i class="el-icon-question"></i>
       </el-tooltip>
     </el-form-item>

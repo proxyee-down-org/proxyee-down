@@ -87,11 +87,15 @@
             width="400"
             trigger="click">
             <div class="file-detail">
-              <el-tooltip :content="task.url" popper-class="file-detail-popper">
-                <p style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+              <el-popover
+                popper-class="file-detail-popper"
+                :content="task.url"
+                trigger="click">
+                <p style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;"
+                   slot="reference">
                   {{task.url}}
                 </p>
-              </el-tooltip>
+              </el-popover>
               <p>
                 <span>名称：</span>
                 <b>{{task.fileName}}</b>
@@ -115,30 +119,20 @@
               <p>
                 <span>状态：</span>
                 <b>{{leftTime(task)}}</b>
-                <el-tooltip v-show="task.status==6" class="item"
-                            placement="right">
-                  <div slot="content">下载链接失效，可尝试
-                    <native-a
-                      href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
-                      target="_blank" style="color: #3a8ee6">刷新下载链接
-                    </native-a>
-                  </div>
-                  <i class="el-icon-question"></i>
-                </el-tooltip>
               </p>
             </div>
             <ul
               :class="{'task-detail-list':true,'task-detail-list-scroll':task.chunkInfoList.length>=16}">
               <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                 <task-progress :text-inside="true" :stroke-width="18"
-                               :percentage="task.totalProgress||progress(chunk)"
+                               :percentage="progress(chunk)"
                                :status="status(chunk)"></task-progress>
                 <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
               </li>
             </ul>
             <task-progress :text-inside="true"
                            :stroke-width="30"
-                           :percentage="task.totalProgress||progress(task)"
+                           :percentage="progress(task)"
                            :status="status(task)"
                            slot="reference"></task-progress>
           </el-popover>
@@ -148,6 +142,26 @@
         </el-col>
         <el-col :span="3">
           <el-tag :type="statusType(task)">{{leftTime(task)}}</el-tag>
+          <el-tooltip v-show="task.status==6" class="item"
+                      placement="right">
+            <div slot="content">下载链接失效，可尝试
+              <native-a
+                href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                target="_blank" style="color: #3a8ee6">刷新下载链接
+              </native-a>
+            </div>
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          <el-tooltip v-show="task.status==4&&progress(task)>0&&speedTask(task)==0" class="item"
+                      placement="right">
+            <div slot="content">若长时间下载速度为0，可尝试
+              <native-a
+                href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                target="_blank" style="color: #3a8ee6">刷新下载链接
+              </native-a>
+            </div>
+            <i class="el-icon-question"></i>
+          </el-tooltip>
         </el-col>
         <el-col :span="3">
           <div class="task-list-icon">
@@ -187,6 +201,7 @@
         checkTasks: [],
         checkAll: false,
         checkSome: false,
+        urlShow: {},
       }
     },
     computed: {
@@ -315,12 +330,12 @@
           case 7:
             return 'success';
           case 6:
+          case 8:
             return 'exception';
           case 5:
             return 'pause';
           case 1:
           case 2:
-          case 8:
             return 'ready';
           default:
             return null;
@@ -551,7 +566,11 @@
   }
 
   .file-detail-popper {
+    padding: 10px;
     width: 60%;
     word-break: break-all;
+    color: #ffffff;
+    font-size: 12px;
+    background: #303133;
   }
 </style>
