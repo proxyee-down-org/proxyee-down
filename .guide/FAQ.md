@@ -15,7 +15,7 @@
   **新建任务时调高分段数，若还是下载慢可能单文件下载被百度云限速了，请尝试批量下载(选中文件夹或多个文件一起下载)。**
 </details>
 <details>
-  <summary>百度云下载卡在99%？</summary>
+  <summary>百度云下载一直没有速度？</summary>
   
   **参考[#246](https://github.com/monkeyWie/proxyee-down/issues/246#issuecomment-378516262)**
 </details>

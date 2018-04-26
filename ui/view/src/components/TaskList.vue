@@ -39,24 +39,24 @@
     <div v-else-if="tasks.length>0">
       <el-row class="task-list-row task-list-row-title"
               :gutter="20">
-        <el-col :span="2">
+        <el-col :span="1">
           <el-checkbox @change="checkAllHandle" v-model="checkAll" :indeterminate="checkSome">
             &nbsp;
           </el-checkbox>
         </el-col>
-        <el-col :span="7">
+        <el-col :span="6">
           <b>名称</b>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <b>大小</b>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="5">
           <b>进度</b>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <b>速度</b>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <b>状态</b>
         </el-col>
         <el-col :span="3">
@@ -64,22 +64,22 @@
         </el-col>
       </el-row>
       <el-row v-for="(task,index) in tasks"
-              class="task-list-row"
               :gutter="20"
+              class="task-list-row"
               :key="task.id">
-        <el-col :span="2">
+        <el-col :span="1">
           <el-checkbox v-model="checkTasks" :label="task.id" @change="checkHandle">&nbsp;
           </el-checkbox>
         </el-col>
-        <el-col :span="7">
+        <el-col :span="6">
           <el-tooltip :content="task.fileName">
             <p>{{task.fileName}}</p>
           </el-tooltip>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <p>{{sizeFmt(task.totalSize, '未知大小')}}</p>
         </el-col>
-        <el-col :span="6"
+        <el-col :span="5"
                 class="task-list-container">
           <el-popover
             placement="right-end"
@@ -87,11 +87,15 @@
             width="400"
             trigger="click">
             <div class="file-detail">
-              <el-tooltip :content="task.url">
-                <p style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;">
+              <el-popover
+                popper-class="file-detail-popper"
+                :content="task.url"
+                trigger="click">
+                <p style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;"
+                   slot="reference">
                   {{task.url}}
                 </p>
-              </el-tooltip>
+              </el-popover>
               <p>
                 <span>名称：</span>
                 <b>{{task.fileName}}</b>
@@ -115,39 +119,49 @@
               <p>
                 <span>状态：</span>
                 <b>{{leftTime(task)}}</b>
-                <el-tooltip v-show="task.status==6" class="item"
-                            placement="right">
-                  <div slot="content">下载链接失效，可尝试
-                    <native-a
-                      href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
-                      target="_blank" style="color: #3a8ee6">刷新下载链接
-                    </native-a>
-                  </div>
-                  <i class="el-icon-question"></i>
-                </el-tooltip>
               </p>
             </div>
             <ul
               :class="{'task-detail-list':true,'task-detail-list-scroll':task.chunkInfoList.length>=16}">
               <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                 <task-progress :text-inside="true" :stroke-width="18"
-                               :percentage="task.totalProgress||progress(chunk)"
+                               :percentage="progress(chunk)"
                                :status="status(chunk)"></task-progress>
                 <span>{{sizeFmt(speedChunk(chunk), '0B')}}/s</span>
               </li>
             </ul>
             <task-progress :text-inside="true"
                            :stroke-width="30"
-                           :percentage="task.totalProgress||progress(task)"
+                           :percentage="progress(task)"
                            :status="status(task)"
                            slot="reference"></task-progress>
           </el-popover>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <p>{{sizeFmt(speedTask(task), '0B')}}/s</p>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <el-tag :type="statusType(task)">{{leftTime(task)}}</el-tag>
+          <el-tooltip v-show="task.status==6" class="item"
+                      placement="right">
+            <div slot="content">下载链接失效，可尝试
+              <native-a
+                href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                target="_blank" style="color: #3a8ee6">刷新下载链接
+              </native-a>
+            </div>
+            <i class="el-icon-question"></i>
+          </el-tooltip>
+          <el-tooltip v-show="task.status==4&&progress(task)>0&&speedTask(task)==0" class="item"
+                      placement="right">
+            <div slot="content">若长时间下载速度为0，可尝试
+              <native-a
+                href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
+                target="_blank" style="color: #3a8ee6">刷新下载链接
+              </native-a>
+            </div>
+            <i class="el-icon-question"></i>
+          </el-tooltip>
         </el-col>
         <el-col :span="3">
           <div class="task-list-icon">
@@ -187,6 +201,7 @@
         checkTasks: [],
         checkAll: false,
         checkSome: false,
+        urlShow: {},
       }
     },
     computed: {
@@ -315,12 +330,12 @@
           case 7:
             return 'success';
           case 6:
+          case 8:
             return 'exception';
           case 5:
             return 'pause';
           case 1:
           case 2:
-          case 8:
             return 'ready';
           default:
             return null;
@@ -509,16 +524,6 @@
 
   @import "../assets/icon/iconfont.css";
 
-  .task-grid-icon {
-    height: 40px;
-  }
-
-  .task-grid-icon i {
-    padding: 10px 30px;
-    font-size: 30px;
-    cursor: pointer;
-  }
-
   .task-list-row {
     text-align: center;
   }
@@ -546,5 +551,26 @@
     font-size: 30px;
     cursor: pointer;
     padding-left: 15px;
+  }
+</style>
+
+<style>
+  .el-checkbox__inner {
+    width: 18px;
+    height: 18px;
+  }
+
+  .el-checkbox__inner::after {
+    left: 6px;
+    height: 10px;
+  }
+
+  .file-detail-popper {
+    padding: 10px;
+    width: 60%;
+    word-break: break-all;
+    color: #ffffff;
+    font-size: 12px;
+    background: #303133;
   }
 </style>
