@@ -1,4 +1,4 @@
-//1.8
+//1.9
 var initHookInterval = setInterval(function () {
   if (!window.$) {
     return;
@@ -330,7 +330,7 @@ var initHookInterval = setInterval(function () {
         } else {
           $('span.' + wordMap['checkbox']).parent().each(function () {
             if (getDefaultStyle($(this).find(">span>span").get(0), 'display')
-                == 'block') {
+                != 'none') {
               var fileName = $(this).find('div.file-name div.text>a').text();
               $.each(fileList, function (i, file) {
                 if (file.server_filename == fileName) {
