@@ -3,4 +3,5 @@
 
 - [windows安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/windows/read.md)
 - [mac安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/mac/read.md)
+- [linux安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/linux/read.md)
 - [火狐浏览器安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/firefox/read.md)

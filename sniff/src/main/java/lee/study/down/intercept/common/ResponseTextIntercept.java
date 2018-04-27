@@ -41,10 +41,8 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
         }
         contentBuf = PooledByteBufAllocator.DEFAULT.buffer();
       }
-      httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE,"text/html;charset=utf-8");
-      //直接调用默认拦截器，跳过下载拦截器
-      pipeline.getDefault()
-          .afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
+      httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");
+      httpResponse.headers().remove(HttpHeaderNames.TRANSFER_ENCODING);
     } else {
       isMatch = false;
       pipeline.afterResponse(clientChannel, proxyChannel, httpResponse);
@@ -68,8 +66,17 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
             GZIPOutputStream outputStream = new GZIPOutputStream(baos);
             outputStream.write(temp);
             outputStream.finish();
-            hookHttpContent.content().writeBytes(baos.toByteArray());
+            byte[] bts = baos.toByteArray();
+            //修改响应头Content-length
+            pipeline.getHttpResponse().headers().set(HttpHeaderNames.CONTENT_LENGTH, bts.length);
+            pipeline.getDefault()
+                .afterResponse(clientChannel, proxyChannel, pipeline.getHttpResponse(), pipeline);
+            hookHttpContent.content().writeBytes(bts);
           } else {
+            //修改响应头Content-length
+            pipeline.getHttpResponse().headers().set(HttpHeaderNames.CONTENT_LENGTH, contentBuf.readableBytes());
+            pipeline.getDefault()
+                .afterResponse(clientChannel, proxyChannel, pipeline.getHttpResponse(), pipeline);
             hookHttpContent.content().writeBytes(contentBuf);
           }
           ReferenceCountUtil.release(contentBuf);

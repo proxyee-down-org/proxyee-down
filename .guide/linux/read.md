@@ -17,10 +17,9 @@ xxx/bin/java -jar -Dfile.encoding=GBK -Xms256m -Xmx512m ./proxyee-down.jar
 ![10](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/10.png)
 
 ## 证书安装
-- [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/linux/read.md)
+[查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/linux/read.md)
 
 ## SwitchyOmega插件安装与设置
-
 [查看](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/switchy/read.md)
 
 ## 完成

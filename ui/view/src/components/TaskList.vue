@@ -165,12 +165,12 @@
         </el-col>
         <el-col :span="3">
           <div class="task-list-icon">
+            <i v-if="task.status==7" class="el-icon-task-folder"
+               @click="openTaskDir(task)"></i>
             <i v-if="task.status!=7"
                :class="iconClass(task)"
                @click="controlTask(task)"></i>
             <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
-            <i v-if="task.status==7" class="el-icon-task-folder"
-               @click="openTaskDir(task)"></i>
           </div>
         </el-col>
       </el-row>

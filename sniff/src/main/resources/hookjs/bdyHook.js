@@ -360,6 +360,10 @@ var initHookInterval = setInterval(function () {
         } else if (selectFileList.length > 1) {
           downloadType = 'batch';
         }
+        if (selectFileList.length >= 1000) {
+          alert("由于百度云的限制，批量下载选中的文件数量不能超过1000，请分批下载");
+          return;
+        }
         if (!checkFileName(selectFileList)) {
           alert("文件夹名称不能包含+号，请修改名称后再下载");
           return;
@@ -930,6 +934,10 @@ var initHookInterval = setInterval(function () {
         }
         if (selectFileList.length === 0) {
           alert('获取选中文件失败，请刷新重试');
+          return;
+        }
+        if (selectFileList.length >= 1000) {
+          alert("由于百度云的限制，批量下载选中的文件数量不能超过1000，请分批下载");
           return;
         }
         if (!checkFileName(selectFileList)) {

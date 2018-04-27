@@ -13,7 +13,7 @@ public class BdyIntercept extends ResponseTextIntercept {
 
   @Override
   public boolean match(HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {
-    return HttpUtil.checkUrl(pipeline.getHttpRequest(), "^(pan|yun).baidu.com.*$")
+    return HttpUtil.checkUrl(pipeline.getHttpRequest(), "^(pan|yun).baidu.com/(disk/home|s/|share/link).*$")
         && isHtml(httpResponse, pipeline);
   }
 
