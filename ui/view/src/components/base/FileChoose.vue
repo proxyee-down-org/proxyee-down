@@ -1,14 +1,14 @@
 <template>
-  <div>
-    <el-button type="primary"
-               class="file-choose-button"
-               :disabled="disabled"
-               @click="visible=true">选择</el-button>
+  <div style="display: inline">
     <el-input class="file-choose-input"
               :value="value"
               :disabled="disabled"
               @input="$emit('input',arguments[0])"
               @dblclick.native="visible = true"></el-input>
+    <el-button type="primary"
+               :disabled="disabled"
+               @click="visible=true">选择
+    </el-button>
     <el-dialog title="目录浏览"
                :visible="visible"
                width="30%"
@@ -67,12 +67,6 @@
 <style scoped>
   .file-choose-input {
     width: 50%
-  }
-
-  .file-choose-button {
-    position: absolute;
-    z-index: 1;
-    right: 50%
   }
 
   .file-choose-tree {

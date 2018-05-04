@@ -9,6 +9,7 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
+import java.awt.TrayIcon.MessageType;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -42,8 +43,13 @@ import lee.study.down.ca.HttpDownProxyCACertFactory;
 import lee.study.down.constant.HttpDownConstant;
 import lee.study.down.content.ContentManager;
 import lee.study.down.intercept.HttpDownHandleInterceptFactory;
+import lee.study.down.model.ConfigBaseInfo;
 import lee.study.down.model.ConfigInfo;
+import lee.study.down.model.ResultInfo;
+import lee.study.down.model.ResultInfo.ResultStatus;
 import lee.study.down.mvc.HttpDownSpringBoot;
+import lee.study.down.mvc.controller.HttpDownController;
+import lee.study.down.mvc.form.NewTaskForm;
 import lee.study.down.plug.PluginContent;
 import lee.study.down.task.HttpDownProgressEventTask;
 import lee.study.down.task.PluginUpdateCheckTask;
@@ -65,6 +71,7 @@ public class HttpDownApplication extends Application {
   private float version;
   private Stage stage;
   private Browser browser;
+  private TrayIcon trayIcon;
 
   private static HttpDownProxyServer proxyServer;
 
@@ -170,13 +177,34 @@ public class HttpDownApplication extends Application {
         new HttpDownProxyCACertFactory(HttpDownConstant.CA_CERT_PATH, HttpDownConstant.CA_PRI_PATH),
         ContentManager.CONFIG.get().getSecProxyConfig(),
         new HttpDownHandleInterceptFactory(httpDownInfo -> Platform.runLater(() -> {
-          if (ContentManager.CONFIG.get().getUiModel() == 1) {
-            String taskId = httpDownInfo.getTaskInfo().getId();
-            browser.webEngine.executeScript("vue.$children[0].openTabHandle('/tasks');"
-                + "vue.$store.commit('tasks/setNewTaskId','" + taskId + "');"
-                + "vue.$store.commit('tasks/setNewTaskStatus',2);");
+          ConfigBaseInfo configInfo = ContentManager.CONFIG.get();
+          //自动开始下载
+          if (configInfo.isAutoDown()) {
+            NewTaskForm newTaskForm = new NewTaskForm();
+            newTaskForm.setId(httpDownInfo.getTaskInfo().getId());
+            newTaskForm.setFilePath(configInfo.getAutoDownPath());
+            newTaskForm.setFileName(FileUtil.renameIfExists(configInfo.getAutoDownPath() + File.separator + httpDownInfo.getTaskInfo().getFileName()));
+            newTaskForm.setUnzip(true);
+            try {
+              ResultInfo resultInfo = HttpDownController.commonStartTask(newTaskForm);
+              if (resultInfo.getStatus() == ResultStatus.SUCC.getCode()) {
+                trayIcon.displayMessage("提示", "新任务【" + newTaskForm.getFileName() + "】开始自动下载", TrayIcon.MessageType.INFO);
+              } else {
+                trayIcon.displayMessage("提示", "自动下载失败：" + resultInfo.getMsg(), MessageType.ERROR);
+              }
+            } catch (Exception e) {
+              LOGGER.error("auto start error", e);
+              trayIcon.displayMessage("提示", "自动下载失败：" + e.getMessage(), MessageType.ERROR);
+            }
+          } else {
+            if (configInfo.getUiModel() == 1) {
+              String taskId = httpDownInfo.getTaskInfo().getId();
+              browser.webEngine.executeScript("vue.$children[0].openTabHandle('/tasks');"
+                  + "vue.$store.commit('tasks/setNewTaskId','" + taskId + "');"
+                  + "vue.$store.commit('tasks/setNewTaskStatus',2);");
+            }
+            open(false);
           }
-          open(false);
         }))
     );
     int sniffProxyPort = ContentManager.CONFIG.get().getProxyPort();
@@ -218,8 +246,17 @@ public class HttpDownApplication extends Application {
       event.consume();
       close();
     });
+    //启动时是否打开窗口
+    if (ContentManager.CONFIG.get().isAutoOpen()) {
+      open(false);
+    }
   }
 
+  /**
+   * 打开下载器界面
+   *
+   * @param isTray 是否由托盘菜单发起
+   */
   public void open(boolean isTray) {
     if (browser == null || ContentManager.CONFIG.get().getUiModel() == 2) {
       try {
@@ -264,7 +301,7 @@ public class HttpDownApplication extends Application {
         SystemTray systemTray = SystemTray.getSystemTray();
         // 获取图片所在的URL
         URL url = Thread.currentThread().getContextClassLoader().getResource("favicon.png");
-        TrayIcon trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url), "proxyee-down");
+        trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url), "proxyee-down");
         // 为系统托盘加托盘图标
         systemTray.add(trayIcon);
         trayIcon.setImageAutoSize(true);

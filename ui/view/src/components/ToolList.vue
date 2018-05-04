@@ -4,11 +4,11 @@
       <el-row>
         <el-col v-for="(tool,index) in tools"
                 :key="index"
-                :xs="10"
-                :sm="8"
-                :md="6"
-                :lg="4"
-                :xl="2">
+                :xs="11"
+                :sm="9"
+                :md="7"
+                :lg="5"
+                :xl="3">
           <el-tooltip class="item"
                       :content="tool.desc"
                       placement="right">

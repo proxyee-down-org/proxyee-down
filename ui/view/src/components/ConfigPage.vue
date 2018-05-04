@@ -30,9 +30,27 @@
         <i class="el-icon-question"></i>
       </el-tooltip>
     </el-form-item>
+    <el-form-item label="启动显示" prop="autoOpen">
+      <el-switch v-model="form.autoOpen"></el-switch>
+      <el-tooltip class="item" content="启动成功时窗口是否显示" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
+    </el-form-item>
     <el-form-item label="检查证书">
       <el-switch v-model="form.checkCa"></el-switch>
       <el-tooltip class="item" content="启动时是否检查证书安装情况（当证书没有正确安装时会引导安装证书）" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
+    </el-form-item>
+    <el-form-item label="自动下载" prop="autoDown">
+      <el-switch v-model="form.autoDown"></el-switch>
+      <el-tooltip class="item" content="嗅探到任务时是否自动开始下载" placement="right">
+        <i class="el-icon-question"></i>
+      </el-tooltip>
+    </el-form-item>
+    <el-form-item v-if="form.autoDown" label="下载路径" prop="autoDownPath">
+      <file-choose v-model="form.autoDownPath" style="width: 80%"></file-choose>
+      <el-tooltip class="item" content="自动下载时保存文件的路径" placement="right">
         <i class="el-icon-question"></i>
       </el-tooltip>
     </el-form-item>
@@ -77,10 +95,15 @@
   import FileChoose from './base/FileChoose'
 
   export default {
+    components: {
+      FileChoose
+    },
     data() {
       return {
         load: true,
         form: {
+          autoOpen: true,
+          autoDown: false,
           secProxyConfig: {
             proxyType: '',
             host: '',
@@ -92,7 +115,7 @@
         rules: {
           proxyPort: [
             {required: true, message: '不能为空'},
-            {type: 'integer', min: 1025, max: 65535, message: '请输入在1025-65535之间的数字'},
+            {type: 'integer', min: 1, max: 65535, message: '请输入在1-65535之间的数字'},
           ],
           timeout: [
             {required: true, message: '不能为空'},
@@ -126,12 +149,21 @@
           ];
           this.rules['secProxyConfig.port'] = [
             {required: true, message: '不能为空'},
-            {type: 'integer', min: 1025, max: 65535, message: '请输入在1025-65535之间的数字'},
+            {type: 'integer', min: 1, max: 65535, message: '请输入在1-65535之间的数字'},
           ];
         } else {
           this.rules['secProxyConfig.proxyType'] = null;
           this.rules['secProxyConfig.host'] = null;
           this.rules['secProxyConfig.port'] = null;
+        }
+      },
+      'form.autoDown': function (val) {
+        if (val) {
+          this.rules['autoDownPath'] = [
+            {required: true, message: '不能为空'}
+          ];
+        } else {
+          this.rules['autoDownPath'] = null;
         }
       }
     },

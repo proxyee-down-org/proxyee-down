@@ -180,7 +180,7 @@ public class HttpDownUtil {
               ch.pipeline().addLast(ProxyHandleFactory.build(proxyConfig));
             }
             if (requestProto.getSsl()) {
-              ch.pipeline().addLast(clientSslCtx.newHandler(ch.alloc()));
+              ch.pipeline().addLast(clientSslCtx.newHandler(ch.alloc(), requestProto.getHost(), requestProto.getPort()));
             }
             ch.pipeline().addLast("httpCodec", new HttpClientCodec());
             ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {

@@ -12,7 +12,7 @@ sudo tar zxvf jre-8u161-linux-x64.tar.gz
 将下载好的proxyee-down-x.xx-jar.zip解压至任意目录。使用刚刚解压出的jre运行
 (xxx为刚刚解压出来的jre绝对路径)
 ```
-xxx/bin/java -jar -Dfile.encoding=GBK -Xms256m -Xmx512m ./proxyee-down.jar
+xxx/bin/java -jar ./proxyee-down.jar
 ```
 ![10](https://github.com/monkeyWie/proxyee-down/raw/master/.guide/linux/imgs/10.png)
 

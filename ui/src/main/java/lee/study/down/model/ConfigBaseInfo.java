@@ -18,4 +18,7 @@ public class ConfigBaseInfo {
   private double guiHeight = -1;
   private double guiX = -1;
   private double guiY = -1;
+  private boolean autoOpen = true; //启动成功时窗口是否显示
+  private boolean autoDown = false; //嗅探到任务时是否自动开始下载
+  private String autoDownPath;  //自动下载保存文件的路径
 }

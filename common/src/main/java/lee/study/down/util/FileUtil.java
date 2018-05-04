@@ -25,6 +25,14 @@ public class FileUtil {
   }
 
   /**
+   * 文件是否存在
+   */
+  public static boolean existsFile(String path) {
+    File file = new File(path);
+    return file.exists() && file.isFile();
+  }
+
+  /**
    * 文件或目录是否存在
    */
   public static boolean existsAny(String... paths) {
@@ -269,5 +277,26 @@ public class FileUtil {
         }
       }
     }
+  }
+
+  /**
+   * 判断文件存在是重命名
+   */
+  public static String renameIfExists(String path) {
+    File file = new File(path);
+    if (file.exists() && file.isFile()) {
+      int index = file.getName().lastIndexOf(".");
+      String name = file.getName().substring(0, index);
+      String suffix = index == -1 ? "" : file.getName().substring(index);
+      int i = 1;
+      String newName;
+      do {
+        newName = name + "(" + i + ")" + suffix;
+        i++;
+      }
+      while (existsFile(file.getParent() + File.separator + newName));
+      return newName;
+    }
+    return file.getName();
   }
 }

@@ -12,16 +12,15 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import lee.study.down.boot.AbstractHttpDownBootstrap;
 import lee.study.down.constant.HttpDownStatus;
 import lee.study.down.dispatch.HttpDownCallback;
 import lee.study.down.model.ChunkInfo;
+import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
-import lee.study.down.util.HttpUtil;
 import lee.study.proxyee.proxy.ProxyHandleFactory;
+import lee.study.proxyee.util.ProtoUtil.RequestProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,8 @@ public class HttpDownInitializer extends ChannelInitializer {
       ch.pipeline().addLast(ProxyHandleFactory.build(bootstrap.getHttpDownInfo().getProxyConfig()));
     }
     if (isSsl) {
-      ch.pipeline().addLast(bootstrap.getClientSslContext().newHandler(ch.alloc()));
+      RequestProto requestProto = ((HttpRequestInfo) bootstrap.getHttpDownInfo().getRequest()).requestProto();
+      ch.pipeline().addLast(bootstrap.getClientSslContext().newHandler(ch.alloc(), requestProto.getHost(), requestProto.getPort()));
     }
     ch.pipeline()
         .addLast("httpCodec",
