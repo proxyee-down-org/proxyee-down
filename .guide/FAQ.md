@@ -41,6 +41,11 @@
   **使用下载器工具里的百度云解压工具进行解压。**
 </details>
 <details>
+  <summary>软件怎么更新到新版本？</summary>
+  
+  **在下载器的关于界面，可以进行在线升级。在线更新一直失败的话可以下载proxyee-down-x.xx-jar.zip的压缩包，解压main目录里的文件进行覆盖**
+</details>
+<details>
   <summary>运行时提示证书安装失败？</summary>
   
   **请按照教程里的[手动安装证书](https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/ca/read.md)步骤进行安装**
