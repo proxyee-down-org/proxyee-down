@@ -22,10 +22,17 @@ import java.util.concurrent.TimeUnit;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.VPos;
+import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBase;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.DialogPane;
 import javafx.scene.image.Image;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -34,6 +41,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javax.swing.JOptionPane;
@@ -171,7 +179,6 @@ public class HttpDownApplication extends Application {
     if (ContentManager.CONFIG.get().isAutoOpen()) {
       open(false);
     }
-
   }
 
   private void checkCa() {
@@ -215,10 +222,9 @@ public class HttpDownApplication extends Application {
       showMsg("证书安装失败，请手动安装");
       LOGGER.error("cert handle error", e);
     }
-    showMsg("需要安装新证书，请按确定再引导进行安装");
   }
 
-  private void startSniffProxy(){
+  private void startSniffProxy() {
     //嗅探代理服务器启动
     proxyServer = new HttpDownProxyServer(
         new HttpDownProxyCACertFactory(HttpDownConstant.CA_CERT_PATH, HttpDownConstant.CA_PRI_PATH),
@@ -301,7 +307,28 @@ public class HttpDownApplication extends Application {
   }
 
   private void showMsg(String msg) {
-    JOptionPane.showMessageDialog(null, msg, "提示", JOptionPane.WARNING_MESSAGE);
+    Alert alert = new Alert(AlertType.INFORMATION);
+    alert.setTitle("提示");
+    alert.setHeaderText(null);
+    alert.setContentText(msg);
+
+    DialogPane root = alert.getDialogPane();
+    Stage dialogStage = new Stage();
+
+    for (ButtonType buttonType : root.getButtonTypes()) {
+      ButtonBase button = (ButtonBase) root.lookupButton(buttonType);
+      button.setOnAction(evt -> dialogStage.close());
+    }
+
+    root.getScene().setRoot(new Group());
+    root.setPadding(new Insets(10, 0, 10, 0));
+
+    Scene scene = new Scene(root);
+    dialogStage.setScene(scene);
+    dialogStage.initModality(Modality.APPLICATION_MODAL);
+    dialogStage.setAlwaysOnTop(true);
+    dialogStage.setResizable(false);
+    dialogStage.showAndWait();
   }
 
   private void addTray() {
