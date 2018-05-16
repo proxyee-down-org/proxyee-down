@@ -56,9 +56,9 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
       try {
         contentBuf.writeBytes(httpContent.content());
         if (httpContent instanceof LastHttpContent) {
-          ByteUtil.insertText(contentBuf, ByteUtil.findText(contentBuf, "<head>"), hookResponse(),
-              Charset.forName("UTF-8"));
+          ByteUtil.insertText(contentBuf, ByteUtil.findText(contentBuf, "<head>"), hookResponse(), Charset.forName("UTF-8"));
           HttpContent hookHttpContent = new DefaultLastHttpContent();
+          long contentLength;
           if (isGzip) { //转化成gzip编码
             byte[] temp = new byte[contentBuf.readableBytes()];
             contentBuf.readBytes(temp);
@@ -67,21 +67,18 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
             outputStream.write(temp);
             outputStream.finish();
             byte[] bts = baos.toByteArray();
-            //修改响应头Content-length
-            pipeline.getHttpResponse().headers().set(HttpHeaderNames.CONTENT_LENGTH, bts.length);
-            pipeline.getDefault()
-                .afterResponse(clientChannel, proxyChannel, pipeline.getHttpResponse(), pipeline);
+            contentLength = bts.length;
             hookHttpContent.content().writeBytes(bts);
           } else {
-            //修改响应头Content-length
-            pipeline.getHttpResponse().headers().set(HttpHeaderNames.CONTENT_LENGTH, contentBuf.readableBytes());
-            pipeline.getDefault()
-                .afterResponse(clientChannel, proxyChannel, pipeline.getHttpResponse(), pipeline);
+            contentLength = contentBuf.readableBytes();
             hookHttpContent.content().writeBytes(contentBuf);
           }
           ReferenceCountUtil.release(contentBuf);
-          pipeline.getDefault()
-              .afterResponse(clientChannel, proxyChannel, hookHttpContent, pipeline);
+          //修改响应头Content-length
+          pipeline.getHttpResponse().headers().set(HttpHeaderNames.CONTENT_LENGTH, contentLength);
+          pipeline.getDefault().afterResponse(clientChannel, proxyChannel, pipeline.getHttpResponse(), pipeline);
+          //写出hook后的响应体
+          pipeline.getDefault().afterResponse(clientChannel, proxyChannel, hookHttpContent, pipeline);
         }
       } finally {
         ReferenceCountUtil.release(httpContent);

@@ -11,6 +11,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpConstants;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -59,10 +61,28 @@ public class HttpDownUtil {
         //TODO 302重定向乱码 https://link.gimhoy.com/googledrive/aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL29wZW4/aWQ9MThlVmNKeEhwaE40RUpGTUowSk10bWNXOVhCcWJhVE1k.jpg
         String redirectUrl = httpResponse.headers().get(HttpHeaderNames.LOCATION);
         HttpRequestInfo requestInfo = (HttpRequestInfo) httpRequest;
-        requestInfo.headers().remove("Host");
+        //重定向cookie设置
+        List<String> setCookies = httpResponse.headers().getAll(HttpHeaderNames.SET_COOKIE);
+        if (setCookies != null && setCookies.size() > 0) {
+          StringBuilder requestCookie = new StringBuilder();
+          String oldRequestCookie = requestInfo.headers().get(HttpHeaderNames.COOKIE);
+          if (oldRequestCookie != null) {
+            requestCookie.append(oldRequestCookie);
+          }
+          String split = String.valueOf((char) HttpConstants.SEMICOLON) + String.valueOf(HttpConstants.SP_CHAR);
+          for (String setCookie : setCookies) {
+            String cookieNV = setCookie.split(split)[0];
+            if (requestCookie.length() > 0) {
+              requestCookie.append(split);
+            }
+            requestCookie.append(cookieNV);
+          }
+          requestInfo.headers().set(HttpHeaderNames.COOKIE, requestCookie.toString());
+        }
+        requestInfo.headers().remove(HttpHeaderNames.HOST);
         requestInfo.setUri(redirectUrl);
         RequestProto requestProto = ProtoUtil.getRequestProto(requestInfo);
-        requestInfo.headers().set("Host", requestProto.getHost());
+        requestInfo.headers().set(HttpHeaderNames.HOST, requestProto.getHost());
         requestInfo.setRequestProto(requestProto);
         return getTaskInfo(httpRequest, null, proxyConfig, clientSslCtx, loopGroup);
       }

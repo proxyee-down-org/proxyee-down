@@ -33,7 +33,7 @@ public class HttpDownConstant {
     } catch (SSLException e) {
       e.printStackTrace();
     }
-    clientLoopGroup = new NioEventLoopGroup(1);
+    clientLoopGroup = new NioEventLoopGroup();
     httpDownCallback = new HttpDownHandleCallback();
   }
 }

@@ -76,6 +76,9 @@
           unzipPath: '',
         },
         rules: {
+          oldId: [
+            {required: true, message: '不能为空'},
+          ],
           url: [
             {required: true, message: '不能为空'},
             {type: 'url', message: '格式不正确'}

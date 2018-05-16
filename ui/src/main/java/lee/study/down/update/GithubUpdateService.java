@@ -53,15 +53,12 @@ public class GithubUpdateService implements UpdateService {
       throws Exception {
     HttpRequestInfo requestInfo = HttpDownUtil.buildGetRequest(updateInfo.getUrl());
     TaskInfo taskInfo = HttpDownUtil
-        .getTaskInfo(requestInfo, null, null, HttpDownConstant.clientSslContext,
-            HttpDownConstant.clientLoopGroup)
+        .getTaskInfo(requestInfo, null, null, HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup)
         .setConnections(64)
         .setFileName("proxyee-down-jar.zip")
-        .setFilePath(
-            HttpDownConstant.HOME_PATH.substring(0, HttpDownConstant.HOME_PATH.length() - 1));
+        .setFilePath(HttpDownConstant.HOME_PATH.substring(0, HttpDownConstant.HOME_PATH.length() - 1));
     HttpDownInfo httpDownInfo = new HttpDownInfo(taskInfo, requestInfo, null);
-    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo, 5,
-        HttpDownConstant.clientSslContext, HttpDownConstant.clientLoopGroup, callback);
+    AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo, 5, HttpDownConstant.clientSslContext, callback);
     FileUtil.deleteIfExists(bootstrap.getHttpDownInfo().getTaskInfo().buildTaskFilePath());
     bootstrap.startDown();
     return bootstrap;

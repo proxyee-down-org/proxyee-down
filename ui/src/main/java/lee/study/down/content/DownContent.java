@@ -1,6 +1,5 @@
 package lee.study.down.content;
 
-import io.netty.handler.codec.http.HttpRequest;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -141,7 +140,6 @@ public class DownContent {
     AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
         ContentManager.CONFIG.get().getRetryCount(),
         HttpDownConstant.clientSslContext,
-        HttpDownConstant.clientLoopGroup,
         HttpDownConstant.httpDownCallback);
     TaskInfo taskInfo = bootstrap.getHttpDownInfo().getTaskInfo();
     if (taskInfo.isSupportRange()) {
@@ -203,7 +201,6 @@ public class DownContent {
           AbstractHttpDownBootstrap bootstrap = HttpDownBootstrapFactory.create(httpDownInfo,
               ContentManager.CONFIG.get().getRetryCount(),
               HttpDownConstant.clientSslContext,
-              HttpDownConstant.clientLoopGroup,
               HttpDownConstant.httpDownCallback);
           TaskInfo taskInfo = httpDownInfo.getTaskInfo();
           if (taskInfo.getStatus() == HttpDownStatus.WAIT) {

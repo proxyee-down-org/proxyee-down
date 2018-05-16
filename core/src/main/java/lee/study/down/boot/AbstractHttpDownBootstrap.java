@@ -38,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Data
-@AllArgsConstructor
 public abstract class AbstractHttpDownBootstrap {
 
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractHttpDownBootstrap.class);
@@ -54,10 +53,19 @@ public abstract class AbstractHttpDownBootstrap {
   private HttpDownInfo httpDownInfo;
   private int retryCount;
   private SslContext clientSslContext;
-  private NioEventLoopGroup clientLoopGroup;
   private HttpDownCallback callback;
   private TimeoutCheckTask timeoutCheckTask;
   private final Map<Integer, Map<String, Object>> attr = new HashMap<>();
+
+  public AbstractHttpDownBootstrap(HttpDownInfo httpDownInfo, int retryCount, SslContext clientSslContext, HttpDownCallback callback, TimeoutCheckTask timeoutCheckTask) {
+    this.httpDownInfo = httpDownInfo;
+    this.retryCount = retryCount;
+    this.clientSslContext = clientSslContext;
+    this.callback = callback;
+    this.timeoutCheckTask = timeoutCheckTask;
+  }
+
+  private NioEventLoopGroup clientLoopGroup;
 
   public void startDown() throws Exception {
     TaskInfo taskInfo = httpDownInfo.getTaskInfo();
@@ -77,15 +85,12 @@ public abstract class AbstractHttpDownBootstrap {
       throw new BootstrapException("文件名已存在，请修改文件名");
     }
     //创建文件
-    try (
-        RandomAccessFile randomAccessFile = new RandomAccessFile(taskInfo.buildTaskFilePath(), "rw")
-    ) {
-      randomAccessFile.setLength(taskInfo.getTotalSize());
-    }
+    FileUtil.createSparseFile(taskInfo.buildTaskFilePath(), taskInfo.getTotalSize());
     //文件下载开始回调
     taskInfo.reset();
     taskInfo.setStatus(HttpDownStatus.RUNNING);
     taskInfo.setStartTime(System.currentTimeMillis());
+    clientLoopGroup = new NioEventLoopGroup(1);
     for (int i = 0; i < taskInfo.getChunkInfoList().size(); i++) {
       ChunkInfo chunkInfo = taskInfo.getChunkInfoList().get(i);
       //设置状态和时间
@@ -236,6 +241,7 @@ public abstract class AbstractHttpDownBootstrap {
         taskInfo.setPauseTime(
             taskInfo.getPauseTime() + (curTime - taskInfo.getLastTime()));
         taskInfo.setLastTime(curTime);
+        clientLoopGroup = new NioEventLoopGroup(1);
         for (ChunkInfo chunkInfo : taskInfo.getChunkInfoList()) {
           synchronized (chunkInfo) {
             if (chunkInfo.getStatus() == HttpDownStatus.PAUSE
@@ -290,6 +296,9 @@ public abstract class AbstractHttpDownBootstrap {
           close(chunkInfo, status);
         }
       }
+    }
+    if (clientLoopGroup != null) {
+      clientLoopGroup.shutdownGracefully();
     }
   }
 

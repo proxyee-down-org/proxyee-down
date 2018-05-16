@@ -7,8 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Stack;
 import java.util.UUID;
@@ -298,5 +303,19 @@ public class FileUtil {
       return newName;
     }
     return file.getName();
+  }
+
+  /**
+   * 创建指定大小的Sparse File
+   */
+  public static void createSparseFile(String filePath, long length) throws IOException {
+    Path path = Paths.get(filePath);
+    Files.deleteIfExists(path);
+    try (
+        SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE, StandardOpenOption.SPARSE)
+    ) {
+      channel.position(length - 1);
+      channel.write(ByteBuffer.wrap(new byte[]{0}));
+    }
   }
 }
