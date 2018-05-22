@@ -399,11 +399,10 @@
           document.getElementById("task-delete").checked = false;
         }
         this.$confirm(
-          '<label>' +
-          '<input id="task-delete" type="checkbox" style="height:18px;width:18px;vertical-align:middle;">'
-          +
-          '<span>删除任务和文件</span>' +
-          '</label>',
+          `<label>
+          <input id="task-delete" type="checkbox" style="height:18px;width:18px;vertical-align:middle;">
+          <span>删除任务和文件</span>
+          </label>`,
           '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
