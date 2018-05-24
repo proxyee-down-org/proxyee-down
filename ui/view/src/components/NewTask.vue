@@ -34,7 +34,7 @@
       </el-slider>
     </el-form-item>
     <el-form-item label="路径" prop="filePath">
-      <file-choose v-model="form.filePath" :disabled="!!form.oldId"></file-choose>
+      <file-choose v-model="form.filePath" :disabled="!!form.oldId" :placeholder="desktopDirectory"></file-choose>
     </el-form-item>
     <el-form-item label="自动解压" prop="unzip">
       <el-switch
@@ -64,6 +64,7 @@
         load: true,
         newTask: null,
         sameTasks: [],
+        desktopDirectory: '',
         form: {
           id: this.taskId,
           oldId: '',
@@ -73,7 +74,7 @@
           connections: 1,
           filePath: '',
           unzip: true,
-          unzipPath: '',
+          unzipPath: ''
         },
         rules: {
           oldId: [
@@ -87,8 +88,16 @@
             {required: true, message: '不能为空'}
           ],
           filePath: [
-            {required: true, message: '不能为空'},
-            {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
+            {validator: (rule, value, callback) => {
+              if (this.desktopDirectory === '' && value === '') {
+                return callback(new Error('不能为空'));
+              }
+              if (value) {
+                let patt = new RegExp(/^([a-z]:)?[/\\].*$/i);
+                !patt.test(value) && callback(new Error('格式不正确'));
+              }
+              callback()
+            }, trigger: 'change' },
           ],
           unzipPath: [
             {required: true, message: '不能为空'},
@@ -131,6 +140,10 @@
     },
     methods: {
       onSubmit() {
+        if (this.form.filePath === '' || this.form.filePath == null) {
+          this.form.filePath = this.desktopDirectory;
+          this.form.unzipPath = Util.getUnzipFilePath(this.desktopDirectory, this.form.fileName);
+        }
         this.$refs['form'].validate((valid) => {
           if (valid) {
             this.load = true;
@@ -170,8 +183,15 @@
           Util.copy(this.newTask, this.form, ['id', 'oldId'])
         }
       },
+      getDesktopDirectory () {
+        this.$http.get('api/getDesktopDirectory')
+        .then(result => {
+          this.desktopDirectory = result.data || ''
+        })
+      }
     },
     created() {
+      this.getDesktopDirectory()
       this.$http.get('api/getTask?id=' + this.form.id)
       .then(result => {
         if (result.data) {

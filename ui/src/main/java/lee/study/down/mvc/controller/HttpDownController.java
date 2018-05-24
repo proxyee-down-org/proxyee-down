@@ -55,6 +55,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import javax.swing.filechooser.FileSystemView;
 
 @RestController
 @RequestMapping("/api")
@@ -142,6 +143,15 @@ public class HttpDownController {
         }
       }
     }
+    return resultInfo;
+  }
+
+  @RequestMapping("/getDesktopDirectory")
+  public  ResultInfo getDesktopDirectory() {
+    ResultInfo resultInfo = new ResultInfo();
+    File desktopDir = FileSystemView.getFileSystemView().getHomeDirectory();
+    String desktopPath = desktopDir.getAbsolutePath();
+    resultInfo.setData(desktopPath);
     return resultInfo;
   }
 

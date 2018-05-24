@@ -4,7 +4,8 @@
               :value="value"
               :disabled="disabled"
               @input="$emit('input',arguments[0])"
-              @dblclick.native="visible = true"></el-input>
+              @dblclick.native="visible = true"
+              :placeholder="placeholder"></el-input>
     <el-button type="primary"
                :disabled="disabled"
                @click="visible=true">选择
@@ -44,7 +45,7 @@
         }
       }
     },
-    props: ['value', 'model', 'disabled'],
+    props: ['value', 'model', 'disabled', 'placeholder'],
     methods: {
       loadChild(node, resolve) {
         this.$http.post('api/getChildDirList',
