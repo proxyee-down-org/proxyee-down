@@ -18,11 +18,20 @@ pom.properties
 hs_err_pid*
 
 .DS_Store
+
+# nodejs files
 */view/node_modules/
+*/view/package-lock.json
 */view/dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# java
+.project
+.settings
+.classpath
+.factorypath
 
 # Editor directories and files
 .idea
