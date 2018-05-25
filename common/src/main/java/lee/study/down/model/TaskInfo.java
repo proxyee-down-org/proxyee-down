@@ -45,10 +45,10 @@ public class TaskInfo implements Serializable {
     List<ChunkInfo> chunkInfoList = new ArrayList<>();
     if (getTotalSize() > 0) {  //非chunked编码
       //计算chunk列表
+      long chunkSize = getTotalSize() / getConnections();
       for (int i = 0; i < getConnections(); i++) {
         ChunkInfo chunkInfo = new ChunkInfo();
         chunkInfo.setIndex(i);
-        long chunkSize = getTotalSize() / getConnections();
         chunkInfo.setOriStartPosition(i * chunkSize);
         chunkInfo.setNowStartPosition(chunkInfo.getOriStartPosition());
         if (i == getConnections() - 1) { //最后一个连接去下载多出来的字节
