@@ -14,6 +14,10 @@
                width="30%"
                :append-to-body="true"
                @close="visible = false">
+               <div class="fast-navigation">
+                  <el-button plain @click="setFrequentlyUsedDirectory('Desktop')">桌面目录</el-button>
+                  <el-button plain @click="setFrequentlyUsedDirectory('Downloads')">下载目录</el-button>
+               </div>
       <el-tree :data="files"
                :props="props"
                :load="loadChild"
@@ -46,7 +50,7 @@
     },
     props: ['value', 'model', 'disabled'],
     methods: {
-      loadChild(node, resolve) {
+      loadChild (node, resolve) {
         this.$http.post('api/getChildDirList',
           {
             path: node.data.path || '',
@@ -58,6 +62,13 @@
           }
         }).catch(() => {
         });
+      },
+      setFrequentlyUsedDirectory (dir) {
+        this.$http.get(`api/getFrequentlyUsedDirectory?dir=${dir}`)
+        .then(result => {
+          this.visible = false;
+          this.$emit('input', result.data)
+        })
       }
     }
   }
@@ -72,5 +83,9 @@
   .file-choose-tree {
     overflow-y: auto;
     height: 300px;
+  }
+
+  .fast-navigation {
+    margin: -15px 0 20px 0;
   }
 </style>
