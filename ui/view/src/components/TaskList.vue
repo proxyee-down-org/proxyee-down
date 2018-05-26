@@ -63,7 +63,7 @@
           <b>操作</b>
         </el-col>
       </el-row>
-      <el-row v-for="(task,index) in tasks"
+      <el-row v-for="task in tasks"
               :gutter="20"
               class="task-list-row"
               :key="task.id">
@@ -480,7 +480,7 @@
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="less">
   .tool-button {
     font-size: 14px;
     padding-right: 20px;
@@ -492,8 +492,20 @@
   }
 
   .task-detail-list {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
+    li {
+      list-style: none;
+      padding-bottom: 8px;
+      div {
+        display: inline-block;
+        width: 70%;
+      }
+      span {
+        float: right;
+        padding: 0 5px 0 20px;
+      }
+    }
   }
 
   .task-detail-list-scroll {
@@ -501,55 +513,34 @@
     height: 448px;
   }
 
-  .task-detail-list li {
-    list-style: none;
-    padding-bottom: 8px;
-  }
-
-  .task-detail-list li > div {
-    display: inline-block;
-    width: 70%;
-  }
-
-  .task-detail-list li > span {
-    padding-left: 20px;
-    padding-right: 5px;
-    float: right;
-  }
-
   .file-detail {
     font-size: 15px;
   }
 
-  @import "../assets/icon/iconfont.css";
-
   .task-list-row {
     text-align: center;
+    p {
+      position: relative;
+      top: -16px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
   }
 
   .task-list-row-title {
-    padding-top: 30px;
-    padding-bottom: 30px;
-  }
-
-  .task-list-row p {
-    position: relative;
-    top: -16px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    padding: 30px 0;
   }
 
   .task-list-icon {
-    height: 40px;
     top: 0px;
     left: 0px;
-  }
-
-  .task-list-icon i {
-    font-size: 30px;
-    cursor: pointer;
-    padding-left: 15px;
+    height: 40px;
+    i {
+      padding-left: 15px;
+      font-size: 30px;
+      cursor: pointer;
+    }
   }
 </style>
 

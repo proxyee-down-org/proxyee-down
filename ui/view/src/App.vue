@@ -196,10 +196,11 @@
     padding: 0;
   }
 
-  @import "./assets/icon/iconfont.css";
+
 </style>
 
 <style>
+  @import "./assets/icon/iconfont.css";
   .item {
     padding-left: 5px;
   }
