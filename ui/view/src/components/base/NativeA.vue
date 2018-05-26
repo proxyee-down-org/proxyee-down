@@ -9,12 +9,10 @@
     methods: {
       onClick() {
         this.$http.get('api/open?url='+this.$attrs.href).then(result => {
-          console.log(result);
-          if (result.data == 2) {
+          if (result.data === 2) {
             window.open(this.$attrs.href);
           }
-        }).catch(() => {
-        });
+        }).catch(() => {});
       }
     }
   }

@@ -3,7 +3,7 @@
     <el-input class="file-choose-input"
               :value="value"
               :disabled="disabled"
-              @input="$emit('input',arguments[0])"
+              @input="$emit('input', arguments[0])"
               @dblclick.native="visible = true"></el-input>
     <el-button type="primary"
                :disabled="disabled"
@@ -28,7 +28,7 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="visible = false">取 消</el-button>
         <el-button type="primary"
-                   @click="visible = false;$emit('input',$refs.tree.getCurrentNode().path)">确 定
+                   @click="visible = false; $emit('input', $refs.tree.getCurrentNode().path)">确 定
         </el-button>
       </div>
     </el-dialog>
@@ -60,8 +60,7 @@
           if (result.data) {
             resolve(result.data);
           }
-        }).catch(() => {
-        });
+        }).catch(() => {});
       },
       setFrequentlyUsedDirectory (dir) {
         this.$http.get(`api/getFrequentlyUsedDirectory?dir=${dir}`)
@@ -81,8 +80,8 @@
   }
 
   .file-choose-tree {
-    overflow-y: auto;
     height: 300px;
+    overflow-y: auto;
   }
 
   .fast-navigation {

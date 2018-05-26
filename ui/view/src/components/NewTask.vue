@@ -72,7 +72,7 @@
           supportRange: false,
           connections: 1,
           filePath: '',
-          unzip: true,
+          unzip: false,
           unzipPath: '',
         },
         rules: {
@@ -109,12 +109,12 @@
       },
       'form.unzip': function (val) {
         if (val) {
-          this.rules['unzipPath'] = [
+          this.rules.unzipPath = [
             {required: true, message: '不能为空'},
             {pattern: /^([a-z]:)?[/\\].*$/i, message: '格式不正确'}
           ];
         } else {
-          this.rules['unzipPath'] = null;
+          this.rules.unzipPath = null;
         }
       }
     },
@@ -131,11 +131,11 @@
     },
     methods: {
       onSubmit() {
-        this.$refs['form'].validate((valid) => {
+        this.$refs['form'].validate(valid => {
           if (valid) {
             this.load = true;
             this.$http.post('api/startTask', this.form)
-            .then((result) => {
+            .then(result => {
               this.load = false;
               this.$emit('onSubmit', result);
             }).catch(() => {
@@ -145,24 +145,21 @@
         });
       },
       onCancel() {
-        this.$confirm('确认要取消吗',
-          '提示',
+        this.$confirm('确认要取消吗', '提示',
           {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
           }).then(() => {
-          this.$http.get('api/delNewTask?id=' + this.form.id)
+          this.$http.get(`api/delNewTask?id=${this.form.id}`)
           .then(() => {
             this.$emit('onCancel', arguments[0]);
-          }).catch(() => {
-          });
-        }).catch(() => {
-        });
+          }).catch(() => {});
+        }).catch(() => {});
       },
       sameTaskChange(taskId) {
         if (taskId) {
           this.sameTasks.forEach(task => {
-            if (task.id == taskId) {
+            if (task.id === taskId) {
               Util.copy(task, this.form, ['id', 'oldId'])
             }
           })
@@ -172,46 +169,30 @@
       },
     },
     created() {
-      this.$http.get('api/getTask?id=' + this.form.id)
+      this.$http.get(`api/getTask?id=${this.form.id}`)
       .then(result => {
         if (result.data) {
           this.newTask = Util.clone(result.data.task);
           this.form = result.data.task;
           if (result.data.sameTasks && result.data.sameTasks.length > 0) {
-            this.$confirm('检测到可能相同的下载任务，是否选择任务进行刷新？',
-              '提示', {
+            this.$confirm('检测到可能相同的下载任务，是否选择任务进行刷新？', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
               }).then(() => {
               this.sameTasks = result.data.sameTasks;
-            }).catch(() => {
-            });
+            }).catch(() => {});
           }
           this.load = false;
         } else {
           this.$emit('onCancel', arguments[0]);
         }
-      }).catch(() => {
-      });
+      }).catch(() => {});
     }
   }
 </script>
 
 
 <style scoped>
-  .el-input {
-    width: 50%;
-  }
-
-  .el-checkbox + .el-checkbox {
-    margin-left: 10px;
-  }
-
-  .el-slider {
-    padding-left: 5px;
-    width: 70%;
-  }
-
   .same-task-label {
     float: left
   }

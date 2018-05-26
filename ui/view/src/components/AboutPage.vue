@@ -7,8 +7,7 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down</native-a>
+          <native-a target="_blank" href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down</native-a>
         </span>
       </el-col>
     </el-row>
@@ -18,8 +17,7 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">GitHub@proxyee-down/README.md</native-a>
+          <native-a target="_blank" href="https://github.com/monkeyWie/proxyee-down/blob/master/README.md">GitHub@proxyee-down/README.md</native-a>
         </span>
       </el-col>
     </el-row>
@@ -29,8 +27,7 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md">GitHub@proxyee-down/FQA.md</native-a>
+          <native-a target="_blank" href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/FAQ.md">GitHub@proxyee-down/FQA.md</native-a>
         </span>
       </el-col>
     </el-row>
@@ -40,8 +37,7 @@
       </el-col>
       <el-col :span="16">
         <span>
-          <native-a target="_blank"
-                    href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down/issue</native-a>
+          <native-a target="_blank" href="https://github.com/monkeyWie/proxyee-down">GitHub@proxyee-down/issue</native-a>
         </span>
       </el-col>
     </el-row>
@@ -56,10 +52,7 @@
           <i class="el-icon-question"></i>
         </el-tooltip>
       </el-col>
-      <el-dialog
-        title="更新提示"
-        :visible.sync="dialogVisible"
-        width="30%">
+      <el-dialog title="更新提示" :visible.sync="dialogVisible" width="30%">
         <h2>检测到新版本</h2>
         <h3>版本号：{{updateInfo.version}}</h3>
         <h3>更新内容：</h3>
@@ -79,32 +72,28 @@
     <el-row>
       <el-col :span="16">
         <span>
-          <native-a target="_blank"
-                    href="http://spring.io/">spring</native-a>
+          <native-a target="_blank" href="http://spring.io/">spring</native-a>
         </span>
       </el-col>
     </el-row>
     <el-row>
       <el-col :span="16">
         <span>
-          <native-a target="_blank"
-                    href="http://netty.io/">netty</native-a>
+          <native-a target="_blank" href="http://netty.io/">netty</native-a>
         </span>
       </el-col>
     </el-row>
     <el-row>
       <el-col :span="16">
         <span>
-           <native-a target="_blank"
-                     href="https://cn.vuejs.org/">vue.js</native-a>
+           <native-a target="_blank" href="https://cn.vuejs.org/">vue.js</native-a>
         </span>
       </el-col>
     </el-row>
     <el-row>
       <el-col :span="16">
         <span>
-           <native-a target="_blank"
-                     href="http://element.eleme.io">Element UI</native-a>
+           <native-a target="_blank" href="http://element.eleme.io">Element UI</native-a>
         </span>
       </el-col>
     </el-row>
@@ -177,11 +166,7 @@
                 cancelButtonText: '取消'
               }).then(() => {
                 this.$http.get('api/restart')
-                .then(() => {
-                }).catch(() => {
-                });
-              }).catch(() => {
-              });
+              }).catch(() => {});
             }, 200)
             return 'success';
           default:
@@ -200,8 +185,7 @@
       this.$http.get('api/getVersion')
       .then(result => {
         this.version = this.fmtVersion(result.data);
-      }).catch(() => {
-      });
+      }).catch(() => {});
     },
   }
 </script>
