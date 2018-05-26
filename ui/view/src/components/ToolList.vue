@@ -12,12 +12,11 @@
           <el-tooltip class="item"
                       :content="tool.desc"
                       placement="right">
-            <el-button type="success"
-                       round
-                       style="width: 100%"
-                       @click="selected=tool.name">
-              {{tool.title}}
-            </el-button>
+            <div @click="selected=tool.name">
+              <el-card shadow="hover" class="tools-card">
+                {{tool.title}}
+              </el-card>
+            </div>
           </el-tooltip>
         </el-col>
       </el-row>
@@ -65,5 +64,9 @@
     width: 50%;
     height: 200px;
     font-size: 24px;
+  }
+  .tools-card {
+    text-align: center;
+    cursor: pointer;
   }
 </style>
