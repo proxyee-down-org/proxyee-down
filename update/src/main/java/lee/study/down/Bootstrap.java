@@ -20,7 +20,7 @@ public class Bootstrap {
   private static final String MAIN_PATH = PathUtil.ROOT_PATH + "main" + File.separator;
   private static final String CORE_PATH = MAIN_PATH + "proxyee-down-core.jar";
   private static final String UPDATE_PATH = MAIN_PATH + "proxyee-down-core.jar.bak";
-  private static final String SHELL_PARAMS = " -Dfile.encoding=GBK -Xms128m -Xmx128m -jar ";
+  private static final String SHELL_PARAMS = " -Dfile.encoding=GBK -Xms128m -Xmx256m -jar ";
   private static Process process;
   private static String SHELL;
 
