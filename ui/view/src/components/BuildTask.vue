@@ -8,7 +8,7 @@
       <el-checkbox v-model="hasBody">请求体</el-checkbox>
     </el-form-item>
     <el-form-item v-show="hasHead" label="请求头">
-      <div v-for="(head,index) in form.heads"
+      <div v-for="(head, index) in form.heads"
            :key="index"
            :class="index==0?null:'head-margin'">
         <el-input class="head-input" v-model="head.key" placeholder="key"></el-input>
@@ -27,7 +27,7 @@
     </el-form-item>
     <el-form-item>
       <el-button type="primary" @click="onSubmit" :loading="load">确定</el-button>
-      <el-button @click="$emit('onCancel',arguments[0]);">取消</el-button>
+      <el-button @click="$emit('onCancel', arguments[0]);">取消</el-button>
     </el-form-item>
   </el-form>
 </template>
@@ -80,23 +80,22 @@
 </script>
 
 
-<style scoped>
+<style scoped lang="less">
   .head-input {
-    width: 40%
+    width: 40%;
+    & + .head-input {
+      margin-left: 10px;
+    }
   }
 
   .el-form-item i {
-    font-size: 22px;
     margin-left: 10px;
+    font-size: 22px;
     cursor: pointer;
   }
 
   .head-margin {
     margin-top: 10px;
-  }
-
-  .head-input + .head-input {
-    margin-left: 10px;
   }
 
   .el-checkbox + .el-checkbox {

@@ -3,7 +3,7 @@
     <el-input class="file-choose-input"
               :value="value"
               :disabled="disabled"
-              @input="$emit('input',arguments[0])"
+              @input="$emit('input', arguments[0])"
               @dblclick.native="visible = true"></el-input>
     <el-button type="primary"
                :disabled="disabled"
@@ -14,6 +14,10 @@
                width="30%"
                :append-to-body="true"
                @close="visible = false">
+               <div class="fast-navigation">
+                  <el-button plain @click="setFrequentlyUsedDirectory('Desktop')">桌面目录</el-button>
+                  <el-button plain @click="setFrequentlyUsedDirectory('Downloads')">下载目录</el-button>
+               </div>
       <el-tree :data="files"
                :props="props"
                :load="loadChild"
@@ -24,7 +28,7 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="visible = false">取 消</el-button>
         <el-button type="primary"
-                   @click="visible = false;$emit('input',$refs.tree.getCurrentNode().path)">确 定
+                   @click="visible = false; $emit('input', $refs.tree.getCurrentNode().path)">确 定
         </el-button>
       </div>
     </el-dialog>
@@ -46,7 +50,7 @@
     },
     props: ['value', 'model', 'disabled'],
     methods: {
-      loadChild(node, resolve) {
+      loadChild (node, resolve) {
         this.$http.post('api/getChildDirList',
           {
             path: node.data.path || '',
@@ -56,8 +60,14 @@
           if (result.data) {
             resolve(result.data);
           }
-        }).catch(() => {
-        });
+        }).catch(() => {});
+      },
+      setFrequentlyUsedDirectory (dir) {
+        this.$http.get(`api/getFrequentlyUsedDirectory?dir=${dir}`)
+        .then(result => {
+          this.visible = false;
+          this.$emit('input', result.data)
+        })
       }
     }
   }
@@ -70,7 +80,11 @@
   }
 
   .file-choose-tree {
-    overflow-y: auto;
     height: 300px;
+    overflow-y: auto;
+  }
+
+  .fast-navigation {
+    margin: -15px 0 20px 0;
   }
 </style>

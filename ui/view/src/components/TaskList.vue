@@ -24,25 +24,15 @@
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :before-close="dialogCloseHandle">
-      <build-task v-if="newTaskStatus==1"
-                  @onSubmit="buildTaskHandle"
-                  @onCancel="dialogCloseHandle"></build-task>
-      <new-task v-if="newTaskStatus==2"
-                :taskId="newTaskId"
-                @onSubmit="dialogCloseHandle"
-                @onCancel="dialogCloseHandle"></new-task>
+      <build-task v-if="newTaskStatus==1" @onSubmit="buildTaskHandle" @onCancel="dialogCloseHandle"></build-task>
+      <new-task v-if="newTaskStatus==2" :taskId="newTaskId" @onSubmit="dialogCloseHandle" @onCancel="dialogCloseHandle"></new-task>
     </el-dialog>
-    <div v-if="initFlag"
-         v-loading="initFlag"
-         style="height: 500px">
+    <div v-if="initFlag" v-loading="initFlag" style="height: 500px">
     </div>
     <div v-else-if="tasks.length>0">
-      <el-row class="task-list-row task-list-row-title"
-              :gutter="20">
+      <el-row class="task-list-row task-list-row-title" :gutter="20">
         <el-col :span="1">
-          <el-checkbox @change="checkAllHandle" v-model="checkAll" :indeterminate="checkSome">
-            &nbsp;
-          </el-checkbox>
+          <el-checkbox @change="checkAllHandle" v-model="checkAll" :indeterminate="checkSome">&nbsp;</el-checkbox>
         </el-col>
         <el-col :span="6">
           <b>名称</b>
@@ -63,13 +53,9 @@
           <b>操作</b>
         </el-col>
       </el-row>
-      <el-row v-for="(task,index) in tasks"
-              :gutter="20"
-              class="task-list-row"
-              :key="task.id">
+      <el-row v-for="task in tasks" :gutter="20" class="task-list-row" :key="task.id">
         <el-col :span="1">
-          <el-checkbox v-model="checkTasks" :label="task.id" @change="checkHandle">&nbsp;
-          </el-checkbox>
+          <el-checkbox v-model="checkTasks" :label="task.id" @change="checkHandle">&nbsp;</el-checkbox>
         </el-col>
         <el-col :span="6">
           <el-tooltip :content="task.fileName">
@@ -79,18 +65,10 @@
         <el-col :span="3">
           <p>{{sizeFmt(task.totalSize, '未知大小')}}</p>
         </el-col>
-        <el-col :span="5"
-                class="task-list-container">
-          <el-popover
-            placement="right-end"
-            title="下载详情"
-            width="400"
-            trigger="click">
+        <el-col :span="5" class="task-list-container">
+          <el-popover placement="right-end" title="下载详情" width="400" trigger="click">
             <div class="file-detail">
-              <el-popover
-                popper-class="file-detail-popper"
-                :content="task.url"
-                trigger="click">
+              <el-popover popper-class="file-detail-popper" :content="task.url" trigger="click">
                 <p style="white-space: nowrap;text-overflow: ellipsis;overflow: hidden;"
                    slot="reference">
                   {{task.url}}
@@ -122,7 +100,7 @@
               </p>
             </div>
             <ul
-              :class="{'task-detail-list':true,'task-detail-list-scroll':task.chunkInfoList.length>=16}">
+              :class="{'task-detail-list': true, 'task-detail-list-scroll': task.chunkInfoList.length >= 16}">
               <li v-for="chunk in task.chunkInfoList" :key="chunk.index">
                 <task-progress :text-inside="true" :stroke-width="18"
                                :percentage="progress(chunk)"
@@ -142,8 +120,7 @@
         </el-col>
         <el-col :span="3">
           <el-tag :type="statusType(task)">{{leftTime(task)}}</el-tag>
-          <el-tooltip v-show="task.status==6" class="item"
-                      placement="right">
+          <el-tooltip v-show="task.status === 6" class="item" placement="right">
             <div slot="content">下载链接失效，可尝试
               <native-a
                 href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
@@ -152,8 +129,7 @@
             </div>
             <i class="el-icon-question"></i>
           </el-tooltip>
-          <el-tooltip v-show="task.status==4&&progress(task)>0&&speedTask(task)==0" class="item"
-                      placement="right">
+          <el-tooltip v-show="task.status === 4 && progress(task) > 0 && speedTask(task) === 0" class="item" placement="right">
             <div slot="content">若长时间下载速度为0，可尝试
               <native-a
                 href="https://github.com/monkeyWie/proxyee-down/blob/master/.guide/common/refresh/read.md"
@@ -165,9 +141,9 @@
         </el-col>
         <el-col :span="3">
           <div class="task-list-icon">
-            <i v-if="task.status==7" class="el-icon-task-folder"
+            <i v-if="task.status === 7" class="el-icon-task-folder"
                @click="openTaskDir(task)"></i>
-            <i v-if="task.status!=7"
+            <i v-if="task.status !== 7"
                :class="iconClass(task)"
                @click="controlTask(task)"></i>
             <i class="el-icon-task-delete" @click="deleteTask(task)"></i>
@@ -480,7 +456,7 @@
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="less">
   .tool-button {
     font-size: 14px;
     padding-right: 20px;
@@ -492,8 +468,20 @@
   }
 
   .task-detail-list {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
+    li {
+      list-style: none;
+      padding-bottom: 8px;
+      div {
+        display: inline-block;
+        width: 70%;
+      }
+      span {
+        float: right;
+        padding: 0 5px 0 20px;
+      }
+    }
   }
 
   .task-detail-list-scroll {
@@ -501,55 +489,34 @@
     height: 448px;
   }
 
-  .task-detail-list li {
-    list-style: none;
-    padding-bottom: 8px;
-  }
-
-  .task-detail-list li > div {
-    display: inline-block;
-    width: 70%;
-  }
-
-  .task-detail-list li > span {
-    padding-left: 20px;
-    padding-right: 5px;
-    float: right;
-  }
-
   .file-detail {
     font-size: 15px;
   }
 
-  @import "../assets/icon/iconfont.css";
-
   .task-list-row {
     text-align: center;
+    p {
+      position: relative;
+      top: -16px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
   }
 
   .task-list-row-title {
-    padding-top: 30px;
-    padding-bottom: 30px;
-  }
-
-  .task-list-row p {
-    position: relative;
-    top: -16px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    padding: 30px 0;
   }
 
   .task-list-icon {
-    height: 40px;
     top: 0px;
     left: 0px;
-  }
-
-  .task-list-icon i {
-    font-size: 30px;
-    cursor: pointer;
-    padding-left: 15px;
+    height: 40px;
+    i {
+      padding-left: 15px;
+      font-size: 30px;
+      cursor: pointer;
+    }
   }
 </style>
 

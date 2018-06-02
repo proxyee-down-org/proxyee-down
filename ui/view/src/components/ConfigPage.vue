@@ -7,12 +7,7 @@
       </el-tooltip>
     </el-form-item>
     <el-form-item label="分段数" prop="connections">
-      <el-slider
-        v-model="form.connections"
-        :min="2"
-        :max="256"
-        :step="2"
-        show-input>
+      <el-slider v-model="form.connections" :min="2" :max="256" :step="2" show-input>
       </el-slider>
       <el-tooltip class="item" content="创建新任务时默认的分段数" placement="right">
         <i class="el-icon-question" style="position: relative;top:-15px;"></i>
@@ -63,11 +58,7 @@
     <div v-if="form.secProxyEnable">
       <el-form-item label="类型" prop="secProxyConfig.proxyType">
         <el-select v-model="form.secProxyConfig.proxyType" placeholder="请选择">
-          <el-option
-            v-for="item in proxyTypeOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value">
+          <el-option v-for="item in proxyTypeOptions" :key="item.value" :label="item.label" :value="item.value">
           </el-option>
         </el-select>
       </el-form-item>
@@ -169,7 +160,7 @@
     },
     methods: {
       onSubmit() {
-        this.$refs['form'].validate((valid) => {
+        this.$refs['form'].validate(valid => {
           if (valid) {
             this.load = true;
             this.$http.post('api/setConfigInfo', this.form)
@@ -200,10 +191,6 @@
 
 
 <style scoped>
-  .el-input {
-    width: 50%;
-  }
-
   .num-input {
     width: 15%;
   }

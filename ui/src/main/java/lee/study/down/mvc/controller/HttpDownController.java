@@ -145,6 +145,15 @@ public class HttpDownController {
     return resultInfo;
   }
 
+  @RequestMapping("/getFrequentlyUsedDirectory")
+  public  ResultInfo getFrequentlyUsedDirectory(@RequestParam String dir) {
+    ResultInfo resultInfo = new ResultInfo();
+    String userHome = System.getProperties().getProperty("user.home");
+    userHome += (dir.equals("Desktop")) ? "\\Desktop" : "\\Downloads";
+    resultInfo.setData(userHome);
+    return resultInfo;
+  }
+
   @RequestMapping("/pauseTask")
   public ResultInfo pauseTask(@RequestParam String id) throws Exception {
     ResultInfo resultInfo = new ResultInfo();
