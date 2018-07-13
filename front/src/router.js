@@ -9,7 +9,10 @@ export default new Router({
     {
       path: "/",
       name: "tasks",
-      component: Tasks
+      component: Tasks,
+      meta: {
+        title: "任务列表"
+      }
     }
   ]
 });

@@ -10,7 +10,7 @@
                 <Icon type="settings"></Icon>
                 工具列表
             </template>
-            <i-menu-item name="3-1">百度云解压</i-menu-item>
+            <i-menu-item name="3-1">待添加</i-menu-item>
         </i-submenu>
         <i-menu-item name="4">
             <Icon type="gear-a"></Icon>
