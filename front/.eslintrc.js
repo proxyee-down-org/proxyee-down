@@ -23,6 +23,8 @@ module.exports = {
     "no-eval": 'error',
     //禁止使用隐式eval
     "no-implied-eval": 'error',
+     //禁止不必要的分号
+    'no-extra-semi': 'error',
     //switch中的case标签不能重复
     "no-duplicate-case": 'error',
     // 禁止 for 循环出现方向错误的循环，比如 for (i = 0; i < 10; i--)

@@ -2,10 +2,10 @@
   <div class="tasks">
     <i-content :style="{padding: '0 50px'}">
       <div class="tasks-entry">
-        <i-button type="dashed" icon="plus-round" class="tasks-button">创建任务</i-button>
-        <i-button type="dashed" icon="ios-play" class="tasks-button">继续下载</i-button>
-        <i-button type="dashed" icon="ios-pause" class="tasks-button">暂停任务</i-button>
-        <i-button type="dashed" icon="ios-trash" class="tasks-button">删除任务</i-button>
+        <i-button type="dashed" icon="plus-round" class="tasks-button">{{$t("tasks.createTasks")}}</i-button>
+        <i-button type="dashed" icon="ios-play" class="tasks-button">{{$t("tasks.continueDownloading")}}</i-button>
+        <i-button type="dashed" icon="ios-pause" class="tasks-button">{{$t("tasks.pauseDownloads")}}</i-button>
+        <i-button type="dashed" icon="ios-trash" class="tasks-button">{{$t("tasks.deleteTask")}}</i-button>
       </div>
       <div style="min-height: 200px;">
         <i-table ref="selection" :columns="taskListsColumns" :data="taskLists"></i-table>
@@ -26,26 +26,26 @@ export default {
           width: 60
         },
         {
-          title: "文件名",
+          title: this.$t("tasks.fileName"),
           key: "fileName",
           width: 200
         },
         {
-          title: "下载地址",
+          title: this.$t("tasks.downloadAddress"),
           key: "downloadAddress"
         },
         {
-          title: "下载速度",
+          title: this.$t("tasks.downloadSpeed"),
           key: "downloadSpeed",
-          width: 100
+          width: this.$i18n.locale === "zh" ? 100 : 140
         },
         {
-          title: "预计完成时间",
+          title: this.$t("tasks.expectedCompletionTime"),
           key: "completeTime",
-          width: 150
+          width: this.$i18n.locale === "zh" ? 100 : 200
         },
         {
-          title: "开始时间",
+          title: this.$t("tasks.createTime"),
           key: "createTime",
           width: 150
         }

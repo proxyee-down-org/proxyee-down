@@ -3,26 +3,26 @@
   <i-menu mode="horizontal" theme="dark" active-name="1">
     <i-menu-item name="1">
       <i-icon type="code-download"></i-icon>
-      任务管理
+      {{$t("nav.taskManager")}}
     </i-menu-item>
     <i-submenu name="3">
       <template slot="title">
-        <Icon type="settings"></Icon>
-        工具列表
+        <i-icon type="settings"></i-icon>
+        {{$t("nav.toolList")}}
       </template>
       <i-menu-item name="3-1">待添加</i-menu-item>
     </i-submenu>
     <i-menu-item name="4">
-      <Icon type="gear-a"></Icon>
-      软件设置
+      <i-icon type="gear-a"></i-icon>
+      {{$t("nav.softwareSetting")}}
     </i-menu-item>
     <i-menu-item name="4">
       <i-icon type="ios-navigate"></i-icon>
-      关于项目
+      {{$t("nav.aboutProject")}}
     </i-menu-item>
     <i-menu-item name="4">
       <i-icon type="ios-star"></i-icon>
-      支持作者
+      {{$t("nav.supportUs")}}
     </i-menu-item>
   </i-menu>
   <router-view/>
