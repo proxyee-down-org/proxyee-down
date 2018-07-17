@@ -1,5 +1,6 @@
 package org.pdown.gui;
 
+import de.felixroske.jfxsupport.AbstractJavaFxApplicationSupport;
 import java.awt.AWTException;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -7,7 +8,6 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.net.URL;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -15,9 +15,12 @@ import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.pdown.gui.com.Browser;
-import org.pdown.rest.DownRestServer;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
-public class DownApplication extends Application {
+@SpringBootApplication
+@ComponentScan(basePackages = "org.pdown.rest")
+public class DownApplication extends AbstractJavaFxApplicationSupport {
 
   private static final String ICON_NAME = "icon.png";
 
@@ -100,9 +103,6 @@ public class DownApplication extends Application {
 
 
   public static void main(String[] args) {
-    //start rest server
-    new Thread(() -> DownRestServer.start(null)).start();
-    //gui start
-    launch(args);
+    launch(DownApplication.class, null, args);
   }
 }

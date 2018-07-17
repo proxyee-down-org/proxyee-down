@@ -1,0 +1,6 @@
+spring:
+  # 数据库配置
+  profiles:
+    active: dev
+server:
+  port: 26339
