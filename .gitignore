@@ -1,4 +1,6 @@
-﻿target/
+.DS_Store
+
+target/
 log/
 !.mvn/wrapper/maven-wrapper.jar
 
