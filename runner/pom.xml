@@ -21,10 +21,59 @@
       <plugin>
         <groupId>com.zenjava</groupId>
         <artifactId>javafx-maven-plugin</artifactId>
+        <version>8.8.3</version>
         <configuration>
-          <mainClass>org.pdown.gui.DownApplication</mainClass>
-          <vendor>ProxyeeDown</vendor>
+          <mainClass>org.pdown.gui.Runner</mainClass>
+          <vendor>pdown.org</vendor>
+          <title>proxyee-down</title>
+          <appName>proxyee-down</appName>
+          <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
+          <!--<bundleArguments>
+            <runtime/>
+          </bundleArguments>-->
         </configuration>
+        <executions>
+          <execution>
+            <id>jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>native</id>
+            <phase>package</phase>
+            <goals>
+              <goal>native</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.coderplus.maven.plugins</groupId>
+        <artifactId>copy-rename-maven-plugin</artifactId>
+        <version>1.0.1</version>
+        <executions>
+          <execution>
+            <id>copy-java</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <sourceFile>${JAVA_HOME}/bin/java.exe</sourceFile>
+                  <destinationFile>${project.build.directory}/jfx/native/proxyee-down/runtime/bin/java.exe</destinationFile>
+                </fileSet>
+                <fileSet>
+                  <sourceFile>../main/target/proxyee-down-main.jar</sourceFile>
+                  <destinationFile>${project.build.directory}/jfx/native/proxyee-down/main/proxyee-down-main.jar</destinationFile>
+                </fileSet>
+              </fileSets>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

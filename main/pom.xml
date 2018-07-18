@@ -30,17 +30,22 @@
   </dependencies>
 
   <build>
+    <finalName>proxyee-down-main</finalName>
     <plugins>
       <plugin>
-        <groupId>com.zenjava</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>2.0.2.RELEASE</version>
         <configuration>
           <mainClass>org.pdown.gui.DownApplication</mainClass>
-          <vendor>pdown</vendor>
-         <!-- <bundleArguments>
-            <icon>${project.basedir}/src/main/resources/logo.ico</icon>
-          </bundleArguments>-->
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

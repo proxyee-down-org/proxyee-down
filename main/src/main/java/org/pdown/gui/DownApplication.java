@@ -14,6 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import org.pdown.core.util.OsUtil;
 import org.pdown.gui.com.Browser;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -22,7 +23,9 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = "org.pdown.rest")
 public class DownApplication extends AbstractJavaFxApplicationSupport {
 
-  private static final String ICON_NAME = "icon.png";
+  private static final String OS = OsUtil.isWindows() ? "windows"
+      : (OsUtil.isMac() ? "mac" : "linux");
+  private static final String ICON_NAME = OS + "/logo.png";
 
   private Stage stage;
   private Browser browser;
@@ -36,6 +39,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     loadBrowser();
     loadWindow();
     show();
+    trayIcon.displayMessage("提示", System.getProperty("user.dir") + "\t" + System.getProperty("java.home"), TrayIcon.MessageType.INFO);
   }
 
   //加载托盘
@@ -55,7 +59,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       MenuItem showItem = new MenuItem("显示");
       showItem.addActionListener(event -> Platform.runLater(() -> show()));
       MenuItem closeItem = new MenuItem("退出");
-      closeItem.addActionListener(event -> System.exit(0));
+      closeItem.addActionListener(event -> {
+        Platform.exit();
+        System.exit(0);
+      });
       popupMenu.add(showItem);
       popupMenu.add(closeItem);
       trayIcon.setPopupMenu(popupMenu);
