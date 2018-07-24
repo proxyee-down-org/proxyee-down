@@ -1,5 +1,3 @@
-console.log(1);
-
 /**
  * 获取当前系统语言
  * Get the current system language
@@ -8,6 +6,7 @@ console.log(1);
 const getLanguage = () => {
   let language = navigator.browserLanguage || navigator.language;
   return language.indexOf("zh") !== -1 ? "zh" : "en";
+  // return "en";
 };
 
 module.exports = {
