@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   nav: {
     taskManager: "任务管理",
     toolList: "工具列表",
@@ -15,6 +15,7 @@ module.exports = {
     downloadAddress: "下载地址",
     downloadSpeed: "下载速度",
     expectedCompletionTime: "预计完成时间",
-    createTime: "开始时间"
+    createTime: "开始时间",
+    taskProgress: "任务进度"
   }
 };

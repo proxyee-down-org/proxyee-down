@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   nav: {
     taskManager: "Task Manager",
     toolList: "Tool List",
@@ -15,6 +15,7 @@ module.exports = {
     downloadAddress: "Download Address",
     downloadSpeed: "Download Speed",
     expectedCompletionTime: "Expected Completion Time",
-    createTime: "Create Time"
+    createTime: "Create Time",
+    taskProgress: "Schedule"
   }
 };

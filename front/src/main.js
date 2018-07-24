@@ -20,8 +20,8 @@ Vue.config.productionTip = false;
 const i18n = new VueI18n({
   locale: getLanguage(),
   messages: {
-    en: Object.assign(require("./i18n/en"), en),
-    zh: Object.assign(require("./i18n/zh"), zh)
+    en: Object.assign(require("./i18n/en").default, en),
+    zh: Object.assign(require("./i18n/zh").default, zh)
   }
 });
 
