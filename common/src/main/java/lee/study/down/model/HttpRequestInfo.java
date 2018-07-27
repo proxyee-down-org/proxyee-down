@@ -1,5 +1,6 @@
 package lee.study.down.model;
 
+import com.github.monkeywie.proxyee.util.ProtoUtil.RequestProto;
 import io.netty.handler.codec.DecoderResult;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -8,7 +9,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import java.io.Serializable;
 import java.util.Map.Entry;
-import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpRequestInfo implements HttpRequest, Serializable {
 

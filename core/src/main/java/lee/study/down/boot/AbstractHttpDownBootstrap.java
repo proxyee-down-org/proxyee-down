@@ -1,5 +1,6 @@
 package lee.study.down.boot;
 
+import com.github.monkeywie.proxyee.util.ProtoUtil.RequestProto;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.Channel;
@@ -31,8 +32,6 @@ import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
-import lee.study.proxyee.util.ProtoUtil.RequestProto;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

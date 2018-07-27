@@ -1,5 +1,7 @@
 package lee.study.down.handle;
 
+import com.github.monkeywie.proxyee.proxy.ProxyHandleFactory;
+import com.github.monkeywie.proxyee.util.ProtoUtil.RequestProto;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -19,8 +21,6 @@ import lee.study.down.model.ChunkInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
-import lee.study.proxyee.proxy.ProxyHandleFactory;
-import lee.study.proxyee.util.ProtoUtil.RequestProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,5 +1,7 @@
 package lee.study.down.intercept.common;
 
+import com.github.monkeywie.proxyee.intercept.HttpProxyIntercept;
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -15,8 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 import java.util.zip.GZIPOutputStream;
 import lee.study.down.util.ByteUtil;
-import lee.study.proxyee.intercept.HttpProxyIntercept;
-import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 
 public abstract class ResponseTextIntercept extends HttpProxyIntercept {
 
@@ -32,7 +32,7 @@ public abstract class ResponseTextIntercept extends HttpProxyIntercept {
       //解压gzip响应
       if ("gzip".equalsIgnoreCase(httpResponse.headers().get(HttpHeaderNames.CONTENT_ENCODING))) {
         isGzip = true;
-        pipeline.reset3();
+        pipeline.resetAfterHead();
         proxyChannel.pipeline().addAfter("httpCodec", "decompress", new HttpContentDecompressor());
         proxyChannel.pipeline().fireChannelRead(httpResponse);
       } else {

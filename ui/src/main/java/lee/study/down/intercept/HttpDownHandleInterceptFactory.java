@@ -1,5 +1,8 @@
 package lee.study.down.intercept;
 
+import com.github.monkeywie.proxyee.intercept.HttpProxyIntercept;
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpContent;
@@ -14,9 +17,6 @@ import lee.study.down.model.HttpDownInfo;
 import lee.study.down.model.TaskInfo;
 import lee.study.down.util.HttpDownUtil;
 import lee.study.down.util.HttpUtil;
-import lee.study.proxyee.intercept.HttpProxyIntercept;
-import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.proxyee.proxy.ProxyConfig;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor

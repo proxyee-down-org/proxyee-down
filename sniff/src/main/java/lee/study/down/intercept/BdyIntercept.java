@@ -1,10 +1,10 @@
 package lee.study.down.intercept;
 
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
 import io.netty.handler.codec.http.HttpResponse;
 import lee.study.down.intercept.common.ResponseTextIntercept;
 import lee.study.down.plug.PluginContent;
 import lee.study.down.util.HttpUtil;
-import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 
 /**
  * 破解百度云PC浏览器版大文件下载限制

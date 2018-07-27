@@ -1,5 +1,6 @@
 package lee.study.down.mvc.controller;
 
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +47,6 @@ import lee.study.down.update.UpdateService;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.HttpDownUtil;
 import lee.study.down.util.OsUtil;
-import lee.study.proxyee.proxy.ProxyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -146,7 +146,7 @@ public class HttpDownController {
   }
 
   @RequestMapping("/getFrequentlyUsedDirectory")
-  public  ResultInfo getFrequentlyUsedDirectory(@RequestParam String dir) {
+  public ResultInfo getFrequentlyUsedDirectory(@RequestParam String dir) {
     ResultInfo resultInfo = new ResultInfo();
     String userHome = System.getProperties().getProperty("user.home");
     userHome += (dir.equals("Desktop")) ? "\\Desktop" : "\\Downloads";

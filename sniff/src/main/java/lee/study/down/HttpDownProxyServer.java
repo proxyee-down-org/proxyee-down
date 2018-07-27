@@ -1,17 +1,17 @@
 package lee.study.down;
 
+import com.github.monkeywie.proxyee.exception.HttpProxyExceptionHandle;
+import com.github.monkeywie.proxyee.intercept.HttpProxyIntercept;
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptInitializer;
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
+import com.github.monkeywie.proxyee.server.HttpProxyCACertFactory;
+import com.github.monkeywie.proxyee.server.HttpProxyServer;
+import com.github.monkeywie.proxyee.server.HttpProxyServerConfig;
 import io.netty.channel.Channel;
 import lee.study.down.intercept.BdyIntercept;
 import lee.study.down.intercept.HttpDownSniffIntercept;
 import lee.study.down.intercept.common.HttpDownInterceptFactory;
-import lee.study.proxyee.exception.HttpProxyExceptionHandle;
-import lee.study.proxyee.intercept.CertDownIntercept;
-import lee.study.proxyee.intercept.HttpProxyIntercept;
-import lee.study.proxyee.intercept.HttpProxyInterceptInitializer;
-import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
-import lee.study.proxyee.proxy.ProxyConfig;
-import lee.study.proxyee.server.HttpProxyCACertFactory;
-import lee.study.proxyee.server.HttpProxyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +28,14 @@ public class HttpDownProxyServer {
       HttpDownInterceptFactory interceptFactory) {
     this.proxyConfig = proxyConfig;
     this.interceptFactory = interceptFactory;
-
-    this.proxyServer = new HttpProxyServer(caCertFactory);
+    HttpProxyServerConfig config = new HttpProxyServerConfig();
+    config.setHandleSsl(true);
+    config.setBossGroupThreads(1);
+    config.setWorkerGroupThreads(1);
+    config.setProxyGroupThreads(1);
+    this.proxyServer = new HttpProxyServer()
+        .caCertFactory(caCertFactory)
+        .serverConfig(config);
   }
 
   public void setProxyConfig(ProxyConfig proxyConfig) {

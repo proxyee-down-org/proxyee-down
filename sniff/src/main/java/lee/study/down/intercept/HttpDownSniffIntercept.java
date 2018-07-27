@@ -1,5 +1,7 @@
 package lee.study.down.intercept;
 
+import com.github.monkeywie.proxyee.intercept.HttpProxyIntercept;
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -13,8 +15,6 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.util.Arrays;
 import lee.study.down.model.HttpRequestInfo;
-import lee.study.proxyee.intercept.HttpProxyIntercept;
-import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,13 +28,12 @@ public class HttpDownSniffIntercept extends HttpProxyIntercept {
   @Override
   public void beforeRequest(Channel clientChannel, HttpRequest httpRequest,
       HttpProxyInterceptPipeline pipeline) throws Exception {
-    pipeline.setHttpRequest(HttpRequestInfo.adapter(httpRequest));
     String contentLength = httpRequest.headers().get(HttpHeaderNames.CONTENT_LENGTH);
     //缓存request content
     if (contentLength != null) {
       content = PooledByteBufAllocator.DEFAULT.buffer();
     }
-    pipeline.beforeRequest(clientChannel, httpRequest);
+    pipeline.beforeRequest(clientChannel, HttpRequestInfo.adapter(httpRequest));
   }
 
   @Override

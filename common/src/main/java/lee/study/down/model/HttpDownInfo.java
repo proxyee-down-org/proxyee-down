@@ -1,9 +1,9 @@
 package lee.study.down.model;
 
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
 import io.netty.handler.codec.http.HttpRequest;
 import java.io.Serializable;
 import java.util.Map;
-import lee.study.proxyee.proxy.ProxyConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

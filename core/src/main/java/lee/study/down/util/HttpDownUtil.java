@@ -1,5 +1,9 @@
 package lee.study.down.util;
 
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
+import com.github.monkeywie.proxyee.proxy.ProxyHandleFactory;
+import com.github.monkeywie.proxyee.util.ProtoUtil;
+import com.github.monkeywie.proxyee.util.ProtoUtil.RequestProto;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -39,10 +43,6 @@ import lee.study.down.model.HttpHeadsInfo;
 import lee.study.down.model.HttpRequestInfo;
 import lee.study.down.model.HttpRequestInfo.HttpVer;
 import lee.study.down.model.TaskInfo;
-import lee.study.proxyee.proxy.ProxyConfig;
-import lee.study.proxyee.proxy.ProxyHandleFactory;
-import lee.study.proxyee.util.ProtoUtil;
-import lee.study.proxyee.util.ProtoUtil.RequestProto;
 
 public class HttpDownUtil {
 

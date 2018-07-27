@@ -1,6 +1,6 @@
 package lee.study.down.model;
 
-import lee.study.proxyee.proxy.ProxyConfig;
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

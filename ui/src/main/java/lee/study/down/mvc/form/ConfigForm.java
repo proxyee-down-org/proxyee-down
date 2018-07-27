@@ -1,9 +1,9 @@
 package lee.study.down.mvc.form;
 
+import com.github.monkeywie.proxyee.proxy.ProxyConfig;
+import com.github.monkeywie.proxyee.proxy.ProxyType;
 import lee.study.down.model.ConfigBaseInfo;
 import lee.study.down.model.ConfigInfo;
-import lee.study.proxyee.proxy.ProxyConfig;
-import lee.study.proxyee.proxy.ProxyType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.beans.BeanUtils;

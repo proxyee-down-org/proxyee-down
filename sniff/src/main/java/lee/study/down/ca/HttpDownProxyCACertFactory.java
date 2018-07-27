@@ -1,9 +1,9 @@
 package lee.study.down.ca;
 
+import com.github.monkeywie.proxyee.crt.CertUtil;
+import com.github.monkeywie.proxyee.server.HttpProxyCACertFactory;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
-import lee.study.proxyee.crt.CertUtil;
-import lee.study.proxyee.server.HttpProxyCACertFactory;
 
 public class HttpDownProxyCACertFactory implements HttpProxyCACertFactory {
 

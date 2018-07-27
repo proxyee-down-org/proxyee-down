@@ -1,5 +1,6 @@
 package lee.study.down.gui;
 
+import com.github.monkeywie.proxyee.crt.CertUtil;
 import com.sun.javafx.application.ParametersImpl;
 import java.awt.CheckboxMenuItem;
 import java.awt.Desktop;
@@ -66,7 +67,6 @@ import lee.study.down.util.ConfigUtil;
 import lee.study.down.util.FileUtil;
 import lee.study.down.util.OsUtil;
 import lee.study.down.util.PathUtil;
-import lee.study.proxyee.crt.CertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;

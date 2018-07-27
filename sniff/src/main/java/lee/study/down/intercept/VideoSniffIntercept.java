@@ -1,10 +1,10 @@
 package lee.study.down.intercept;
 
+import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
 import io.netty.handler.codec.http.HttpResponse;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import lee.study.down.intercept.common.ResponseTextIntercept;
-import lee.study.proxyee.intercept.HttpProxyInterceptPipeline;
 
 /**
  * 嗅探网站视频资源
