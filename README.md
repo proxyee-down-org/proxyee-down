@@ -3,11 +3,11 @@
 ## 编译
 ```
 git clone https://github.com/monkeyWie/proxyee-down.git
-cd proxyee-down/main
-mvn clean package
-```
-## 运行
-```
-cd target
-java -jar proxyee-down.jar
+cd proxyee-down
+#build on Windows(default)
+mvn clean package -P=windows
+#build on Mac
+mvn clean package -P=mac
+#build on Linux
+mvn clean package -P=linux
 ```

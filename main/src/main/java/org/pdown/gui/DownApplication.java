@@ -2,6 +2,8 @@ package org.pdown.gui;
 
 import de.felixroske.jfxsupport.AbstractJavaFxApplicationSupport;
 import java.awt.AWTException;
+import java.awt.Dimension;
+import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
@@ -18,7 +20,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.DialogPane;
-import javafx.scene.image.Image;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -56,10 +57,12 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       SystemTray systemTray = SystemTray.getSystemTray();
       // 获取图片所在的URL
       URL url = Thread.currentThread().getContextClassLoader().getResource(ICON_NAME);
-      trayIcon = new TrayIcon(Toolkit.getDefaultToolkit().getImage(url), "proxyee-down");
+      Image trayImage = Toolkit.getDefaultToolkit().getImage(url);
+      Dimension trayIconSize = systemTray.getTrayIconSize();
+      trayImage = trayImage.getScaledInstance(trayIconSize.width, trayIconSize.height, Image.SCALE_SMOOTH);
+      trayIcon = new TrayIcon(trayImage, "proxyee-down");
       // 为系统托盘加托盘图标
       systemTray.add(trayIcon);
-      trayIcon.setImageAutoSize(true);
 
       //添加右键菜单
       PopupMenu popupMenu = new PopupMenu();
@@ -91,7 +94,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     stage.setY(bounds.getMinY());
     stage.setWidth(bounds.getWidth());
     stage.setHeight(bounds.getHeight());
-    stage.getIcons().add(new Image(Thread.currentThread().getContextClassLoader().getResourceAsStream(ICON_NAME)));
+    stage.getIcons().add(new javafx.scene.image.Image(Thread.currentThread().getContextClassLoader().getResourceAsStream(ICON_NAME)));
     //关闭窗口监听
     stage.setOnCloseRequest(event -> event.consume());
   }
