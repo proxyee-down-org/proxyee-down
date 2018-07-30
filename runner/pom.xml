@@ -2,19 +2,48 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.pdown.gui</groupId>
+    <artifactId>parent</artifactId>
+    <version>3.0</version>
+  </parent>
+
   <groupId>org.pdown.gui</groupId>
   <artifactId>runner</artifactId>
-  <version>3.0</version>
   <packaging>jar</packaging>
 
-  <name>proxyee-down-runner</name>
-  <url>https://github.com/proxyee-down-org/proxyee-down</url>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.compiler.source>1.8</maven.compiler.source>
-  </properties>
+  <profiles>
+    <profile>
+      <id>windows</id>
+      <properties>
+        <bundler>windows.app</bundler>
+        <basePath>proxyee-down</basePath>
+        <runtimePath>runtime</runtimePath>
+        <javaCmdName>java.exe</javaCmdName>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+    <profile>
+      <id>mac</id>
+      <properties>
+        <bundler>mac.app</bundler>
+        <basePath>proxyee-down.app/Contents</basePath>
+        <runtimePath>PlugIns/Java.runtime/Contents/Home/jre</runtimePath>
+        <javaCmdName>java</javaCmdName>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux</id>
+      <properties>
+        <bundler>linux.app</bundler>
+        <basePath>proxyee-down</basePath>
+        <runtimePath>runtime</runtimePath>
+        <javaCmdName>java</javaCmdName>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <plugins>
@@ -28,8 +57,9 @@
           <title>proxyee-down</title>
           <appName>proxyee-down</appName>
           <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
+          <bundler>${bundler}</bundler>
           <!--<bundleArguments>
-            <runtime/>
+            <runtime>${JAVA_HOME}/jre</runtime>
           </bundleArguments>-->
         </configuration>
         <executions>
@@ -50,9 +80,9 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.coderplus.maven.plugins</groupId>
+        <groupId>com.github.monkeywie</groupId>
         <artifactId>copy-rename-maven-plugin</artifactId>
-        <version>1.0.1</version>
+        <version>1.0</version>
         <executions>
           <execution>
             <id>copy-java</id>
@@ -63,12 +93,12 @@
             <configuration>
               <fileSets>
                 <fileSet>
-                  <sourceFile>${JAVA_HOME}/bin/java.exe</sourceFile>
-                  <destinationFile>${project.build.directory}/jfx/native/proxyee-down/runtime/bin/java.exe</destinationFile>
+                  <sourceFile>${env.JAVA_HOME}/bin/${javaCmdName}</sourceFile>
+                  <destinationFile>${project.build.directory}/jfx/native/${basePath}/${runtimePath}/bin/${javaCmdName}</destinationFile>
                 </fileSet>
                 <fileSet>
                   <sourceFile>../main/target/proxyee-down-main.jar</sourceFile>
-                  <destinationFile>${project.build.directory}/jfx/native/proxyee-down/main/proxyee-down-main.jar</destinationFile>
+                  <destinationFile>${project.build.directory}/jfx/native/${basePath}/main/proxyee-down-main.jar</destinationFile>
                 </fileSet>
               </fileSets>
             </configuration>

@@ -9,9 +9,17 @@ import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.net.URL;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBase;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DialogPane;
 import javafx.scene.image.Image;
+import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.pdown.core.util.OsUtil;
@@ -39,7 +47,6 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     loadBrowser();
     loadWindow();
     show();
-    trayIcon.displayMessage("提示", System.getProperty("user.dir") + "\t" + System.getProperty("java.home"), TrayIcon.MessageType.INFO);
   }
 
   //加载托盘
@@ -106,6 +113,31 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       stage.setIconified(true);
       stage.setIconified(false);
     }*/
+  }
+
+  private void alert(String msg) {
+    Alert alert = new Alert(AlertType.INFORMATION);
+    alert.setTitle("提示");
+    alert.setHeaderText(null);
+    alert.setContentText(msg);
+
+    DialogPane root = alert.getDialogPane();
+    Stage dialogStage = new Stage();
+
+    for (ButtonType buttonType : root.getButtonTypes()) {
+      ButtonBase button = (ButtonBase) root.lookupButton(buttonType);
+      button.setOnAction(evt -> dialogStage.close());
+    }
+
+    root.getScene().setRoot(new Group());
+    root.setPadding(new Insets(10, 0, 10, 0));
+
+    Scene scene = new Scene(root);
+    dialogStage.setScene(scene);
+    dialogStage.initModality(Modality.APPLICATION_MODAL);
+    dialogStage.setAlwaysOnTop(true);
+    dialogStage.setResizable(false);
+    dialogStage.showAndWait();
   }
 
 
