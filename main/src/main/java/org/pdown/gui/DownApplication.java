@@ -9,6 +9,7 @@ import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
+import java.lang.reflect.Method;
 import java.net.URL;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -44,10 +45,26 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   public void start(Stage primaryStage) throws Exception {
     this.stage = primaryStage;
     Platform.setImplicitExit(false);
+    handleMacDockIcon();
     loadTray();
     loadBrowser();
     loadWindow();
     show();
+  }
+
+  private void handleMacDockIcon() {
+    if (OsUtil.isMac()) {
+      try {
+        Class<?> appClass = Class.forName("com.apple.eawt.Application");
+        Method getApplication = appClass.getMethod("getApplication");
+        Object application = getApplication.invoke(appClass);
+        Method setDockIconImage = appClass.getMethod("setDockIconImage", Image.class);
+        URL url = Thread.currentThread().getContextClassLoader().getResource("mac/dock_logo.png");
+        Image image = Toolkit.getDefaultToolkit().getImage(url);
+        setDockIconImage.invoke(application, image);
+      } catch (Exception e) {
+      }
+    }
   }
 
   //加载托盘

@@ -17,7 +17,7 @@ public class Runner {
           JAVA_CMD_PATH,
           "-jar",
           "-Dfile.encoding=GBK",
-          "-Dapple.awt.UIElement=true",
+          //"-Dapple.awt.UIElement=true",
           "-Xms128m",
           "-Xmx256m",
           MAIN_JAR_PATH
