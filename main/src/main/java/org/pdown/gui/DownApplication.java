@@ -11,21 +11,18 @@ import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.concurrent.CountDownLatch;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonBase;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.DialogPane;
-import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.com.Browser;
+import org.pdown.gui.http.EmbedHttpServer;
+import org.pdown.gui.http.handler.DirChooserHandler;
+import org.pdown.gui.http.handler.FileChooserHandler;
+import org.pdown.rest.util.PathUtil;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
@@ -41,18 +38,31 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   private Browser browser;
   private TrayIcon trayIcon;
 
+  private CountDownLatch countDownLatch;
+
   @Override
   public void start(Stage primaryStage) throws Exception {
-    this.stage = primaryStage;
+    stage = primaryStage;
     Platform.setImplicitExit(false);
-    handleMacDockIcon();
-    loadTray();
-    loadBrowser();
-    loadWindow();
+    initEmbedHttpServer();
+    initMacDockIcon();
+    initTray();
+    initWindow();
+    initBrowser();
     show();
   }
 
-  private void handleMacDockIcon() {
+  private void initEmbedHttpServer() {
+    countDownLatch = new CountDownLatch(1);
+    new Thread(() -> {
+      EmbedHttpServer embedHttpServer = new EmbedHttpServer(7478);
+      embedHttpServer.addRouter("/native/fileChooser", new FileChooserHandler());
+      embedHttpServer.addRouter("/native/dirChooser", new DirChooserHandler());
+      embedHttpServer.start(future -> countDownLatch.countDown());
+    }).start();
+  }
+
+  private void initMacDockIcon() {
     if (OsUtil.isMac()) {
       try {
         Class<?> appClass = Class.forName("com.apple.eawt.Application");
@@ -68,7 +78,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   }
 
   //加载托盘
-  private void loadTray() throws AWTException {
+  private void initTray() throws AWTException {
     if (SystemTray.isSupported()) {
       // 获得系统托盘对象
       SystemTray systemTray = SystemTray.getSystemTray();
@@ -97,15 +107,19 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   }
 
   //加载webView
-  private void loadBrowser() throws AWTException {
-    this.browser = new Browser();
+  private void initBrowser() throws AWTException {
+    browser = new Browser();
     stage.setScene(new Scene(browser));
-    browser.load("http://www.baidu.com");
+    try {
+      countDownLatch.await();
+    } catch (InterruptedException e) {
+    }
+    browser.load("http://127.0.0.1:7478");
   }
 
   //加载gui窗口
-  private void loadWindow() {
-    stage.setTitle("proxyee-down");
+  private void initWindow() {
+    stage.setTitle("Proxyee Down");
     Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
     stage.setX(bounds.getMinX());
     stage.setY(bounds.getMinY());
@@ -135,31 +149,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     }*/
   }
 
-  private void alert(String msg) {
-    Alert alert = new Alert(AlertType.INFORMATION);
-    alert.setTitle("提示");
-    alert.setHeaderText(null);
-    alert.setContentText(msg);
-
-    DialogPane root = alert.getDialogPane();
-    Stage dialogStage = new Stage();
-
-    for (ButtonType buttonType : root.getButtonTypes()) {
-      ButtonBase button = (ButtonBase) root.lookupButton(buttonType);
-      button.setOnAction(evt -> dialogStage.close());
-    }
-
-    root.getScene().setRoot(new Group());
-    root.setPadding(new Insets(10, 0, 10, 0));
-
-    Scene scene = new Scene(root);
-    dialogStage.setScene(scene);
-    dialogStage.initModality(Modality.APPLICATION_MODAL);
-    dialogStage.setAlwaysOnTop(true);
-    dialogStage.setResizable(false);
-    dialogStage.showAndWait();
+  //设置日志存放路径
+  static {
+    System.setProperty("LOG_PATH", PathUtil.ROOT_PATH);
   }
-
 
   public static void main(String[] args) {
     launch(DownApplication.class, null, args);
