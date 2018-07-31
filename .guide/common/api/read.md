@@ -23,7 +23,7 @@ method | POST
 参数 | 描述 | 必要 | 示例 | 默认值
 ---|---|---|---|---
 request.url | 下载链接 | √ | https://www.baidu.com/test.zip |
-request.heads | 请求头 | × | [{"key":"User-Agent","value":"iphone"}] | 参考([手动创建任务](https://github.com/monkeyWie/proxyee-down/blob/2.5/.guide/common/create/read.md))
+request.heads | 请求头 | × | [{"key":"User-Agent","value":"iphone"}] | 参考([手动创建任务](https://github.com/proxyee-down-org/proxyee-down/blob/v2.5/.guide/common/create/read.md))
 request.body | 请求体 | × | name=proxyee&pwd=123 |
 fileName | 下载文件名 | × |  | 下载链接响应的文件名
 filePath | 下载路径 | √ | |

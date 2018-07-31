@@ -1,6 +1,6 @@
 ## 手动创建任务
 在下载器任务面板点击左上角的+号，可手动创建任务。  
-![](https://github.com/monkeyWie/proxyee-down/raw/2.5/.guide/common/create/imgs/1-1.png)
+![](https://github.com/proxyee-down-org/proxyee-down/raw/v2.5/.guide/common/create/imgs/1-1.png)
 ### 链接
 输入资源的下载链接(例如配合百度云获取直链的脚本，把获取到的下载链接粘贴在此输入框进行下载。)
 ### 请求头

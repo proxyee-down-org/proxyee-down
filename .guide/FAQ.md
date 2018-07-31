@@ -2,7 +2,7 @@
 <details>
   <summary>安装完后进入百度云页面没有显示proxyee-down标记？</summary>
 
-  **先尝试重启软件和浏览器，若还是不显示可以[安装switchy插件](https://github.com/monkeyWie/proxyee-down/blob/2.5/.guide/common/switchy/read.md)进行下载**
+  **先尝试重启软件和浏览器，若还是不显示可以[安装switchy插件](https://github.com/proxyee-down-org/proxyee-down/blob/v2.5/.guide/common/switchy/read.md)进行下载**
 </details>
 <details>
   <summary>下载百度云出现pcs server refuse？</summary>
@@ -33,7 +33,7 @@
 <details>
   <summary>下载进度一直不动或任务状态显示失败怎么解决?</summary>
 
-  **这种情况一般都是下载链接失效了，需要刷新下载链接，具体[查看](https://github.com/monkeyWie/proxyee-down/blob/2.5/.guide/common/refresh/read.md)**
+  **这种情况一般都是下载链接失效了，需要刷新下载链接，具体[查看](https://github.com/proxyee-down-org/proxyee-down/blob/v2.5/.guide/common/refresh/read.md)**
 </details>
 <details>
   <summary>百度云下载的压缩文件打不开，提示文件损坏？</summary>
@@ -48,7 +48,7 @@
 <details>
   <summary>运行时提示证书安装失败？</summary>
 
-  **请按照教程里的[手动安装证书](https://github.com/monkeyWie/proxyee-down/blob/2.5/.guide/common/ca/read.md)步骤进行安装**
+  **请按照教程里的[手动安装证书](https://github.com/proxyee-down-org/proxyee-down/blob/v2.5/.guide/common/ca/read.md)步骤进行安装**
 </details>
 <details>
   <summary>关闭软件后无法正常上网？</summary>
