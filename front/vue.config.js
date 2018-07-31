@@ -3,6 +3,14 @@ module.exports = {
   css: {
     sourceMap: false // css不生成source map
   },
+  devServer: {
+    proxy: {
+      "/native": {
+        target: "http://127.0.0.1:7478",
+        changeOrigin: true
+      }
+    }
+  },
   chainWebpack: config => {
     config.module
       .rule("vue")

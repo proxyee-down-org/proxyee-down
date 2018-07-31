@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "iview": "^2.14.3",
     "vue": "^2.5.16",
     "vue-i18n": "^8.0.0",
