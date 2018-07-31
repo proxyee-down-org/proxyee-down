@@ -17,5 +17,9 @@ export default {
     expectedCompletionTime: "预计完成时间",
     createTime: "开始时间",
     taskProgress: "任务进度"
+  },
+  alert: {
+    timeout: "请求失败，连接超时",
+    error: "请求失败，服务器异常"
   }
 };

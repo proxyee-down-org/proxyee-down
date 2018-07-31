@@ -17,5 +17,9 @@ export default {
     expectedCompletionTime: "Expected Completion Time",
     createTime: "Create Time",
     taskProgress: "Schedule"
+  },
+  alert: {
+    timeout: "Request failed,Time Out.",
+    error: "Request failed,System Error."
   }
 };

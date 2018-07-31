@@ -26,7 +26,9 @@
               <Checkbox v-model="item.checked" @click.native="toggle($event, item)"></Checkbox>
             </div>
             <div class="td">{{ item['fileName'] }}</div>
-            <div class="td"><a :href="item['downloadAddress']">{{ item['downloadAddress'] }}</a></div>
+            <div class="td">
+              <a :href="item['downloadAddress']">{{ item['downloadAddress'] }}</a>
+            </div>
             <div class="td">{{ item['downloadSpeed'] }}</div>
             <div class="td">{{ item['completeTime'] }}</div>
             <div class="td">{{ item['createTime'] }}</div>

@@ -2,14 +2,14 @@
   <div class="tasks">
     <i-content :style="{padding: '0 50px'}">
       <div class="tasks-entry">
-        <i-button type="dashed" icon="plus-round" class="tasks-button">{{$t("tasks.createTasks")}}</i-button>
+        <i-button type="dashed" icon="plus-round" class="tasks-button" @click="resolveVisible=true">{{$t("tasks.createTasks")}}</i-button>
         <i-button type="dashed" icon="ios-play" class="tasks-button">{{$t("tasks.continueDownloading")}}</i-button>
         <i-button type="dashed" icon="ios-pause" class="tasks-button">{{$t("tasks.pauseDownloads")}}</i-button>
         <i-button type="dashed" icon="ios-trash" class="tasks-button">{{$t("tasks.deleteTask")}}</i-button>
       </div>
 
-      <tabler 
-        :data="data" 
+      <Table
+        :data="data"
         progress
         @on-check-change="onCheckChange"
         @on-select-all="onSelectAll"
@@ -17,16 +17,19 @@
 
     </i-content>
 
+    <Resolve v-model="resolveVisible"/>
   </div>
 </template>
 
 <script>
-import Tabler from "../components/Table";
+import Table from "../components/Table";
+import Resolve from "../components/Task/Resolve";
 
 export default {
   name: "tasks",
   components: {
-    Tabler
+    Table,
+    Resolve
   },
   mounted() {
     // this.taskProgress();
@@ -79,7 +82,8 @@ export default {
           progress: 11,
           id: 4
         }
-      ]
+      ],
+      resolveVisible: false
     };
   },
   methods: {
@@ -89,6 +93,10 @@ export default {
 
     onSelectAll(v) {
       console.log(v);
+    },
+
+    showResolve() {
+      this.resolveVisible = true;
     }
   }
 };
