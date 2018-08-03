@@ -1,0 +1,6 @@
+gui:
+  alert:
+    startError: Start error:{0}
+  tray:
+    show: Show
+    exit: Exit

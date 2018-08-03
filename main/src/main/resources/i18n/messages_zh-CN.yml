@@ -1,0 +1,6 @@
+gui:
+  alert:
+    startError: 启动失败：{0}
+  tray:
+    show: 显示
+    exit: 退出

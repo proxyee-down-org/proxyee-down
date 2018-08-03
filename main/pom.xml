@@ -16,7 +16,7 @@
     <dependency>
       <groupId>org.pdown</groupId>
       <artifactId>rest</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.github.monkeywie</groupId>
@@ -27,6 +27,11 @@
       <groupId>de.roskenet</groupId>
       <artifactId>springboot-javafx-support</artifactId>
       <version>2.1.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.19</version>
     </dependency>
   </dependencies>
 

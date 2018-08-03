@@ -1,6 +1,7 @@
 spring:
-  # 数据库配置
   profiles:
     active: dev
+  messages:
+    basename: i18n/messages
 server:
   port: 26339

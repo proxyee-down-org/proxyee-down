@@ -16,17 +16,15 @@ public class FileChooserHandler implements HttpHandler {
   public FullHttpResponse handle(Channel channel, FullHttpRequest request) throws Exception {
     Platform.runLater(() -> {
       File file = Components.fileChooser();
-      Map<String, Object> result = new HashMap<>();
-      Map<String, Object> detail = null;
+      Map<String, Object> data = null;
       if (file != null) {
-        detail = new HashMap<>();
-        detail.put("name", file.getName());
-        detail.put("path", file.getPath());
-        detail.put("parent", file.getParent());
-        detail.put("size", file.length());
+        data = new HashMap<>();
+        data.put("name", file.getName());
+        data.put("path", file.getPath());
+        data.put("parent", file.getParent());
+        data.put("size", file.length());
       }
-      result.put("data", detail);
-      HttpHandlerUtil.writeJson(channel, result);
+      HttpHandlerUtil.writeJson(channel, data);
     });
     return null;
   }

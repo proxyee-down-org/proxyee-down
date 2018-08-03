@@ -16,17 +16,15 @@ public class DirChooserHandler implements HttpHandler {
   public FullHttpResponse handle(Channel channel, FullHttpRequest request) throws Exception {
     Platform.runLater(() -> {
       File file = Components.dirChooser();
-      Map<String, Object> result = new HashMap<>();
-      Map<String, Object> detail = null;
+      Map<String, Object> data = null;
       if (file != null) {
-        detail = new HashMap<>();
-        detail.put("path", file.getPath());
-        detail.put("canWrite", file.canWrite());
-        detail.put("freeSpace", file.getFreeSpace());
-        detail.put("totalSpace", file.getTotalSpace());
+        data = new HashMap<>();
+        data.put("path", file.getPath());
+        data.put("canWrite", file.canWrite());
+        data.put("freeSpace", file.getFreeSpace());
+        data.put("totalSpace", file.getTotalSpace());
       }
-      result.put("data", detail);
-      HttpHandlerUtil.writeJson(channel, result);
+      HttpHandlerUtil.writeJson(channel, data);
     });
     return null;
   }
