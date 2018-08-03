@@ -14,7 +14,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.pdown.gui.DownApplication;
 
 public class Components {
 
@@ -65,7 +64,7 @@ public class Components {
     Stage stage = buildBackgroundTopStage();
     DirectoryChooser chooser = new DirectoryChooser();
     chooser.setTitle("选择文件夹");
-    File file = chooser.showDialog(new Stage());
+    File file = chooser.showDialog(stage);
     stage.close();
     return file;
   }
@@ -73,6 +72,8 @@ public class Components {
   private static Stage buildBackgroundTopStage() {
     Stage stage = new Stage();
     stage.setAlwaysOnTop(true);
+    stage.setWidth(1);
+    stage.setHeight(1);
     stage.initStyle(StageStyle.UNDECORATED);
     stage.show();
     return stage;
