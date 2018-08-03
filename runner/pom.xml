@@ -17,7 +17,7 @@
       <id>windows</id>
       <properties>
         <bundler>windows.app</bundler>
-        <basePath>proxyee-down</basePath>
+        <basePath>Proxyee Down</basePath>
         <runtimePath>runtime</runtimePath>
         <javaCmdName>java.exe</javaCmdName>
       </properties>
@@ -29,7 +29,7 @@
       <id>mac</id>
       <properties>
         <bundler>mac.app</bundler>
-        <basePath>proxyee-down.app/Contents</basePath>
+        <basePath>Proxyee Down.app/Contents</basePath>
         <runtimePath>PlugIns/Java.runtime/Contents/Home/jre</runtimePath>
         <javaCmdName>java</javaCmdName>
       </properties>
@@ -38,7 +38,7 @@
       <id>linux</id>
       <properties>
         <bundler>linux.app</bundler>
-        <basePath>proxyee-down</basePath>
+        <basePath>Proxyee Down</basePath>
         <runtimePath>runtime</runtimePath>
         <javaCmdName>java</javaCmdName>
       </properties>
@@ -54,8 +54,7 @@
         <configuration>
           <mainClass>org.pdown.gui.Runner</mainClass>
           <vendor>pdown.org</vendor>
-          <title>proxyee-down</title>
-          <appName>proxyee-down</appName>
+          <appName>Proxyee Down</appName>
           <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
           <bundler>${bundler}</bundler>
           <!--<bundleArguments>
