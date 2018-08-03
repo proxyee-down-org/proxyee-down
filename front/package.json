@@ -3,6 +3,7 @@
   "version": "3.0.0",
   "private": true,
   "scripts": {
+    "start": "npm run serve",
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
@@ -10,6 +11,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "iview": "^2.14.3",
+    "numeral": "^2.0.6",
     "vue": "^2.5.16",
     "vue-i18n": "^8.0.0",
     "vue-router": "^3.0.1",

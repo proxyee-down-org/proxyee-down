@@ -5,20 +5,20 @@ module.exports = {
   },
   devServer: {
     proxy: {
-      "/native": {
-        target: "http://127.0.0.1:7478",
+      '/native': {
+        target: 'http://127.0.0.1:7478',
         changeOrigin: true
       }
     }
   },
   chainWebpack: config => {
     config.module
-      .rule("vue")
+      .rule('vue')
       .test(/\.vue$/)
-      .use("iview-loader")
-      .loader("iview-loader")
+      .use('iview-loader')
+      .loader('iview-loader')
       .options({
         prefix: true
-      });
+      })
   }
-};
+}
