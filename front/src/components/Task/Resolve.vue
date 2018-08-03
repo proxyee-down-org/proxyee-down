@@ -48,8 +48,7 @@
     </Form>
     <div slot="footer">
       <Button type="primary"
-        @click="onSubmit"
-        :loading="load">确定</Button>
+        @click="onSubmit">确定</Button>
       <Button @click="$emit('input', false);">取消</Button>
     </div>
     <Spin size="large"
@@ -62,10 +61,7 @@
 export default {
   props: {
     value: {
-      type: Boolean,
-      default() {
-        return false;
-      }
+      type: Boolean
     }
   },
   data() {
@@ -74,72 +70,78 @@ export default {
       hasHead: false,
       hasBody: false,
       form: {
-        url: "",
+        url: '',
         heads: [],
-        body: "",
-        dir: ""
+        body: '',
+        dir: ''
       },
       rules: {
         url: [
-          { required: true, message: "不能为空" },
-          { pattern: /^https?:\/\/.*$/i, message: "格式不正确" }
+          { required: true, message: '不能为空' },
+          { pattern: /^https?:\/\/.*$/i, message: '格式不正确' }
         ]
       }
-    };
+    }
   },
   watch: {
     hasHead(val) {
       if (val && this.form.heads.length == 0) {
-        this.addHead();
+        this.addHead()
       }
     }
   },
   methods: {
     addHead() {
-      this.form.heads.push({ key: "", value: "" });
+      this.form.heads.push({ key: '', value: '' })
     },
     delHead(index) {
-      this.form.heads.splice(index, 1);
+      this.form.heads.splice(index, 1)
     },
     onSubmit() {
-      this.$refs["form"].validate(valid => {
+      this.$refs['form'].validate(valid => {
         if (valid) {
           const requestData = {
             url: this.form.url,
             heads: {},
-            body: ""
-          };
+            body: ''
+          }
           if (this.hasHead) {
             for (let head of this.form.heads) {
               if (head.key && head.value) {
-                requestData.heads[head.key] = head.value;
+                requestData.heads[head.key] = head.value
               }
             }
           }
           if (this.hasBody) {
-            requestData.body = this.form.body;
+            requestData.body = this.form.body
           }
-          this.load = true;
+          this.load = true
           this.$http
-            .put("http://127.0.0.1:26339/util/resolve", requestData)
+            .put('http://127.0.0.1:26339/util/resolve', requestData)
             .then(result => {
-              console.log(result);
+              this.$emit('input', false)
+              const request = JSON.stringify(requestData)
+              const response = JSON.stringify(result.data)
+              this.$router.push({
+                path: '/',
+                query: { request: request, response: response }
+              })
             })
             .finally(() => {
-              this.load = false;
-            });
+              this.load = false
+            })
         }
-      });
+      })
     },
     onReset(visible) {
       if (visible) {
-        this.$refs["form"].resetFields();
-        this.hasHead = false;
-        this.hasBody = false;
+        this.$refs['form'].resetFields()
+        this.hasHead = false
+        this.hasBody = false
       }
     }
   }
-};
+}
 </script>
 
 <style scoped lang="less">

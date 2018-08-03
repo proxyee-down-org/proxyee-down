@@ -5,36 +5,54 @@
       readonly
       @dblclick.native="showChooser" />
     <Button type="primary"
-      :disabled="disabled"
+      :disabled="disabled||chooserWait"
       @click="showChooser">选择</Button>
   </div>
 </template>
 
 <script>
-import Chooser from "../../common/native";
+import { showDirChooser, showFileChooser } from '../../common/native'
 
 export default {
-  props: ["value", "mode", "disabled"],
+  props: {
+    value: {
+      type: String
+    },
+    mode: {
+      type: String,
+      default: 'dir'
+    },
+    disabled: {
+      type: Boolean
+    }
+  },
+  data() {
+    return {
+      chooserWait: false
+    }
+  },
   methods: {
     showChooser() {
-      let chooserPromise;
-      if (this.mode == "dir") {
-        chooserPromise = Chooser.showDirChooser();
-      } else {
-        chooserPromise = Chooser.showFileChooser();
-      }
-      chooserPromise.then(result => {
-        if (result) {
-          this.$emit("input", result.path);
-        }
-      });
+      this.chooserWait = true
+      let chooserPromise =
+        this.mode === 'dir' ? showDirChooser() : showFileChooser()
+      chooserPromise
+        .then(result => {
+          if (result) {
+            this.$emit('input', result.path)
+          }
+        })
+        .finally(() => {
+          this.chooserWait = false
+        })
     }
   }
-};
+}
 </script>
 
 <style scoped>
 .file-choose-input {
-  width: 50%;
+  width: 80%;
+  padding-right: 3px;
 }
 </style>

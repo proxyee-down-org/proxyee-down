@@ -6,7 +6,8 @@
         <div class="tb-tr">
           <div class="ths">
             <div class="th">
-              <Checkbox v-model="all" @on-change="setAll"></Checkbox>
+              <Checkbox v-model="all"
+                @on-change="setAll"></Checkbox>
             </div>
             <div class="th">{{ $t("tasks.fileName") }}</div>
             <div class="th">{{ $t("tasks.downloadAddress") }}</div>
@@ -19,11 +20,16 @@
       </div>
 
       <div class="tb-body">
-        <div class="tb-tr" v-for="item in data" :key="item.id">
-          <div class="progress" :style="`width: ${ item['progress'] }%;`" v-if="progress"></div>
+        <div class="tb-tr"
+          v-for="item in data"
+          :key="item.id">
+          <div class="progress"
+            :style="`width: ${ item['progress'] }%;`"
+            v-if="progress"></div>
           <div class="tds">
             <div class="td">
-              <Checkbox v-model="item.checked" @click.native="toggle($event, item)"></Checkbox>
+              <Checkbox v-model="item.checked"
+                @click.native="toggle($event, item)"></Checkbox>
             </div>
             <div class="td">{{ item['fileName'] }}</div>
             <div class="td">
@@ -47,7 +53,7 @@ export default {
     return {
       checkedList: [],
       all: false
-    };
+    }
   },
 
   // props
@@ -68,57 +74,57 @@ export default {
 
   // lifes
   mounted() {
-    this.data.forEach(i => (i.checked = false));
+    this.data.forEach(i => (i.checked = false))
   },
 
   // wa
   watch: {
     checkedList() {
       if (this.checkedList.length === this.data.length) {
-        this.all = true;
-        return;
+        this.all = true
+        return
       }
-      this.all = false;
+      this.all = false
     }
   },
 
   // methods
   methods: {
     toggle(e, item) {
-      let checked = e.target.checked;
+      let checked = e.target.checked
 
-      item.checked = checked;
+      item.checked = checked
 
       if (checked) {
-        this.checkedList.push(item);
+        this.checkedList.push(item)
       } else {
-        this.checkedList = this.checkedList.filter(i => i !== item);
+        this.checkedList = this.checkedList.filter(i => i !== item)
       }
 
-      this.$emit("on-check-change", {
+      this.$emit('on-check-change', {
         list: this.checkedList,
         e
-      });
+      })
     },
 
     setAll(v) {
       if (v) {
-        this.data.forEach(i => (i.checked = true));
-        this.checkedList = this.data;
+        this.data.forEach(i => (i.checked = true))
+        this.checkedList = this.data
       } else {
-        this.data.forEach(i => (i.checked = false));
-        this.checkedList = [];
+        this.data.forEach(i => (i.checked = false))
+        this.checkedList = []
       }
 
-      this.all = v;
+      this.all = v
 
-      this.$emit("on-select-all", {
+      this.$emit('on-select-all', {
         list: this.checkedList,
         all: v
-      });
+      })
     }
   }
-};
+}
 </script>
 
 <style lang="less" scoped>

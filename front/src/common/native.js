@@ -1,26 +1,44 @@
-import axios from "axios";
+import axios from 'axios'
 
-const client = axios.create();
+const client = axios.create()
 
 const showFileChooser = () => {
   return new Promise((resolve, reject) => {
     client
-      .get("/native/fileChooser")
-      .then(response => resolve(response.data.data))
-      .catch(error => reject(error));
-  });
-};
+      .get('/native/fileChooser')
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
 
 const showDirChooser = () => {
   return new Promise((resolve, reject) => {
     client
-      .get("/native/dirChooser")
-      .then(response => resolve(response.data.data))
-      .catch(error => reject(error));
-  });
-};
+      .get('/native/dirChooser')
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
 
-export default {
-  showFileChooser,
-  showDirChooser
-};
+const getLocale = () => {
+  return new Promise((resolve, reject) => {
+    client
+      .get('/native/getLocale')
+      .then(response => resolve(response.data.locale))
+      .catch(error => reject(error))
+  })
+}
+
+const setLocale = locale => {
+  return new Promise((resolve, reject) => {
+    client
+      .post('/native/setLocale', { locale: locale })
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
+export { showFileChooser }
+export { showDirChooser }
+export { getLocale }
+export { setLocale }
