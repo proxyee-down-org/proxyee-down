@@ -1,4 +1,4 @@
-package org.pdown.gui.http.handler;
+package org.pdown.gui.http.controller;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -11,17 +11,19 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import java.io.InputStream;
 import java.net.URI;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-public class DefaultHttpHandler implements HttpHandler {
+@RequestMapping("/")
+public class DefaultController {
 
-  @Override
-  public FullHttpResponse handle(Channel channel,FullHttpRequest request) throws Exception {
+  public FullHttpResponse handle(Channel channel, FullHttpRequest request) throws Exception {
     URI uri = new URI(request.uri());
     String path = uri.getPath();
     if ("/".equals(path)) {
       path = "/index.html";
     }
-    InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("http" + path);
+    InputStream inputStream = Thread.currentThread().getContextClassLoader()
+        .getResourceAsStream("http" + path);
     FullHttpResponse httpResponse;
     if (inputStream != null) {
       String mime = path.substring(path.lastIndexOf(".") + 1);
@@ -37,7 +39,8 @@ public class DefaultHttpHandler implements HttpHandler {
         inputStream.close();
       }
     } else {
-      httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_FOUND);
+      httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+          HttpResponseStatus.NOT_FOUND);
       buildHead(httpResponse, null);
     }
     return httpResponse;

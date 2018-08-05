@@ -23,10 +23,7 @@ import org.pdown.gui.com.Browser;
 import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
 import org.pdown.gui.http.EmbedHttpServer;
-import org.pdown.gui.http.handler.DirChooserHandler;
-import org.pdown.gui.http.handler.FileChooserHandler;
-import org.pdown.gui.http.handler.GetLocaleHandler;
-import org.pdown.gui.http.handler.SetLocaleHandler;
+import org.pdown.gui.http.controller.NativeController;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.I18nUtil;
 import org.pdown.rest.util.PathUtil;
@@ -79,10 +76,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     countDownLatch = new CountDownLatch(1);
     new Thread(() -> {
       EmbedHttpServer embedHttpServer = new EmbedHttpServer(7478);
-      embedHttpServer.addRouter("/native/fileChooser", new FileChooserHandler());
-      embedHttpServer.addRouter("/native/dirChooser", new DirChooserHandler());
-      embedHttpServer.addRouter("/native/getLocale", new GetLocaleHandler());
-      embedHttpServer.addRouter("/native/setLocale", new SetLocaleHandler());
+      embedHttpServer.addController(new NativeController());
       embedHttpServer.start(future -> countDownLatch.countDown());
     }).start();
   }

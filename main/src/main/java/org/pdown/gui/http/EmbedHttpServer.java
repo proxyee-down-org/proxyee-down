@@ -17,24 +17,60 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpVersion;
-import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.GenericFutureListener;
+import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import org.pdown.gui.http.handler.DefaultHttpHandler;
-import org.pdown.gui.http.handler.HttpHandler;
+import java.util.ArrayList;
+import java.util.List;
+import org.pdown.gui.http.controller.DefaultController;
+import org.pdown.gui.http.controller.NativeController;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 public class EmbedHttpServer {
 
   private int port;
-  private Map<String, HttpHandler> httpHandlerMap;
+  private DefaultController defaultController;
+  private List<Object> controllerList;
 
   public EmbedHttpServer(int port) {
     this.port = port;
-    this.httpHandlerMap = new HashMap<>();
-    this.addRouter("/", new DefaultHttpHandler());
+    this.defaultController = new DefaultController();
+    this.controllerList = new ArrayList<>();
+  }
+
+  //根据请求uri找到对应的处理类方法执行
+  public FullHttpResponse invoke(String uri, Channel channel, FullHttpRequest request)
+      throws Exception {
+    if (controllerList != null) {
+      for (Object obj : controllerList) {
+        Class<?> clazz = obj.getClass();
+        RequestMapping mapping = clazz.getAnnotation(RequestMapping.class);
+        if (mapping != null) {
+          String mappingUri = fixUri(mapping.value()[0]);
+          for (Method actionMethod : clazz.getMethods()) {
+            RequestMapping subMapping = actionMethod.getAnnotation(RequestMapping.class);
+            if (subMapping != null) {
+              String subMappingUri = fixUri(subMapping.value()[0]);
+              if (uri.equalsIgnoreCase(mappingUri + subMappingUri)) {
+                return (FullHttpResponse) actionMethod.invoke(obj, channel, request);
+              }
+            }
+          }
+        }
+      }
+    }
+    return defaultController.handle(channel, request);
+  }
+
+  private String fixUri(String uri) {
+    StringBuilder builder = new StringBuilder(uri);
+    if (builder.indexOf("/") != 0) {
+      builder.insert(0, "/");
+    }
+    if (builder.lastIndexOf("/") == builder.length() - 1) {
+      builder.delete(builder.length() - 1, builder.length());
+    }
+    return builder.toString();
   }
 
   public void start() {
@@ -52,42 +88,40 @@ public class EmbedHttpServer {
             protected void initChannel(Channel ch) throws Exception {
               ch.pipeline().addLast("httpCodec", new HttpServerCodec());
               ch.pipeline().addLast(new HttpObjectAggregator(4194304));
-              ch.pipeline().addLast("serverHandle", new SimpleChannelInboundHandler<FullHttpRequest>() {
+              ch.pipeline()
+                  .addLast("serverHandle", new SimpleChannelInboundHandler<FullHttpRequest>() {
 
-                @Override
-                protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) throws Exception {
-                  URI uri = new URI(request.uri());
-                  String path = uri.getPath();
-                  HttpHandler httpHandler = EmbedHttpServer.this.httpHandlerMap
-                      .entrySet()
-                      .stream()
-                      .filter(entry -> path.matches("^" + entry.getKey() + "(\\?.*)?$"))
-                      .sorted(Comparator.comparingInt(e -> e.getKey().length()))
-                      .map(entry -> entry.getValue())
-                      .findFirst()
-                      .orElse(EmbedHttpServer.this.httpHandlerMap.get("/"));
-                  FullHttpResponse httpResponse = httpHandler.handle(ctx.channel(), request);
-                  if (httpResponse != null) {
-                    httpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-                    httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpResponse.content().readableBytes());
-                    ch.writeAndFlush(httpResponse);
-                  }
-                }
+                    @Override
+                    protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request)
+                        throws Exception {
+                      URI uri = new URI(request.uri());
+                      FullHttpResponse httpResponse = invoke(uri.getPath(), ctx.channel(), request);
+                      if (httpResponse != null) {
+                        httpResponse.headers()
+                            .set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH,
+                            httpResponse.content().readableBytes());
+                        ch.writeAndFlush(httpResponse);
+                      }
+                    }
 
-                @Override
-                public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-                  ctx.channel().close();
-                }
+                    @Override
+                    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+                      ctx.channel().close();
+                    }
 
-                @Override
-                public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                  cause.printStackTrace();
-                  FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.SERVICE_UNAVAILABLE);
-                  httpResponse.content().writeBytes(cause.getMessage().getBytes());
-                  httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpResponse.content().readableBytes());
-                  ctx.channel().writeAndFlush(httpResponse);
-                }
-              });
+                    @Override
+                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
+                        throws Exception {
+                      cause.printStackTrace();
+                      FullHttpResponse httpResponse = new DefaultFullHttpResponse(
+                          HttpVersion.HTTP_1_1, HttpResponseStatus.SERVICE_UNAVAILABLE);
+                      httpResponse.content().writeBytes(cause.getCause().getMessage().getBytes());
+                      httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH,
+                          httpResponse.content().readableBytes());
+                      ctx.channel().writeAndFlush(httpResponse);
+                    }
+                  });
             }
           });
       ChannelFuture f = bootstrap.bind("127.0.0.1", port).sync();
@@ -103,11 +137,15 @@ public class EmbedHttpServer {
     }
   }
 
-  public void addRouter(String uri, HttpHandler httpHandler) {
-    this.httpHandlerMap.put(uri, httpHandler);
+  public EmbedHttpServer addController(Object obj) {
+    this.controllerList.add(obj);
+    return this;
   }
 
   public static void main(String[] args) {
-    new EmbedHttpServer(8998).start();
+
+    new EmbedHttpServer(8998)
+        .addController(new NativeController())
+        .start();
   }
 }
