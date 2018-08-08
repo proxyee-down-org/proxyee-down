@@ -25,6 +25,45 @@
     </repository>
   </repositories>
 
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <properties>
+        <environment>dev</environment>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+    <profile>
+      <id>prd</id>
+      <properties>
+        <environment>prd</environment>
+      </properties>
+    </profile>
+    <profile>
+      <id>windows</id>
+      <properties>
+        <osType>windows</osType>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+    <profile>
+      <id>mac</id>
+      <properties>
+        <osType>mac</osType>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux</id>
+      <properties>
+        <osType>mac</osType>
+      </properties>
+    </profile>
+  </profiles>
+
   <dependencies>
     <dependency>
       <groupId>org.pdown</groupId>
@@ -42,6 +81,11 @@
       <version>2.1.5</version>
     </dependency>
     <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>4.5.1</version>
+    </dependency>
+    <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
       <version>1.19</version>
@@ -49,6 +93,22 @@
   </dependencies>
 
   <build>
+    <resources>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <excludes>
+          <exclude>tool/mac-tool</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>tool/${osType}-tool</include>
+        </includes>
+      </resource>
+    </resources>
     <finalName>proxyee-down-main</finalName>
     <plugins>
       <plugin>

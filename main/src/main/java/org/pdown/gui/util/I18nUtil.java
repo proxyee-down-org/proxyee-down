@@ -17,8 +17,8 @@ import org.yaml.snakeyaml.Yaml;
 
 public class I18nUtil {
 
+  private static final String DEFAULT_LOCALE = "zh-CN";
   private static Map<String, Map<String, Object>> map;
-  private static String locale = PDownConfigContent.getInstance().get().getLocale();
 
   static {
     Yaml yaml = new Yaml();
@@ -44,26 +44,17 @@ public class I18nUtil {
       }
     } catch (IOException e) {
     }
-
-//    map = yaml.load(Thread.currentThread().getContextClassLoader().getResource("i18n"));
-//    String active = getString("spring.profiles.active");
-//    merge(map, yaml.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("application-" + active + ".yml")));
   }
 
   private static String takeLocale(String name) {
     return name.substring(name.lastIndexOf("_") + 1, name.length() - 4);
   }
 
-  public static String getLocale() {
-    return locale;
-  }
-
-  public static void setLocale(String locale) {
-    I18nUtil.locale = locale;
-  }
-
-
   public static String getMessage(String key, Object... args) {
+    String locale = PDownConfigContent.getInstance().get().getLocale();
+    if (!map.containsKey(locale)) {
+      locale = DEFAULT_LOCALE;
+    }
     if (map == null || map.size() == 0) {
       return key;
     }
@@ -75,7 +66,7 @@ public class I18nUtil {
   }
 
   public static void main(String[] args) {
-    setLocale("en-US");
-    System.out.println(getMessage("gui.alert.startError", "1111"));
+    PDownConfigContent.getInstance().load();
+    System.out.println(getMessage("gui.alert.startError","test"));
   }
 }

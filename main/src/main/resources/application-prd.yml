@@ -2,3 +2,5 @@ logging:
   config: classpath:logback-prd.xml
 front:
   port: 7478
+api:
+  port: 7478

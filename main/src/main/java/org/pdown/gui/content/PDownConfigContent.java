@@ -2,6 +2,7 @@ package org.pdown.gui.content;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.File;
+import java.util.Locale;
 import org.pdown.gui.entity.PDownConfigInfo;
 import org.pdown.rest.base.content.PersistenceContent;
 import org.pdown.rest.util.PathUtil;
@@ -27,6 +28,10 @@ public class PDownConfigContent extends PersistenceContent<PDownConfigInfo, PDow
 
   @Override
   protected PDownConfigInfo defaultValue() {
-    return new PDownConfigInfo();
+    PDownConfigInfo pDownConfigInfo = new PDownConfigInfo();
+    //取系统默认语言
+    Locale defaultLocale = Locale.getDefault();
+    pDownConfigInfo.setLocale(defaultLocale.getLanguage() + "-" + defaultLocale.getCountry());
+    return pDownConfigInfo;
   }
 }

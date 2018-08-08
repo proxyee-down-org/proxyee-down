@@ -13,6 +13,10 @@ import io.netty.util.AsciiString;
 public class HttpHandlerUtil {
 
   public static void writeJson(Channel channel, Object obj) {
+    channel.writeAndFlush(buildJson(obj));
+  }
+
+  public static FullHttpResponse buildJson(Object obj) {
     FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("application/json;charset=utf-8"));
     if (obj != null) {
@@ -25,6 +29,6 @@ public class HttpHandlerUtil {
       }
     }
     response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
-    channel.writeAndFlush(response);
+    return response;
   }
 }

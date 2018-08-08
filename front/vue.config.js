@@ -3,6 +3,7 @@ module.exports = {
   css: {
     sourceMap: false // css不生成source map
   },
+  outputDir: '../main/src/main/resources/http',
   devServer: {
     proxy: {
       '/native': {

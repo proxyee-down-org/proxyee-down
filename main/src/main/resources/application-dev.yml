@@ -2,3 +2,5 @@ logging:
   config: classpath:logback-dev.xml
 front:
   port: 8080
+api:
+  port: 7478

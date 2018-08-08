@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: dev
+    active: @environment@
   messages:
     basename: i18n/messages
 server:
