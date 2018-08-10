@@ -31,10 +31,14 @@ import org.pdown.core.util.OsUtil;
 import org.pdown.gui.com.Browser;
 import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
-import org.pdown.gui.extension.mitm.util.ExecUtil;
+import org.pdown.gui.extension.ExtensionContent;
+import org.pdown.gui.extension.mitm.server.PDownProxyServer;
+import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
 import org.pdown.gui.http.EmbedHttpServer;
 import org.pdown.gui.http.controller.NativeController;
+import org.pdown.gui.http.controller.PacController;
 import org.pdown.gui.util.ConfigUtil;
+import org.pdown.gui.util.ExecUtil;
 import org.pdown.gui.util.I18nUtil;
 import org.pdown.rest.util.PathUtil;
 import org.slf4j.Logger;
@@ -64,14 +68,22 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   public void start(Stage primaryStage) throws Exception {
     stage = primaryStage;
     Platform.setImplicitExit(false);
+    doCheck();
     //load config
     initConfig();
     initMacTool();
     initEmbedHttpServer();
+    initExtension();
     initTray();
     initWindow();
     initBrowser();
     show();
+  }
+
+  private void doCheck() {
+    if (OsUtil.isBusyPort(26339)) {
+      alertAndExit(I18nUtil.getMessage("gui.alert.startError", I18nUtil.getMessage("gui.alert.portBusy")));
+    }
   }
 
   private void initConfig() throws IOException {
@@ -86,8 +98,39 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
         frontPort = OsUtil.getFreePort(frontPort);
         apiPort = frontPort;
       } catch (IOException e) {
-        Components.alert(I18nUtil.getMessage("gui.alert.startError") + e.getMessage());
-        throw e;
+        LOGGER.error("initConfig error", e);
+        alertAndExit(I18nUtil.getMessage("gui.alert.startError", e.getMessage()));
+      }
+    }
+  }
+
+  public static int proxyPort;
+
+  //读取扩展信息和启动代理服务器
+  private void initExtension() {
+    new Thread(() -> {
+      try {
+        ExtensionContent.load();
+        proxyPort = OsUtil.getFreePort(9999);
+        PDownProxyServer.start(proxyPort);
+      } catch (Exception e) {
+        LOGGER.error("initExtension error", e);
+        alertAndExit("initExtension error：" + e.getMessage());
+      }
+    }).start();
+    //TODO mode修改
+    if (PDownConfigContent.getInstance().get().getProxyMode() == 0) {
+      //程序退出监听
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        try {
+          ExtensionProxyUtil.disabledProxy();
+        } catch (IOException e) {
+        }
+      }));
+      try {
+        ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + apiPort + "/pac/pdown.pac?t=" + System.currentTimeMillis());
+      } catch (IOException e) {
+        LOGGER.error("initExtension enabledPACProxy error", e);
       }
     }
   }
@@ -98,25 +141,37 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   private void initMacTool() {
     if (OsUtil.isMac()) {
       new Thread(() -> {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL url = classLoader.getResource("tool/mac-tool");
+        String toolUri = "tool/mac-tool";
+        Path toolPath = Paths.get(PathUtil.ROOT_PATH + File.separator + toolUri);
         try {
-          URLConnection connection = url.openConnection();
-          Path toolPath = Paths.get(PathUtil.ROOT_PATH + File.separator + "tool" + File.separator + "mac-tool");
-          if (connection instanceof JarURLConnection) {
-            if (!toolPath.getParent().toFile().exists()) {
-              Files.createDirectories(toolPath.getParent());
+          if (!toolPath.toFile().exists()) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            URL url = classLoader.getResource(toolUri);
+            URLConnection connection = url.openConnection();
+            if (connection instanceof JarURLConnection) {
+              if (!toolPath.getParent().toFile().exists()) {
+                Files.createDirectories(toolPath.getParent());
+              }
+              Files.copy(classLoader.getResourceAsStream(toolUri), toolPath);
+              Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrw-rw-");
+              Files.setPosixFilePermissions(toolPath, perms);
             }
-            Files.write(toolPath, Files.readAllBytes(Paths.get(url.toURI())));
-            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrw-rw-");
-            Files.setPosixFilePermissions(toolPath, perms);
           }
           //取一个空闲端口来运行mac tool
           macToolPort = OsUtil.getFreePort(9393);
-          ExecUtil.execSyncWithAdmin(toolPath.toFile().getPath() + " " + macToolPort);
+          //程序退出监听
+          Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+              ExecUtil.httpGet("http://127.0.0.1:" + macToolPort + "/quit");
+            } catch (IOException e) {
+            }
+          }));
+          ExecUtil.execSyncWithAdmin("'" + toolPath.toFile().getPath() + "' " + macToolPort);
         } catch (Exception e) {
           LOGGER.error("initMacTool error", e);
+          alertAndExit("initMacTool error：" + e.getMessage());
         }
+        System.exit(0);
       }).start();
     }
   }
@@ -126,6 +181,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     new Thread(() -> {
       EmbedHttpServer embedHttpServer = new EmbedHttpServer(apiPort);
       embedHttpServer.addController(new NativeController());
+      embedHttpServer.addController(new PacController());
       embedHttpServer.start(future -> countDownLatch.countDown());
     }).start();
   }
@@ -206,6 +262,14 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       stage.setIconified(true);
       stage.setIconified(false);
     }*/
+  }
+
+  //提示并退出程序
+  private void alertAndExit(String msg) {
+    Platform.runLater(() -> {
+      Components.alert(msg);
+      System.exit(0);
+    });
   }
 
   static {

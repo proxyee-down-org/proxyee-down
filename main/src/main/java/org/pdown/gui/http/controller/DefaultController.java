@@ -77,6 +77,15 @@ public class DefaultController {
         case "gif":
           contentType = AsciiString.cached("image/gif");
           break;
+        case "ico":
+          contentType = AsciiString.cached("image/x-icon");
+          break;
+        case "ttf":
+          contentType = AsciiString.cached("font/ttf;charset=utf-8");
+          break;
+        case "woff":
+          contentType = AsciiString.cached("application/font-woff;charset=utf-8");
+          break;
         default:
           contentType = HttpHeaderValues.APPLICATION_OCTET_STREAM;
       }

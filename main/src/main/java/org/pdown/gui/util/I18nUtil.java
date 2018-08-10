@@ -33,7 +33,9 @@ public class I18nUtil {
         Enumeration<JarEntry> entries = jarFile.entries();
         while (entries.hasMoreElements()) {
           JarEntry entry = entries.nextElement();
-          map.put(takeLocale(entry.getName()), yaml.load(jarFile.getInputStream(entry)));
+          if (entry.getName().matches("^i18n/[^/]+\\.yml$")) {
+            map.put(takeLocale(entry.getName()), yaml.load(jarFile.getInputStream(entry)));
+          }
         }
         jarFile.close();
       } else {
@@ -51,8 +53,11 @@ public class I18nUtil {
   }
 
   public static String getMessage(String key, Object... args) {
-    String locale = PDownConfigContent.getInstance().get().getLocale();
-    if (!map.containsKey(locale)) {
+    String locale = null;
+    if (PDownConfigContent.getInstance().get() != null) {
+      locale = PDownConfigContent.getInstance().get().getLocale();
+    }
+    if (locale == null || !map.containsKey(locale)) {
       locale = DEFAULT_LOCALE;
     }
     if (map == null || map.size() == 0) {
@@ -67,6 +72,6 @@ public class I18nUtil {
 
   public static void main(String[] args) {
     PDownConfigContent.getInstance().load();
-    System.out.println(getMessage("gui.alert.startError","test"));
+    System.out.println(getMessage("gui.alert.startError", "test"));
   }
 }

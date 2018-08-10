@@ -41,7 +41,7 @@
         <environment>prd</environment>
       </properties>
     </profile>
-    <profile>
+    <!--<profile>
       <id>windows</id>
       <properties>
         <osType>windows</osType>
@@ -59,9 +59,9 @@
     <profile>
       <id>linux</id>
       <properties>
-        <osType>mac</osType>
+        <osType>linux</osType>
       </properties>
-    </profile>
+    </profile>-->
   </profiles>
 
   <dependencies>
@@ -93,7 +93,7 @@
   </dependencies>
 
   <build>
-    <resources>
+   <!-- <resources>
       <resource>
         <filtering>true</filtering>
         <directory>src/main/resources</directory>
@@ -108,7 +108,7 @@
           <include>tool/${osType}-tool</include>
         </includes>
       </resource>
-    </resources>
+    </resources>-->
     <finalName>proxyee-down-main</finalName>
     <plugins>
       <plugin>

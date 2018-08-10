@@ -1,6 +1,7 @@
 gui:
   alert:
     startError: Start error:{0}
+    portBusy: The port 26339 has been bound
   tray:
     show: Show
     exit: Exit

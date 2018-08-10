@@ -15,12 +15,15 @@ import java.util.regex.Pattern;
 import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
+import org.pdown.gui.util.ExecUtil;
 import sun.security.x509.X500Name;
 
 /**
  * 用于处理系统的证书安装、查询和卸载
  */
 public class ExtensionCertUtil {
+
+
 
   /**
    * 在指定目录生成一个ca证书和私钥

@@ -19,6 +19,7 @@ import org.pdown.gui.DownApplication;
 import org.pdown.gui.extension.mitm.util.WinInet.INTERNET_PER_CONN_OPTION;
 import org.pdown.gui.extension.mitm.util.WinInet.INTERNET_PER_CONN_OPTION.ByReference;
 import org.pdown.gui.extension.mitm.util.WinInet.INTERNET_PER_CONN_OPTION_LIST;
+import org.pdown.gui.util.ExecUtil;
 
 /**
  * 系统的代理切换工具类

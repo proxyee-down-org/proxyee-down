@@ -31,4 +31,14 @@ public class HttpHandlerUtil {
     response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
     return response;
   }
+
+  public static FullHttpResponse buildContent(String content, String contentType) {
+    FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached(contentType));
+    if (content != null) {
+      response.content().writeBytes(content.getBytes());
+    }
+    response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+    return response;
+  }
 }
