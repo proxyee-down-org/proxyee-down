@@ -52,17 +52,17 @@ public class DefaultController {
       switch (mime) {
         case "txt":
         case "text":
-          contentType = AsciiString.cached("text/plain;charset=utf-8");
+          contentType = AsciiString.cached("text/plain; charset=utf-8");
           break;
         case "html":
         case "htm":
-          contentType = AsciiString.cached("text/html;charset=utf-8");
+          contentType = AsciiString.cached("text/html; charset=utf-8");
           break;
         case "css":
-          contentType = AsciiString.cached("text/css;charset=utf-8");
+          contentType = AsciiString.cached("text/css; charset=utf-8");
           break;
         case "js":
-          contentType = AsciiString.cached("application/javascript;charset=utf-8");
+          contentType = AsciiString.cached("application/javascript; charset=utf-8");
           break;
         case "png":
           contentType = AsciiString.cached("image/png");
@@ -81,10 +81,10 @@ public class DefaultController {
           contentType = AsciiString.cached("image/x-icon");
           break;
         case "ttf":
-          contentType = AsciiString.cached("font/ttf;charset=utf-8");
+          contentType = AsciiString.cached("font/ttf; charset=utf-8");
           break;
         case "woff":
-          contentType = AsciiString.cached("application/font-woff;charset=utf-8");
+          contentType = AsciiString.cached("application/font-woff; charset=utf-8");
           break;
         default:
           contentType = HttpHeaderValues.APPLICATION_OCTET_STREAM;
