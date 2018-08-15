@@ -1,10 +1,11 @@
 <template>
-  <div style="display: inline">
+  <div class="file-choose">
     <Input class="file-choose-input"
       :value="value"
       readonly
-      @dblclick.native="showChooser" />
+      disabled />
     <Button type="primary"
+      class="file-choose-button"
       :disabled="disabled||chooserWait"
       @click="showChooser">选择</Button>
   </div>
@@ -51,8 +52,15 @@ export default {
 </script>
 
 <style scoped>
+.file-choose {
+  display: inline-block;
+  width: 100%;
+}
 .file-choose-input {
-  width: 80%;
+  width: 85%;
   padding-right: 3px;
+}
+.file-choose-button {
+  width: 15%;
 }
 </style>

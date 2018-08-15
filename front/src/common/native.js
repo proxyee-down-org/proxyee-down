@@ -38,7 +38,17 @@ const setLocale = locale => {
   })
 }
 
+const showFile = path => {
+  return new Promise((resolve, reject) => {
+    client
+      .post('/native/showFile', { path: path })
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
 export { showFileChooser }
 export { showDirChooser }
 export { getLocale }
 export { setLocale }
+export { showFile }

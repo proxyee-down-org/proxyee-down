@@ -73,7 +73,7 @@
     <dependency>
       <groupId>com.github.monkeywie</groupId>
       <artifactId>proxyee</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.2</version>
     </dependency>
     <dependency>
       <groupId>de.roskenet</groupId>
@@ -93,8 +93,28 @@
   </dependencies>
 
   <build>
-   <!-- <resources>
+    <resources>
       <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <excludes>
+          <exclude>application.yml</exclude>
+          <exclude>application-dev.yml</exclude>
+          <exclude>application-prd.yml</exclude>
+          <exclude>logback-dev.xml</exclude>
+          <exclude>logback-prd.xml</exclude>
+        </excludes>
+      </resource>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>logback-${environment}.xml</include>
+          <include>application-${environment}.yml</include>
+          <include>application.yml</include>
+        </includes>
+      </resource>
+      <!--<resource>
         <filtering>true</filtering>
         <directory>src/main/resources</directory>
         <excludes>
@@ -107,8 +127,8 @@
         <includes>
           <include>tool/${osType}-tool</include>
         </includes>
-      </resource>
-    </resources>-->
+      </resource>-->
+    </resources>
     <finalName>proxyee-down-main</finalName>
     <plugins>
       <plugin>

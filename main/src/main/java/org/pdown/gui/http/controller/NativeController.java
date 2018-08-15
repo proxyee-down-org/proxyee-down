@@ -7,16 +7,19 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import java.awt.Desktop;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
 import org.pdown.core.util.FileUtil;
+import org.pdown.core.util.OsUtil;
 import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
 import org.pdown.gui.extension.mitm.util.ExtensionCertUtil;
 import org.pdown.gui.http.util.HttpHandlerUtil;
+import org.pdown.gui.util.ExecUtil;
 import org.pdown.rest.util.PathUtil;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -68,10 +71,28 @@ public class NativeController {
   @RequestMapping("setLocale")
   public FullHttpResponse setLocale(Channel channel, FullHttpRequest request) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> map = objectMapper.readValue(request.content().toString(Charset.defaultCharset()), Map.class);
+    Map<String, String> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
     String locale = map.get("locale");
     if (!StringUtils.isEmpty(locale)) {
       PDownConfigContent.getInstance().get().setLocale(locale);
+    }
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
+  @RequestMapping("showFile")
+  public FullHttpResponse showFile(Channel channel, FullHttpRequest request) throws Exception {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, String> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    String path = map.get("path");
+    if (!StringUtils.isEmpty(path)) {
+      File file = new File(path);
+      if (!file.exists() || OsUtil.isUnix()) {
+        Desktop.getDesktop().open(file.getParentFile());
+      } else if (OsUtil.isWindows()) {
+        ExecUtil.execSync("explorer.exe", "/select,", file.getPath());
+      } else if (OsUtil.isMac()) {
+        ExecUtil.execSync("open", "-R", file.getPath());
+      }
     }
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }

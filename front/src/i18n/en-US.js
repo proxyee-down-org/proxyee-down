@@ -11,21 +11,36 @@ export default {
     continueDownloading: 'Continue Downloading',
     pauseDownloads: 'Pause Downloads',
     deleteTask: 'Delete Task',
-    fileName: 'File Name',
-    downloadAddress: 'Download Address',
-    downloadSpeed: 'Download Speed',
-    expectedCompletionTime: 'Expected Completion Time',
+    deleteTaskTip: 'Do you want to delete task and file?',
+    fileName: 'Name',
+    fileSize: 'Size',
+    status: 'Status',
+    operate: 'Operate',
+    downloadAddress: 'Address',
+    wait: 'Wait',
+    unknowLeft: 'Unknow',
+    downloadSpeed: 'Speed',
     createTime: 'Create Time',
-    taskProgress: 'Schedule'
+    taskProgress: 'Schedule',
+    statusPause: 'Pause',
+    statusFail: 'Fail',
+    statusDone: 'Done'
   },
   alert: {
-    refused: 'Connect Refused',
-    timeout: 'Connect Time Out',
-    error: 'System Error',
+    refused: 'Program exception,Connect Refused',
+    timeout: 'Program exception,Connect Time Out',
+    error: 'Program Error',
     notFound: 'Task not found',
     '/tasks': {
       post: {
-        4007: 'File already exist.'
+        4000: 'Params parse error',
+        4001: 'Request is empty',
+        4002: 'Request URL is empty',
+        4003: 'File save path is empty',
+        4004: 'Failed to create folder',
+        4005: 'No write permission',
+        4006: 'Not enough disk space',
+        4007: 'File already exists'
       }
     }
   }

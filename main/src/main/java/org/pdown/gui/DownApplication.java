@@ -27,6 +27,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javax.swing.JOptionPane;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.com.Browser;
 import org.pdown.gui.com.Components;
@@ -40,6 +41,8 @@ import org.pdown.gui.http.controller.PacController;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
 import org.pdown.gui.util.I18nUtil;
+import org.pdown.rest.content.ConfigContent;
+import org.pdown.rest.content.RestWebServerFactoryCustomizer;
 import org.pdown.rest.util.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +71,6 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   public void start(Stage primaryStage) throws Exception {
     stage = primaryStage;
     Platform.setImplicitExit(false);
-    doCheck();
     //load config
     initConfig();
     initMacTool();
@@ -80,11 +82,6 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     show();
   }
 
-  private void doCheck() {
-    if (OsUtil.isBusyPort(26339)) {
-      alertAndExit(I18nUtil.getMessage("gui.alert.startError", I18nUtil.getMessage("gui.alert.portBusy")));
-    }
-  }
 
   private void initConfig() throws IOException {
     PDownConfigContent.getInstance().load();
@@ -294,7 +291,27 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     }
   }
 
+  private static void doCheck() {
+    int port = ConfigContent.getInstance().get().getPort();
+    if (OsUtil.isBusyPort(port)) {
+      try {
+        ConfigContent.getInstance().get().setPort(OsUtil.getFreePort());
+        ConfigContent.getInstance().save();
+      } catch (Exception e) {
+        JOptionPane.showMessageDialog(
+            null,
+            I18nUtil.getMessage("gui.alert.startError", I18nUtil.getMessage("gui.alert.noFreePort")),
+            I18nUtil.getMessage("gui.warning"),
+            JOptionPane.WARNING_MESSAGE
+        );
+        System.exit(0);
+      }
+    }
+  }
+
   public static void main(String[] args) {
+    RestWebServerFactoryCustomizer.init(null);
+    doCheck();
     launch(DownApplication.class, null, args);
   }
 }

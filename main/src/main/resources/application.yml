@@ -1,7 +1,5 @@
 spring:
   profiles:
-    active: prd
+    active: @environment@
   messages:
     basename: i18n/messages
-server:
-  port: 26339

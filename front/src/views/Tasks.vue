@@ -7,20 +7,32 @@
           class="tasks-button"
           @click="resolveVisible=true">{{$t("tasks.createTasks")}}</i-button>
         <i-button type="dashed"
-          icon="ios-play"
-          class="tasks-button">{{$t("tasks.continueDownloading")}}</i-button>
-        <i-button type="dashed"
           icon="ios-pause"
-          class="tasks-button">{{$t("tasks.pauseDownloads")}}</i-button>
+          class="tasks-button"
+          @click="onPauseBatch">{{$t("tasks.pauseDownloads")}}</i-button>
+        <i-button type="dashed"
+          icon="ios-play"
+          class="tasks-button"
+          @click="onResumeBatch">{{$t("tasks.continueDownloading")}}</i-button>
         <i-button type="dashed"
           icon="ios-trash"
-          class="tasks-button">{{$t("tasks.deleteTask")}}</i-button>
+          class="tasks-button"
+          @click="onDeleteBatch">{{$t("tasks.deleteTask")}}</i-button>
       </div>
 
-      <Table :data="data"
-        progress
-        @on-check-change="onCheckChange"
-        @on-select-all="onSelectAll" />
+      <Table :taskList="taskList"
+        ref="taskTable"
+        @on-delete="onDelete"
+        @on-pause="onPause"
+        @on-resume="onResume"
+        @on-open="onOpen" />
+
+      <Modal v-model="deleteModal"
+        :title="$t('tasks.deleteTask')"
+        @on-ok="doDelete(delTaskId)">
+        <Checkbox :value="delFile"></Checkbox>
+        <span @click="delFile=!delFile">{{$t('tasks.deleteTaskTip')}}</span>
+      </Modal>
 
     </i-content>
 
@@ -35,6 +47,9 @@
 import Table from '../components/Table'
 import Resolve from '../components/Task/Resolve'
 import Create from '../components/Task/Create'
+import { showFile } from '../common/native'
+
+let intervalId
 
 export default {
   name: 'tasks',
@@ -44,57 +59,46 @@ export default {
     Create
   },
   mounted() {
-    // this.taskProgress();
-    let arr1 = [22, 31, 66, 71, 22, 100, 96, 56, 78, 97]
-    let arr2 = ['10KB/s', '22M/s', '2.2B/s', '6G/s']
-
-    setInterval(() => {
-      this.data.forEach(item => {
-        item.progress = arr1[parseInt(Math.random() * arr1.length)]
-        item.downloadSpeed = arr2[parseInt(Math.random() * arr2.length)]
-      })
-    }, 1500)
+    /**
+     * 每秒读取下载进度
+     */
+    intervalId = setInterval(() => {
+      if (!this.taskList) {
+        return
+      }
+      //过滤出正在下载的任务ID
+      const downloadingIds = this.taskList
+        .filter(task => task.info.status == 1)
+        .map(task => task.id)
+      if (downloadingIds && downloadingIds.length) {
+        this.$http
+          .get('http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds)
+          .then(result => {
+            //匹配并更新正在下载的任务信息
+            result.data.forEach(task => {
+              const index = this.getIndexByTaskId(task.id)
+              if (index >= 0) {
+                this.taskList[index].info = task.info
+              }
+            })
+          })
+          .catch(error => {
+            if (!error.response || error.response.status == 504) {
+              clearInterval(intervalId)
+            }
+          })
+      }
+    }, 1000)
+  },
+  destroyed() {
+    clearInterval(intervalId)
   },
   data() {
     return {
-      data: [
-        {
-          fileName: 'Pro.iso',
-          downloadAddress: 'https://pan.baidu.com/win/10/pro.iso',
-          downloadSpeed: '21.6M/S',
-          completeTime: '2018-7-16 08:21:42',
-          createTime: '2018-7-14 08:12:24',
-          progress: 10,
-          id: 1
-        },
-        {
-          fileName: 'Pro.iso',
-          downloadAddress: 'https://pan.baidu.com/win/10/pro.iso',
-          downloadSpeed: '21.6M/S',
-          completeTime: '2018-7-16 08:21:42',
-          createTime: '2018-7-14 08:12:24',
-          progress: 20,
-          id: 2
-        },
-        {
-          fileName: 'Pro.iso',
-          downloadAddress: 'http://127.0.0.1:8080/#/?request=%7B%22url%22%3A%22http%3A%2F%2F192.168.2.24%2Fstatic%2Ftest.iso%22,%22heads%22%3A%7B%7D,%22body%22%3A%22%22%7D&response=%7B%22fileName%22%3A%22test.iso%22,%22totalSize%22%3A1123452928,%22supportRange%22%3Atrue%7D',
-          downloadSpeed: '21.6M/S',
-          completeTime: '2018-7-16 08:21:42',
-          createTime: '2018-7-14 08:12:24',
-          progress: 20,
-          id: 3
-        },
-        {
-          fileName: 'Pro.iso',
-          downloadAddress: 'https://pan.baidu.com/win/10/pro.iso',
-          downloadSpeed: '21.6M/S',
-          completeTime: '2018-7-16 08:21:42',
-          createTime: '2018-7-14 08:12:24',
-          progress: 11,
-          id: 4
-        }
-      ],
+      taskList: [],
+      deleteModal: false,
+      delTaskId: '',
+      delFile: false,
       resolveVisible: false,
       createForm: {
         request: null,
@@ -108,15 +112,13 @@ export default {
     }
   },
   methods: {
-    onCheckChange({ list }) {
-      console.log(list)
-    },
-
-    onSelectAll(v) {
-      console.log(v)
-    },
     showResolve() {
       this.resolveVisible = true
+    },
+    getAllTask() {
+      this.$http
+        .get('http://127.0.0.1:26339/tasks')
+        .then(result => (this.taskList = result.data))
     },
     onRouteChange(query) {
       if (query.request && query.response) {
@@ -129,7 +131,83 @@ export default {
           request: null,
           response: null
         }
+        this.getAllTask()
       }
+    },
+    onPause(task) {
+      this.doPause(task.id)
+    },
+    onResume(task) {
+      this.doResume(task.id)
+    },
+    onDelete(task) {
+      this.delTaskId = task.id
+      this.delFile = false
+      this.deleteModal = true
+    },
+    onOpen(task) {
+      showFile(task.config.filePath + '/' + task.response.fileName)
+    },
+    onPauseBatch() {
+      this.doPause(this.getCheckedIds())
+    },
+    onResumeBatch() {
+      this.doResume(this.getCheckedIds())
+    },
+    onDeleteBatch() {
+      this.delTaskId = this.getCheckedIds()
+      this.delFile = false
+      this.deleteModal = true
+    },
+    doPause(ids) {
+      this.$http.put('http://127.0.0.1:26339/tasks/' + ids + '/pause')
+    },
+    doResume(ids) {
+      this.$http
+        .put('http://127.0.0.1:26339/tasks/' + ids + '/resume')
+        .then(result => {
+          let pauseIds = result.data.pauseIds
+          let resumeIds = result.data.resumeIds
+          if (pauseIds) {
+            pauseIds.forEach(pauseId => {
+              const index = this.getIndexByTaskId(pauseId)
+              if (index >= 0) {
+                this.taskList[index].info.status = 2
+              }
+            })
+          }
+          if (resumeIds) {
+            resumeIds.forEach(resumeId => {
+              const index = this.getIndexByTaskId(resumeId)
+              if (index >= 0) {
+                this.taskList[index].info.status = 1
+              }
+            })
+          }
+        })
+    },
+    doDelete(ids) {
+      this.$http
+        .delete(
+          'http://127.0.0.1:26339/tasks/' + ids + '?delFile=' + this.delFile
+        )
+        .then(() => {
+          ids.split(',').forEach(id => {
+            const index = this.getIndexByTaskId(id)
+            if (index >= 0) {
+              this.taskList.splice(index, 1)
+            }
+          })
+        })
+    },
+    getCheckedIds() {
+      return this.$refs['taskTable']
+        .getCheckedTasks()
+        .map(task => task.id)
+        .join(',')
+    },
+    getIndexByTaskId(taskId) {
+      return this.taskList.findIndex(t => t.id == taskId)
     }
   },
   created() {

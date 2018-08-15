@@ -1,7 +1,8 @@
 gui:
+  warning: Warning
   alert:
     startError: Start error:{0}
-    portBusy: The port 26339 has been bound
+    noFreePort: The system cannot allocate the TCP port
   tray:
     show: Show
     exit: Exit

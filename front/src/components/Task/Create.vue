@@ -46,6 +46,14 @@
 <script>
 import FileChoose from '../FileChoose'
 
+const defualtConfig = {
+  filePath: '',
+  connections: 32,
+  timeout: 0,
+  retryCount: 0,
+  autoRename: false
+}
+
 export default {
   props: {
     request: {
@@ -61,13 +69,7 @@ export default {
       form: {
         request: this.request,
         response: this.response,
-        config: {
-          filePath: '',
-          connections: 32,
-          timeout: 0,
-          retryCount: 0,
-          autoRename: false
-        }
+        config: { ...defualtConfig }
       },
       rules: {
         'response.fileName': [{ required: true, message: '不能为空' }],
@@ -79,6 +81,7 @@ export default {
     request() {
       this.form.request = this.request
       this.form.response = this.response
+      this.form.config = { ...defualtConfig }
     }
   },
   computed: {
