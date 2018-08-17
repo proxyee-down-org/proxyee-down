@@ -54,6 +54,7 @@ public class HttpDownUtil {
       SslContext clientSslCtx, NioEventLoopGroup loopGroup)
       throws Exception {
     HttpResponse httpResponse = null;
+      String fileName = null;
     if (resHeaders == null) {
       httpResponse = getResponse(httpRequest, proxyConfig, clientSslCtx, loopGroup);
       //处理重定向
@@ -88,21 +89,27 @@ public class HttpDownUtil {
       }
       resHeaders = httpResponse.headers();
     }
-    TaskInfo taskInfo = new TaskInfo()
-        .setId(UUID.randomUUID().toString())
-        .setFileName(getDownFileName(httpRequest, resHeaders))
-        .setTotalSize(getDownFileSize(resHeaders));
-    //chunked编码不支持断点下载
-    if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
-      if (httpResponse == null) {
-        httpResponse = getResponse(httpRequest, proxyConfig, clientSslCtx, loopGroup);
+      fileName = getDownFileName(httpRequest, resHeaders);
+      if (fileName != null) {
+          TaskInfo taskInfo = new TaskInfo()
+                  .setId(UUID.randomUUID().toString())
+                  .setFileName(getDownFileName(httpRequest, resHeaders))
+                  .setTotalSize(getDownFileSize(resHeaders));
+          //chunked编码不支持断点下载
+          if (resHeaders.contains(HttpHeaderNames.CONTENT_LENGTH)) {
+              if (httpResponse == null) {
+                  httpResponse = getResponse(httpRequest, proxyConfig, clientSslCtx, loopGroup);
+              }
+              //206表示支持断点下载
+              if (httpResponse.status().equals(HttpResponseStatus.PARTIAL_CONTENT)) {
+                  taskInfo.setSupportRange(true);
+              }
+          }
+          return taskInfo;
       }
-      //206表示支持断点下载
-      if (httpResponse.status().equals(HttpResponseStatus.PARTIAL_CONTENT)) {
-        taskInfo.setSupportRange(true);
-      }
-    }
-    return taskInfo;
+        //todo @demoxu
+      return null;
+
   }
 
   public static String getDownFileName(HttpRequest httpRequest, HttpHeaders resHeaders) {
@@ -134,7 +141,11 @@ public class HttpDownUtil {
         fileName = matcher.group(1);
       }
     }
-    return fileName == null ? "未知文件.xxx" : fileName;
+      if (fileName == null) {
+
+      }
+          //todo @demoxu
+          return fileName == null ? null : fileName;
   }
 
   /**
