@@ -8,7 +8,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -16,17 +15,23 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.pdown.gui.http.controller.DefaultController;
 import org.pdown.gui.http.controller.NativeController;
+import org.pdown.gui.http.util.HttpHandlerUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 public class EmbedHttpServer {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(EmbedHttpServer.class);
 
   private int port;
   private DefaultController defaultController;
@@ -97,10 +102,8 @@ public class EmbedHttpServer {
                       URI uri = new URI(request.uri());
                       FullHttpResponse httpResponse = invoke(uri.getPath(), ctx.channel(), request);
                       if (httpResponse != null) {
-                        httpResponse.headers()
-                            .set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-                        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH,
-                            httpResponse.content().readableBytes());
+                        httpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH,httpResponse.content().readableBytes());
                         ch.writeAndFlush(httpResponse);
                       }
                     }
@@ -113,12 +116,11 @@ public class EmbedHttpServer {
                     @Override
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
                         throws Exception {
-                      cause.printStackTrace();
-                      FullHttpResponse httpResponse = new DefaultFullHttpResponse(
-                          HttpVersion.HTTP_1_1, HttpResponseStatus.SERVICE_UNAVAILABLE);
-                      httpResponse.content().writeBytes(cause.getCause().getMessage().getBytes());
-                      httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH,
-                          httpResponse.content().readableBytes());
+                      LOGGER.error("native request error", cause.getCause());
+                      Map<String, Object> data = new HashMap<>();
+                      data.put("error", cause.getCause().toString());
+                      FullHttpResponse httpResponse = HttpHandlerUtil.buildJson(data);
+                      httpResponse.setStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
                       ctx.channel().writeAndFlush(httpResponse);
                     }
                   });

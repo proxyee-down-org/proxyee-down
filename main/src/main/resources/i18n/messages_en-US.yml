@@ -2,6 +2,7 @@ gui:
   warning: Warning
   alert:
     startError: Start error:{0}
+    restPortBusy: Port 26339 is busy,Do not repeat startup software.
     noFreePort: The system cannot allocate the TCP port
   tray:
     show: Show

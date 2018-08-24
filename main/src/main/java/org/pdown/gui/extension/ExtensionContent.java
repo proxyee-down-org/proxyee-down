@@ -8,64 +8,91 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.pdown.gui.extension.ExtensionInfo.ContentScript;
-import org.pdown.rest.util.PathUtil;
 
 public class ExtensionContent {
 
-  private static final String EXT_DIR = "extends";
+  //  public static final String EXT_DIR = PathUtil.ROOT_PATH + File.separator + "extensions";
+  public static final String EXT_DIR = "E:\\exts";
   private static final String EXT_MANIFEST = "manifest.json";
 
   private static List<ExtensionInfo> EXTENSION_INFO_LIST;
-  private static Set<String> DOMAINS;
+  private static Set<String> WILDCARDS;
 
-  public synchronized static void load() {
-//    File file = new File(PathUtil.ROOT_PATH + File.separator + EXT_DIR);
-    File file = new File("E:\\exts");
+  public static void load() throws IOException {
+    File file = new File(EXT_DIR);
     if (file.exists() && file.isDirectory()) {
       if (EXTENSION_INFO_LIST == null) {
         EXTENSION_INFO_LIST = new ArrayList<>();
-        DOMAINS = new HashSet<>();
+        WILDCARDS = new HashSet<>();
       } else {
         EXTENSION_INFO_LIST.clear();
-        DOMAINS.clear();
+        WILDCARDS.clear();
       }
+      //加载所有已安装的扩展
       for (File extendDir : file.listFiles()) {
         if (extendDir.isDirectory()) {
-          ExtensionInfo extensionInfo = parseExtendDir(extendDir);
+          //读取manifest.json
+          ExtensionInfo extensionInfo = parseExtensionDir(extendDir);
           if (extensionInfo != null) {
-            extensionInfo.setPath(extendDir.getPath());
-            if (extensionInfo.getContentScripts() != null && extensionInfo.getContentScripts().size() > 0) {
-              for (ContentScript contentScript : extensionInfo.getContentScripts()) {
-                if (contentScript.getDomains() != null && contentScript.getDomains().length > 0) {
-                  for (String domain : contentScript.getDomains()) {
-                    DOMAINS.add(domain.trim());
-                  }
-                }
-              }
-            }
             EXTENSION_INFO_LIST.add(extensionInfo);
+          }
+        }
+      }
+      refreshProxyDomains();
+    }
+  }
+
+  public synchronized static void refreshExtensionInfo(String path) throws IOException {
+    if (EXTENSION_INFO_LIST != null && path != null) {
+      boolean match = false;
+      for (int i = 0; i < EXTENSION_INFO_LIST.size(); i++) {
+        ExtensionInfo extensionInfo = EXTENSION_INFO_LIST.get(i);
+        if (path.equals(extensionInfo.getMeta().getPath())) {
+          match = true;
+          EXTENSION_INFO_LIST.set(i, parseExtensionDir(new File(EXT_DIR + path)));
+          break;
+        }
+      }
+      if (!match) {
+        EXTENSION_INFO_LIST.add(parseExtensionDir(new File(EXT_DIR + path)));
+      }
+      refreshProxyDomains();
+    }
+  }
+
+  public synchronized static void refreshProxyDomains() throws IOException {
+    if (EXTENSION_INFO_LIST != null) {
+      for (ExtensionInfo extensionInfo : EXTENSION_INFO_LIST) {
+        if (extensionInfo.getMeta().isEnabled() && extensionInfo.getProxyWildcards() != null) {
+          //读取需要代理的域名匹配符
+          for (String wildcard : extensionInfo.getProxyWildcards()) {
+            WILDCARDS.add(wildcard.trim());
           }
         }
       }
     }
   }
 
-  private static ExtensionInfo parseExtendDir(File extendDir) {
+  private static ExtensionInfo parseExtensionDir(File extendDir) {
+    ExtensionInfo extensionInfo = null;
     ObjectMapper objectMapper = new ObjectMapper();
     try {
-      return objectMapper.readValue(new FileInputStream(extendDir + File.separator + EXT_MANIFEST), ExtensionInfo.class);
+      extensionInfo = objectMapper.readValue(new FileInputStream(extendDir + File.separator + EXT_MANIFEST), ExtensionInfo.class);
     } catch (IOException e) {
 
     }
-    return null;
+    if (extensionInfo != null) {
+      Meta meta = Meta.load(extendDir.getPath());
+      extensionInfo.setMeta(meta);
+    }
+    return extensionInfo;
   }
 
-  public synchronized static List<ExtensionInfo> get() {
+  public static List<ExtensionInfo> get() {
     return EXTENSION_INFO_LIST;
   }
 
-  public synchronized static Set<String> getDomains() {
-    return DOMAINS;
+  public static Set<String> getWildCards() {
+    return WILDCARDS;
   }
 }

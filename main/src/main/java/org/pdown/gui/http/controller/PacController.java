@@ -9,7 +9,6 @@ import java.util.Set;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.http.util.HttpHandlerUtil;
-import org.pdown.gui.util.ConfigUtil;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RequestMapping("pac")
@@ -33,7 +32,7 @@ public class PacController {
 
   @RequestMapping("pdown.pac")
   public FullHttpResponse build(Channel channel, FullHttpRequest request) throws Exception {
-    Set<String> domains = ExtensionContent.getDomains();
+    Set<String> domains = ExtensionContent.getWildCards();
     String pacContent = PAC_TEMPLATE.replace("{port}", DownApplication.proxyPort + "");
     if (domains != null && domains.size() > 0) {
       StringBuilder domainsBuilder = new StringBuilder();

@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+import java.nio.charset.Charset;
 
 public class HttpHandlerUtil {
 
@@ -18,12 +19,12 @@ public class HttpHandlerUtil {
 
   public static FullHttpResponse buildJson(Object obj) {
     FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    response.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("application/json;charset=utf-8"));
+    response.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("application/json; charset=utf-8"));
     if (obj != null) {
       try {
         ObjectMapper objectMapper = new ObjectMapper();
         String content = objectMapper.writeValueAsString(obj);
-        response.content().writeBytes(content.getBytes());
+        response.content().writeBytes(content.getBytes(Charset.forName("utf-8")));
       } catch (JsonProcessingException e) {
         response.setStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
       }
@@ -36,7 +37,7 @@ public class HttpHandlerUtil {
     FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached(contentType));
     if (content != null) {
-      response.content().writeBytes(content.getBytes());
+      response.content().writeBytes(content.getBytes(Charset.forName("utf-8")));
     }
     response.headers().set(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
     return response;

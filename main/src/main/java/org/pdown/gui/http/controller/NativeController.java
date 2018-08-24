@@ -15,10 +15,15 @@ import java.util.Map;
 import javafx.application.Platform;
 import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
+import org.pdown.gui.DownApplication;
 import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
+import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.mitm.util.ExtensionCertUtil;
+import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
+import org.pdown.gui.extension.util.ExtensionUtil;
 import org.pdown.gui.http.util.HttpHandlerUtil;
+import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
 import org.pdown.rest.util.PathUtil;
 import org.springframework.util.StringUtils;
@@ -61,6 +66,18 @@ public class NativeController {
     return null;
   }
 
+  @RequestMapping("getInitConfig")
+  public FullHttpResponse getInitConfig(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> data = new HashMap<>();
+    //语言
+    data.put("locale", PDownConfigContent.getInstance().get().getLocale());
+    //扩展商店请求地址
+    data.put("extServer", ConfigUtil.getString("extServer"));
+    //扩展下载服务器列表
+    data.put("extFileServers", PDownConfigContent.getInstance().get().getExtFileServers());
+    return HttpHandlerUtil.buildJson(data);
+  }
+
   @RequestMapping("getLocale")
   public FullHttpResponse getLocale(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
@@ -94,6 +111,93 @@ public class NativeController {
         ExecUtil.execSync("open", "-R", file.getPath());
       }
     }
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
+  /**
+   * 获取已安装的插件列表
+   */
+  @RequestMapping("getExtensions")
+  public FullHttpResponse getExtensions(Channel channel, FullHttpRequest request) throws Exception {
+    return HttpHandlerUtil.buildJson(ExtensionContent.get());
+  }
+
+  /**
+   * 安装扩展
+   */
+  @RequestMapping("installExtension")
+  public FullHttpResponse installExtension(Channel channel, FullHttpRequest request) throws Exception {
+    return extensionCommon(request, false);
+  }
+
+  /**
+   * 更新扩展
+   */
+  @RequestMapping("updateExtension")
+  public FullHttpResponse updateExtension(Channel channel, FullHttpRequest request) throws Exception {
+    return extensionCommon(request, true);
+  }
+
+  private FullHttpResponse extensionCommon(FullHttpRequest request, boolean isUpdate) throws Exception {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    String server = (String) map.get("server");
+    String path = (String) map.get("path");
+    String files = (String) map.get("files");
+    if (isUpdate) {
+      ExtensionUtil.update(server, path, files);
+    } else {
+      ExtensionUtil.install(server, path, files);
+    }
+    //刷新扩展content
+    ExtensionContent.refreshExtensionInfo(path);
+    //刷新系统pac代理
+    if (PDownConfigContent.getInstance().get().getProxyMode() == 1) {
+      ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + DownApplication.API_PORT + "/pac/pdown.pac?t=" + System.currentTimeMillis());
+    }
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
+  /**
+   * 启用或禁用插件
+   */
+  @RequestMapping("toggleExtension")
+  public FullHttpResponse toggleExtension(Channel channel, FullHttpRequest request) throws Exception {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    String path = (String) map.get("path");
+    boolean enabled = (boolean) map.get("enabled");
+    ExtensionContent.get()
+        .stream()
+        .filter(extensionInfo -> extensionInfo.getMeta().getPath().equals(path))
+        .findFirst()
+        .get()
+        .getMeta()
+        .setEnabled(enabled)
+        .save();
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
+  @RequestMapping("getProxyMode")
+  public FullHttpResponse getProxyMode(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> data = new HashMap<>();
+    data.put("mode", PDownConfigContent.getInstance().get().getProxyMode());
+    return HttpHandlerUtil.buildJson(data);
+  }
+
+  @RequestMapping("changeProxyMode")
+  public FullHttpResponse changeProxyMode(Channel channel, FullHttpRequest request) throws Exception {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    int mode = (int) map.get("mode");
+    //修改系统代理
+    if (mode == 1) {
+      ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + DownApplication.API_PORT + "/pac/pdown.pac?t=" + System.currentTimeMillis());
+    } else {
+      ExtensionProxyUtil.disabledProxy();
+    }
+    PDownConfigContent.getInstance().get().setProxyMode(mode);
+    PDownConfigContent.getInstance().save();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 

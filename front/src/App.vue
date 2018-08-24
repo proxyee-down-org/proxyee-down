@@ -2,34 +2,52 @@
   <div id="app">
     <i-menu mode="horizontal"
       theme="dark"
-      active-name="1">
-      <i-menu-item name="1">
-        <i-icon type="code-download"></i-icon>
-        {{$t("nav.taskManager")}}
+      :active-name="$route.path.substring(1)"
+      @on-select="forward">
+      <i-menu-item name="tasks">
+        <Icon type="ios-download-outline"></Icon>
+        {{$t("nav.tasks")}}
       </i-menu-item>
-      <i-submenu name="3">
-        <template slot="title">
-          <i-icon type="settings"></i-icon>
-          {{$t("nav.toolList")}}
-        </template>
-        <i-menu-item name="3-1">待添加</i-menu-item>
-      </i-submenu>
-      <i-menu-item name="4">
-        <i-icon type="gear-a"></i-icon>
-        {{$t("nav.softwareSetting")}}
+      <i-menu-item name="extension">
+        <Icon type="social-windows"></Icon>
+        {{$t("nav.extension")}}
       </i-menu-item>
-      <i-menu-item name="4">
-        <i-icon type="ios-navigate"></i-icon>
-        {{$t("nav.aboutProject")}}
+      <i-menu-item name="setting">
+        <Icon type="settings"></Icon>
+        {{$t("nav.setting")}}
       </i-menu-item>
-      <i-menu-item name="4">
-        <i-icon type="ios-star"></i-icon>
-        {{$t("nav.supportUs")}}
+      <i-menu-item name="about">
+        <Icon type="information-circled"></Icon>
+        {{$t("nav.about")}}
+      </i-menu-item>
+      <i-menu-item name="support">
+        <Icon type="social-yen"></Icon>
+        {{$t("nav.support")}}
       </i-menu-item>
     </i-menu>
-    <router-view/>
+    <div style="padding: 20px 50px">
+      <router-view/>
+    </div>
   </div>
 </template>
 
-<style lang="less">
+<script>
+export default {
+  methods: {
+    forward(a) {
+      this.$router.push(a)
+    }
+  }
+}
+</script>
+
+<style>
+i.action-icon {
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+i.action-icon + i.action-icon{
+  padding-left: 0.625rem;
+}
 </style>
+

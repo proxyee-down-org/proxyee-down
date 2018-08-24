@@ -37,17 +37,21 @@
             <div class="td">{{ $numeral(task.info.speed).format('0.00b') }}/S</div>
             <div class="td">{{ new Date(task.info.startTime).format('yyyy-MM-dd hh:mm:ss')}}</div>
             <div class="td">{{ calcStatus(task) }}</div>
-            <div class="td operate">
+            <div class="td">
               <Icon v-if="task.info.status==1"
+                class="action-icon"
                 type="ios-pause"
                 @click="$emit('on-pause',task)"></Icon>
               <Icon v-else-if="task.info.status==4"
+                class="action-icon"
                 type="ios-folder"
                 @click="$emit('on-open',task)"></Icon>
               <Icon v-else
+                class="action-icon"
                 type="ios-play"
                 @click="$emit('on-resume',task)"></Icon>
               <Icon type="ios-trash"
+                class="action-icon"
                 @click="$emit('on-delete',task)"></Icon>
             </div>
           </div>
@@ -211,12 +215,6 @@ export default {
         .th {
           background-color: #f8f8f9;
           text-align: left;
-        }
-
-        .operate i {
-          cursor: pointer;
-          padding-right: 0.625rem;
-          font-size: 1.25rem;
         }
       }
 

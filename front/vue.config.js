@@ -9,6 +9,10 @@ module.exports = {
       '/native': {
         target: 'http://127.0.0.1:7478',
         changeOrigin: true
+      },
+      '/pac': {
+        target: 'http://127.0.0.1:7478',
+        changeOrigin: true
       }
     }
   },

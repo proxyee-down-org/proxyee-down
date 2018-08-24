@@ -2,6 +2,7 @@ gui:
   warning: 警告
   alert:
     startError: 启动失败：{0}
+    restPortBusy: 端口26339被占用，请勿重复启动软件
     noFreePort: 系统无法分配TCP端口
   tray:
     show: 显示

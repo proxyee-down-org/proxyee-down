@@ -1,10 +1,10 @@
 export default {
   nav: {
-    taskManager: '任务管理',
-    toolList: '工具列表',
-    softwareSetting: '软件设置',
-    aboutProject: '关于项目',
-    supportUs: '支持我们'
+    tasks: '任务管理',
+    extension: '扩展管理',
+    setting: '软件设置',
+    about: '关于项目',
+    support: '支持我们'
   },
   tasks: {
     createTasks: '创建任务',

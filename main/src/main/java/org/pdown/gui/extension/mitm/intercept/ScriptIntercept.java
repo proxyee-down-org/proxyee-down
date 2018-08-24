@@ -16,9 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.pdown.gui.extension.ContentScript;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.ExtensionInfo;
-import org.pdown.gui.extension.ExtensionInfo.ContentScript;
 
 public class ScriptIntercept extends FullResponseIntercept {
 
@@ -43,7 +43,7 @@ public class ScriptIntercept extends FullResponseIntercept {
             if (contentScript.getMatches() != null && contentScript.getMatches().length > 0) {
               for (String match : contentScript.getMatches()) {
                 if (HttpUtil.checkUrl(httpRequest, match)) {
-                  String key = extensionInfo.getPath();
+                  String key = extensionInfo.getMeta().getFullPath();
                   List<ContentScript> contentScriptList = matchScriptMap.get(key);
                   if (contentScriptList == null) {
                     contentScriptList = new ArrayList<>();

@@ -64,8 +64,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   private TrayIcon trayIcon;
 
   private CountDownLatch countDownLatch;
-  private int frontPort;
-  private int apiPort;
+  //前端页面http服务器端口
+  public static int FRONT_PORT;
+  //native api服务器端口
+  public static int API_PORT;
 
   @Override
   public void start(Stage primaryStage) throws Exception {
@@ -86,14 +88,14 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   private void initConfig() throws IOException {
     PDownConfigContent.getInstance().load();
     //取前端http server端口
-    frontPort = ConfigUtil.getInt("front.port");
+    FRONT_PORT = ConfigUtil.getInt("front.port");
     //取native api http server端口
-    apiPort = ConfigUtil.getInt("api.port");
+    API_PORT = ConfigUtil.getInt("api.port");
     if ("prd".equals(ConfigUtil.getString("spring.profiles.active"))) {
       try {
         //打包的情况随机使用一个端口
-        frontPort = OsUtil.getFreePort(frontPort);
-        apiPort = frontPort;
+        FRONT_PORT = OsUtil.getFreePort(FRONT_PORT);
+        API_PORT = FRONT_PORT;
       } catch (IOException e) {
         LOGGER.error("initConfig error", e);
         alertAndExit(I18nUtil.getMessage("gui.alert.startError", e.getMessage()));
@@ -105,30 +107,32 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
 
   //读取扩展信息和启动代理服务器
   private void initExtension() {
-    new Thread(() -> {
-      try {
-        ExtensionContent.load();
-        proxyPort = OsUtil.getFreePort(9999);
-        PDownProxyServer.start(proxyPort);
-      } catch (Exception e) {
-        LOGGER.error("initExtension error", e);
-        alertAndExit("initExtension error：" + e.getMessage());
-      }
-    }).start();
-    //TODO mode修改
-    if (PDownConfigContent.getInstance().get().getProxyMode() == 0) {
-      //程序退出监听
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      //退出时把系统代理还原
+      if (PDownConfigContent.getInstance().get().getProxyMode() == 1) {
         try {
           ExtensionProxyUtil.disabledProxy();
         } catch (IOException e) {
         }
-      }));
-      try {
-        ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + apiPort + "/pac/pdown.pac?t=" + System.currentTimeMillis());
-      } catch (IOException e) {
-        LOGGER.error("initExtension enabledPACProxy error", e);
       }
+    }));
+    new Thread(() -> {
+      try {
+        proxyPort = OsUtil.getFreePort(9999);
+        PDownProxyServer.start(proxyPort);
+      } catch (Exception e) {
+        LOGGER.error("Init extension error", e);
+        alertAndExit("Init extension error：" + e.getMessage());
+      }
+    }).start();
+    try {
+      ExtensionContent.load();
+      //切换系统pac代理
+      if (PDownConfigContent.getInstance().get().getProxyMode() == 1) {
+        ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + API_PORT + "/pac/pdown.pac?t=" + System.currentTimeMillis());
+      }
+    } catch (IOException e) {
+      LOGGER.error("Extension content load error", e);
     }
   }
 
@@ -176,7 +180,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   private void initEmbedHttpServer() {
     countDownLatch = new CountDownLatch(1);
     new Thread(() -> {
-      EmbedHttpServer embedHttpServer = new EmbedHttpServer(apiPort);
+      EmbedHttpServer embedHttpServer = new EmbedHttpServer(API_PORT);
       embedHttpServer.addController(new NativeController());
       embedHttpServer.addController(new PacController());
       embedHttpServer.start(future -> countDownLatch.countDown());
@@ -223,7 +227,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       countDownLatch.await();
     } catch (InterruptedException e) {
     }
-    browser.load("http://127.0.0.1:" + frontPort);
+    browser.load("http://127.0.0.1:" + FRONT_PORT);
   }
 
   //加载gui窗口
@@ -291,26 +295,24 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     }
   }
 
+  private static final int REST_PORT = 26339;
+
   private static void doCheck() {
-    int port = ConfigContent.getInstance().get().getPort();
-    if (OsUtil.isBusyPort(port)) {
-      try {
-        ConfigContent.getInstance().get().setPort(OsUtil.getFreePort());
-        ConfigContent.getInstance().save();
-      } catch (Exception e) {
-        JOptionPane.showMessageDialog(
-            null,
-            I18nUtil.getMessage("gui.alert.startError", I18nUtil.getMessage("gui.alert.noFreePort")),
-            I18nUtil.getMessage("gui.warning"),
-            JOptionPane.WARNING_MESSAGE
-        );
-        System.exit(0);
-      }
+    if (OsUtil.isBusyPort(REST_PORT)) {
+      JOptionPane.showMessageDialog(
+          null,
+          I18nUtil.getMessage("gui.alert.startError", I18nUtil.getMessage("gui.alert.restPortBusy")),
+          I18nUtil.getMessage("gui.warning"),
+          JOptionPane.WARNING_MESSAGE);
+      System.exit(0);
     }
   }
 
   public static void main(String[] args) {
+    //init rest server config
     RestWebServerFactoryCustomizer.init(null);
+    ConfigContent.getInstance().get().setPort(REST_PORT);
+    //get free port
     doCheck();
     launch(DownApplication.class, null, args);
   }

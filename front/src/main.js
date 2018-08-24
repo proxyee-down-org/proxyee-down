@@ -3,14 +3,14 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import iView from 'iview'
-import axios from 'axios'
 import VueI18n from 'vue-i18n'
 import numeral from 'numeral'
 
 import 'iview/dist/styles/iview.css'
 import en_US from 'iview/dist/locale/en-US'
 import zh_CN from 'iview/dist/locale/zh-CN'
-import { getLocale } from './common/native'
+import http from './common/http'
+import { getInitConfig } from './common/native'
 
 Vue.use(VueI18n)
 Vue.use(iView)
@@ -27,11 +27,7 @@ const i18n = new VueI18n({
   }
 })
 
-// 设置语言类型
-// setting locale
-getLocale().then(locale => (i18n.locale = locale))
-
-Vue.prototype.$http = axios.create()
+Vue.prototype.$http = http.build()
 Vue.prototype.$http.interceptors.response.use(
   response => {
     return response
@@ -108,9 +104,16 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
-new Vue({
-  router,
-  store,
-  i18n,
-  render: h => h(App)
-}).$mount('#app')
+//取客户端配置信息
+getInitConfig().then(result => {
+  Vue.prototype.$config = result
+  //设置默认语言
+  i18n.locale = result.locale
+  //加载vue
+  new Vue({
+    router,
+    store,
+    i18n,
+    render: h => h(App)
+  }).$mount('#app')
+})

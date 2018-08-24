@@ -1,10 +1,10 @@
 export default {
   nav: {
-    taskManager: 'Task Manager',
-    toolList: 'Tool List',
-    softwareSetting: 'Software Setting',
-    aboutProject: 'About Project',
-    supportUs: 'Support Us'
+    tasks: 'Task Manager',
+    extension: 'Extension Manager',
+    setting: 'Software Setting',
+    about: 'About Project',
+    support: 'Support Us'
   },
   tasks: {
     createTasks: 'Create Tasks',

@@ -1,41 +1,37 @@
 <template>
   <div class="tasks">
-    <i-content :style="{padding: '0 50px'}">
-      <div class="tasks-entry">
-        <i-button type="dashed"
-          icon="plus-round"
-          class="tasks-button"
-          @click="resolveVisible=true">{{$t("tasks.createTasks")}}</i-button>
-        <i-button type="dashed"
-          icon="ios-pause"
-          class="tasks-button"
-          @click="onPauseBatch">{{$t("tasks.pauseDownloads")}}</i-button>
-        <i-button type="dashed"
-          icon="ios-play"
-          class="tasks-button"
-          @click="onResumeBatch">{{$t("tasks.continueDownloading")}}</i-button>
-        <i-button type="dashed"
-          icon="ios-trash"
-          class="tasks-button"
-          @click="onDeleteBatch">{{$t("tasks.deleteTask")}}</i-button>
-      </div>
+    <div class="tasks-entry">
+      <i-button type="dashed"
+        icon="plus"
+        class="tasks-button"
+        @click="resolveVisible=true">{{$t("tasks.createTasks")}}</i-button>
+      <i-button type="dashed"
+        icon="ios-pause"
+        class="tasks-button"
+        @click="onPauseBatch">{{$t("tasks.pauseDownloads")}}</i-button>
+      <i-button type="dashed"
+        icon="ios-play"
+        class="tasks-button"
+        @click="onResumeBatch">{{$t("tasks.continueDownloading")}}</i-button>
+      <i-button type="dashed"
+        icon="ios-trash"
+        class="tasks-button"
+        @click="onDeleteBatch">{{$t("tasks.deleteTask")}}</i-button>
+    </div>
 
-      <Table :taskList="taskList"
-        ref="taskTable"
-        @on-delete="onDelete"
-        @on-pause="onPause"
-        @on-resume="onResume"
-        @on-open="onOpen" />
+    <Table :taskList="taskList"
+      ref="taskTable"
+      @on-delete="onDelete"
+      @on-pause="onPause"
+      @on-resume="onResume"
+      @on-open="onOpen" />
 
-      <Modal v-model="deleteModal"
-        :title="$t('tasks.deleteTask')"
-        @on-ok="doDelete(delTaskId)">
-        <Checkbox :value="delFile"></Checkbox>
-        <span @click="delFile=!delFile">{{$t('tasks.deleteTaskTip')}}</span>
-      </Modal>
-
-    </i-content>
-
+    <Modal v-model="deleteModal"
+      :title="$t('tasks.deleteTask')"
+      @on-ok="doDelete(delTaskId)">
+      <Checkbox :value="delFile"></Checkbox>
+      <span @click="delFile=!delFile">{{$t('tasks.deleteTaskTip')}}</span>
+    </Modal>
     <Resolve v-model="resolveVisible" />
     <Create :request="createForm.request"
       :response="createForm.response"
@@ -44,11 +40,13 @@
 </template>
 
 <script>
+import axios from 'axios'
 import Table from '../components/Table'
 import Resolve from '../components/Task/Resolve'
 import Create from '../components/Task/Create'
 import { showFile } from '../common/native'
 
+const progressClient = axios.create()
 let intervalId
 
 export default {
@@ -71,7 +69,7 @@ export default {
         .filter(task => task.info.status == 1)
         .map(task => task.id)
       if (downloadingIds && downloadingIds.length) {
-        this.$http
+        progressClient
           .get('http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds)
           .then(result => {
             //匹配并更新正在下载的任务信息
@@ -218,7 +216,7 @@ export default {
 
 <style lang="less" scoped>
 .tasks-entry {
-  margin: 20px 0;
+  margin-bottom: 20px;
   .tasks-button {
     margin-right: 10px;
     &:last-of-type {
