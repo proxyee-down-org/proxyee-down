@@ -1,26 +1,25 @@
 <template>
   <div v-if="!certStatus">
     <Card shadow>
-      <p slot="title">使用须知</p>
-      <p>首次使用扩展模块时，必须安装由Proxyee Down随机生成的一个CA证书，点击下面的安装按钮并按系统的引导进行确认安装。</p>
+      <p slot="title">{{$t('extension.conditions')}}</p>
+      <p>{{$t('extension.conditionsContent')}}</p>
     </Card>
     <Button type="primary"
       class="install-button"
-      @click="installCert">安装</Button>
+      @click="installCert">{{$t('extension.install')}}</Button>
   </div>
   <div v-else>
     <div class="proxy-switch-div">
-      <b>全局代理</b>
+      <b>{{$t('extension.globalProxy')}}</b>
       <Switch v-model="proxySwitch"
         @on-change="changeProxyMode"></Switch>
-      <Tooltip class="item"
-        placement="right">
+      <Tooltip placement="right">
         <Icon type="help-circled"
-          class="action-icon" />
+          class="action-icon tip-icon" />
         <div slot="content"
           style="white-space: normal;text-indent: 2em;">
-          <p>Proxyee Down会修改系统全局的代理设置，可能会与相同机制的软件发生冲突(例如：SS、SSR)</p>
-          <p>若关闭全局代理，需配合浏览器代理插件来使用(例如：SwitchyOmega)</p>
+          <p>{{$t('extension.proxyTip1')}}</p>
+          <p>{{$t('extension.proxyTip2')}}</p>
         </div>
       </Tooltip>
     </div>
@@ -44,6 +43,7 @@
 </template>
 <script>
 import { Icon, Tag } from 'iview'
+import axios from 'axios'
 import {
   checkCert,
   installCert,
@@ -51,8 +51,11 @@ import {
   changeProxyMode,
   getExtensions,
   installExtension,
+  updateExtension,
   toggleExtension
 } from '../common/native.js'
+
+const clientNoSpin = axios.create()
 
 export default {
   name: 'extension',
@@ -65,25 +68,25 @@ export default {
       spinTip: '',
       columns: [
         {
-          title: '名称',
+          title: this.$t('extension.title'),
           key: 'title'
         },
         {
-          title: '描述',
+          title: this.$t('extension.description'),
           key: 'description'
         },
         {
-          title: '当前版本',
+          title: this.$t('extension.currVersion'),
           key: 'currVersion',
           width: 100
         },
         {
-          title: '最新版本',
+          title: this.$t('extension.newVersion'),
           key: 'newVersion',
           width: 100
         },
         {
-          title: '状态',
+          title: this.$t('extension.installStatus'),
           key: 'meta.disabled',
           align: 'center',
           width: 100,
@@ -91,16 +94,18 @@ export default {
             return (
               <div>
                 {params.row.installed ? (
-                  <Tag color="green">已安装</Tag>
+                  <Tag color="green">
+                    {_this.$t('extension.installStatusTrue')}
+                  </Tag>
                 ) : (
-                  <Tag>未安装</Tag>
+                  <Tag>{_this.$t('extension.installStatusFalse')}</Tag>
                 )}
               </div>
             )
           }
         },
         {
-          title: '操作',
+          title: this.$t('extension.action'),
           key: 'action',
           align: 'center',
           width: 150,
@@ -108,11 +113,14 @@ export default {
             return (
               <div>
                 {params.row.installed ? (
-                  params.row.needUpdate ? (
+                  params.row.currVersion < params.row.newVersion ? (
                     <Icon
                       type="ios-cloud-upload-outline"
                       class="action-icon"
-                      title="更新"
+                      title={_this.$t('extension.actionUpdate')}
+                      nativeOnClick={() =>
+                        _this.downExtension(true, params.row, 0)
+                      }
                     />
                   ) : (
                     ''
@@ -121,19 +129,21 @@ export default {
                   <Icon
                     type="ios-cloud-download-outline"
                     class="action-icon"
-                    title="安装"
-                    nativeOnClick={() => _this.install(params.row, 0)}
+                    title={_this.$t('extension.actionInstall')}
+                    nativeOnClick={() =>
+                      _this.downExtension(false, params.row, 0)
+                    }
                   />
                 )}
                 <Icon
                   type="ios-eye-outline"
                   class="action-icon"
-                  title="详情"
+                  title={_this.$t('extension.actionDetail')}
                   nativeOnClick={() => {
                     window.open(
-                      'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master/' +
+                      'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' +
                         params.row.path +
-                        'README.md'
+                        '/README.md'
                     )
                   }}
                 />
@@ -142,7 +152,7 @@ export default {
           }
         },
         {
-          title: '开关',
+          title: this.$t('extension.switch'),
           key: 'switch',
           align: 'center',
           width: 100,
@@ -193,7 +203,7 @@ export default {
     changeEnabled(enabled, row) {
       toggleExtension({ path: row.meta.path, enabled: enabled })
     },
-    install(row, index) {
+    downExtension(isUpdate, row, index) {
       let _this = this
       let extFileServers = this.$config.extFileServers
       if (index < extFileServers.length) {
@@ -201,42 +211,53 @@ export default {
         let extFileServer = extFileServers[index]
         let url = new URL(extFileServer)
         this.spinTip =
-          '下载中...[服务器(' +
+          this.$t('extension.downloadingTip') +
           (index + 1) +
           '/' +
           extFileServers.length +
           ')：' +
           url.host +
           ']'
-        installExtension({
+        const params = {
           server: extFileServer,
           path: row.path,
           files: row.files
-        })
+        }
+        let downPromise = isUpdate
+          ? updateExtension(params)
+          : installExtension(params)
+        downPromise
           .then(() => {
             this.$set(row, 'installed', true)
+            this.$set(row, 'currVersion', row.newVersion)
             this.$set(row.meta, 'path', row.path)
             this.$set(row.meta, 'enabled', true)
             this.spinShow = false
             this.$Message.success({
-              content: '下载成功',
-              duration: 0,
+              content: this.$t('extension.downloadOk'),
               closable: true
             })
+            //上报至服务器
+            clientNoSpin.get(
+              this.$config.adminServer +
+                'extension/down?ext_id=' +
+                row.id +
+                '&version=' +
+                row.newVersion
+            )
           })
           .catch(error => {
             if (index + 1 < extFileServers.length) {
               this.$Notice.error({
-                title: '下载失败',
-                desc: '自动切换服务器',
-                duration: 3,
+                title: this.$t('extension.downloadErr'),
+                desc: this.$t('extension.downloadErrTip'),
                 onClose() {
-                  _this.install(row, index + 1)
+                  _this.downExtension(isUpdate, row, index + 1)
                 }
               })
             } else {
               this.$Notice.error({
-                title: '下载失败',
+                title: this.$t('extension.downloadErr'),
                 desc: error.response.data.error,
                 duration: 0,
                 closable: true
@@ -258,7 +279,7 @@ export default {
     searchExtensions(pageSize) {
       pageSize = pageSize ? pageSize : 1
       this.$http
-        .get(this.$config.extServer + 'extension/search?pageSize=' + pageSize)
+        .get(this.$config.adminServer + 'extension/search?pageSize=' + pageSize)
         .then(result => {
           this.page = result.data
           let serverExts = this.page.data
@@ -270,15 +291,11 @@ export default {
             //本地已经安装该插件
             if (index != -1) {
               let localExt = this.localExts[index]
-              //判断是否需要更新
-              if (serverExt.version > localExt.version) {
-                serverExt.needUpdate = true
-              }
               serverExt.currVersion = localExt.version
               serverExt.installed = true
               serverExt.meta = localExt.meta
             } else {
-              serverExt.meta = {}
+              this.$set(serverExt, 'meta', { enabled: true })
             }
           })
         })
@@ -300,18 +317,12 @@ export default {
 <style scoped>
 .install-button {
   margin-top: 1.25rem;
-  float: right;
 }
 .proxy-switch-div {
   margin-bottom: 1.25rem;
 }
 .proxy-switch-div b {
   padding-right: 10px;
-}
-.proxy-switch-div .action-icon {
-  position: relative;
-  top: 5px;
-  padding-left: 5px;
 }
 .spin-icon-load {
   animation: ani-demo-spin 1s linear infinite;

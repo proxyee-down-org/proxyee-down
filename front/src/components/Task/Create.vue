@@ -1,5 +1,5 @@
 <template>
-  <Modal title="创建任务"
+  <Modal :title="$t('tasks.createTask')"
     :value="visible"
     @input="closeModal"
     :closable="false"
@@ -9,12 +9,12 @@
       :model="form"
       :rules="rules"
       :label-width="60">
-      <FormItem label="文件名"
+      <FormItem :label="$t('tasks.fileName')"
         prop="response.fileName">
         <Input v-model="form.response.fileName" />
       </FormItem>
-      <FormItem label="文件大小">{{$numeral(form.response.totalSize).format('0.00b')}}</FormItem>
-      <FormItem label="连接数"
+      <FormItem :label="$t('tasks.fileSize')">{{$numeral(form.response.totalSize).format('0.00b')}}</FormItem>
+      <FormItem :label="$t('tasks.connectios')"
         prop="config.connections">
         <Slider v-if="response.supportRange"
           v-model="form.config.connections"
@@ -27,15 +27,15 @@
           :min="1"
           :max="1" />
       </FormItem>
-      <FormItem label="路径"
+      <FormItem :label="$t('tasks.filePath')"
         prop="config.filePath">
         <FileChoose v-model="form.config.filePath" />
       </FormItem>
     </Form>
     <div slot="footer">
       <Button type="primary"
-        @click="onSubmit">确定</Button>
-      <Button @click="closeModal">取消</Button>
+        @click="onSubmit">{{$t('tip.ok')}}</Button>
+      <Button @click="closeModal">{{$t('tip.cancel')}}</Button>
     </div>
     <Spin size="large"
       fix
@@ -47,7 +47,7 @@
 import FileChoose from '../FileChoose'
 
 const defualtConfig = {
-  filePath: '',
+  filePath: 'F:\\down',
   connections: 32,
   timeout: 0,
   retryCount: 0,
@@ -72,8 +72,8 @@ export default {
         config: { ...defualtConfig }
       },
       rules: {
-        'response.fileName': [{ required: true, message: '不能为空' }],
-        'config.filePath': [{ required: true, message: '不能为空' }]
+        'response.fileName': [{ required: true, message: this.$t('tip.notNull') }],
+        'config.filePath': [{ required: true, message: this.$t('tip.notNull') }]
       }
     }
   },

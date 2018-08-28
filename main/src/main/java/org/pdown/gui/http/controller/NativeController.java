@@ -9,28 +9,37 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
-import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
+import org.pdown.gui.entity.PDownConfigInfo;
 import org.pdown.gui.extension.ExtensionContent;
+import org.pdown.gui.extension.mitm.server.PDownProxyServer;
 import org.pdown.gui.extension.mitm.util.ExtensionCertUtil;
 import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
 import org.pdown.gui.extension.util.ExtensionUtil;
 import org.pdown.gui.http.util.HttpHandlerUtil;
+import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
-import org.pdown.rest.util.PathUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @RequestMapping("native")
 public class NativeController {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(NativeController.class);
 
   @RequestMapping("dirChooser")
   public FullHttpResponse dirChooser(Channel channel, FullHttpRequest request) throws Exception {
@@ -71,36 +80,38 @@ public class NativeController {
     Map<String, Object> data = new HashMap<>();
     //语言
     data.put("locale", PDownConfigContent.getInstance().get().getLocale());
-    //扩展商店请求地址
-    data.put("extServer", ConfigUtil.getString("extServer"));
+    //后台管理API请求地址
+    data.put("adminServer", ConfigUtil.getString("adminServer"));
     //扩展下载服务器列表
     data.put("extFileServers", PDownConfigContent.getInstance().get().getExtFileServers());
+    //软件版本
+    data.put("version", ConfigUtil.getString("version"));
     return HttpHandlerUtil.buildJson(data);
   }
 
-  @RequestMapping("getLocale")
-  public FullHttpResponse getLocale(Channel channel, FullHttpRequest request) throws Exception {
-    Map<String, Object> data = new HashMap<>();
-    data.put("locale", PDownConfigContent.getInstance().get().getLocale());
-    return HttpHandlerUtil.buildJson(data);
+  @RequestMapping("getConfig")
+  public FullHttpResponse getConfig(Channel channel, FullHttpRequest request) throws Exception {
+    return HttpHandlerUtil.buildJson(PDownConfigContent.getInstance().get());
   }
 
-  @RequestMapping("setLocale")
-  public FullHttpResponse setLocale(Channel channel, FullHttpRequest request) throws Exception {
+  @RequestMapping("setConfig")
+  public FullHttpResponse setConfig(Channel channel, FullHttpRequest request) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
-    String locale = map.get("locale");
-    if (!StringUtils.isEmpty(locale)) {
-      PDownConfigContent.getInstance().get().setLocale(locale);
+    PDownConfigInfo configInfo = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), PDownConfigInfo.class);
+    PDownConfigInfo beforeConfigInfo = PDownConfigContent.getInstance().get();
+    boolean localeChange = !configInfo.getLocale().equals(beforeConfigInfo.getLocale());
+    BeanUtils.copyProperties(configInfo, beforeConfigInfo);
+    if (localeChange) {
+      DownApplication.INSTANCE.loadPopupMenu();
     }
+    PDownConfigContent.getInstance().save();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
   @RequestMapping("showFile")
   public FullHttpResponse showFile(Channel channel, FullHttpRequest request) throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
-    String path = map.get("path");
+    Map<String, Object> map = getJSONParams(request);
+    String path = (String) map.get("path");
     if (!StringUtils.isEmpty(path)) {
       File file = new File(path);
       if (!file.exists() || OsUtil.isUnix()) {
@@ -114,11 +125,21 @@ public class NativeController {
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
+  @RequestMapping("openUrl")
+  public FullHttpResponse openUrl(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> map = getJSONParams(request);
+    String url = (String) map.get("url");
+    Desktop.getDesktop().browse(URI.create(URLDecoder.decode(url, "UTF-8")));
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
   /**
    * 获取已安装的插件列表
    */
   @RequestMapping("getExtensions")
   public FullHttpResponse getExtensions(Channel channel, FullHttpRequest request) throws Exception {
+    //刷新扩展信息
+    ExtensionContent.load();
     return HttpHandlerUtil.buildJson(ExtensionContent.get());
   }
 
@@ -139,8 +160,7 @@ public class NativeController {
   }
 
   private FullHttpResponse extensionCommon(FullHttpRequest request, boolean isUpdate) throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    Map<String, Object> map = getJSONParams(request);
     String server = (String) map.get("server");
     String path = (String) map.get("path");
     String files = (String) map.get("files");
@@ -152,9 +172,7 @@ public class NativeController {
     //刷新扩展content
     ExtensionContent.refreshExtensionInfo(path);
     //刷新系统pac代理
-    if (PDownConfigContent.getInstance().get().getProxyMode() == 1) {
-      ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + DownApplication.API_PORT + "/pac/pdown.pac?t=" + System.currentTimeMillis());
-    }
+    AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
@@ -163,8 +181,7 @@ public class NativeController {
    */
   @RequestMapping("toggleExtension")
   public FullHttpResponse toggleExtension(Channel channel, FullHttpRequest request) throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    Map<String, Object> map = getJSONParams(request);
     String path = (String) map.get("path");
     boolean enabled = (boolean) map.get("enabled");
     ExtensionContent.get()
@@ -175,6 +192,9 @@ public class NativeController {
         .getMeta()
         .setEnabled(enabled)
         .save();
+    //刷新pac
+    ExtensionContent.refreshProxyWildcards();
+    AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
@@ -187,57 +207,61 @@ public class NativeController {
 
   @RequestMapping("changeProxyMode")
   public FullHttpResponse changeProxyMode(Channel channel, FullHttpRequest request) throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    Map<String, Object> map = getJSONParams(request);
     int mode = (int) map.get("mode");
+    PDownConfigContent.getInstance().get().setProxyMode(mode);
     //修改系统代理
     if (mode == 1) {
-      ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + DownApplication.API_PORT + "/pac/pdown.pac?t=" + System.currentTimeMillis());
+      AppUtil.refreshPAC();
     } else {
       ExtensionProxyUtil.disabledProxy();
     }
-    PDownConfigContent.getInstance().get().setProxyMode(mode);
     PDownConfigContent.getInstance().save();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
-  private static final String SUBJECT = "ProxyeeDown CA";
-  private static final String SSL_PATH = PathUtil.ROOT_PATH + File.separator + "ssl" + File.separator;
-  private static final String CERT_PATH = SSL_PATH + "ca.crt";
-  private static final String PRIVATE_PATH = SSL_PATH + ".ca_pri.der";
-
   @RequestMapping("checkCert")
   public FullHttpResponse checkCert(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
-    data.put("status", checkIsInstalledCert());
+    data.put("status", AppUtil.checkIsInstalledCert());
     return HttpHandlerUtil.buildJson(data);
   }
 
   @RequestMapping("installCert")
   public FullHttpResponse installCert(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
+    boolean status;
     //再检测一次，确保不重复安装
-    if (!checkIsInstalledCert()) {
-      if (ExtensionCertUtil.existsCert(SUBJECT)) {
+    if (!AppUtil.checkIsInstalledCert()) {
+      if (ExtensionCertUtil.existsCert(AppUtil.SUBJECT)) {
         //存在无用证书需要卸载
-        ExtensionCertUtil.existsCert(SUBJECT);
+        ExtensionCertUtil.uninstallCert(AppUtil.SUBJECT);
       }
       //生成新的证书
-      ExtensionCertUtil.buildCert(SSL_PATH, SUBJECT);
+      ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
       //安装
-      ExtensionCertUtil.installCert(new File(CERT_PATH));
+      ExtensionCertUtil.installCert(new File(AppUtil.CERT_PATH));
       //检测是否安装成功，可能点了取消就没安装成功
-      data.put("status", checkIsInstalledCert());
+      status = AppUtil.checkIsInstalledCert();
     } else {
-      data.put("status", true);
+      status = true;
+    }
+    data.put("status", status);
+    if (status && !PDownProxyServer.isStart) {
+      new Thread(() -> {
+        try {
+          AppUtil.startProxyServer();
+        } catch (IOException e) {
+          LOGGER.error("Start proxy server error", e);
+        }
+      }).start();
     }
     return HttpHandlerUtil.buildJson(data);
   }
 
-  //证书和私钥文件都存在并且检测到系统安装了这个证书
-  private boolean checkIsInstalledCert() throws Exception {
-    return FileUtil.exists(CERT_PATH)
-        && FileUtil.exists(PRIVATE_PATH)
-        && ExtensionCertUtil.isInstalledCert(new File(CERT_PATH));
+  private Map<String, Object> getJSONParams(FullHttpRequest request) throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
+    return map;
   }
 }

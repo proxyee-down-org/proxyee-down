@@ -6,4 +6,7 @@ gui:
     noFreePort: 系统无法分配TCP端口
   tray:
     show: 显示
+    set: 设置
+    about: 关于
+    support: 打赏
     exit: 退出

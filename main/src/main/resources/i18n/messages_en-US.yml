@@ -6,4 +6,7 @@ gui:
     noFreePort: The system cannot allocate the TCP port
   tray:
     show: Show
+    set: Setting
+    about: About
+    support: Support
     exit: Exit

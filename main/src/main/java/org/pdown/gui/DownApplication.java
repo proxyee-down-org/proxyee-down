@@ -2,6 +2,7 @@ package org.pdown.gui;
 
 import de.felixroske.jfxsupport.AbstractJavaFxApplicationSupport;
 import java.awt.AWTException;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.MenuItem;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -33,21 +35,24 @@ import org.pdown.gui.com.Browser;
 import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
 import org.pdown.gui.extension.ExtensionContent;
-import org.pdown.gui.extension.mitm.server.PDownProxyServer;
 import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
 import org.pdown.gui.http.EmbedHttpServer;
+import org.pdown.gui.http.controller.ApiController;
 import org.pdown.gui.http.controller.NativeController;
 import org.pdown.gui.http.controller.PacController;
+import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
 import org.pdown.gui.util.I18nUtil;
 import org.pdown.rest.content.ConfigContent;
 import org.pdown.rest.content.RestWebServerFactoryCustomizer;
+import org.pdown.rest.entity.ServerConfigInfo;
 import org.pdown.rest.util.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.util.StringUtils;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "org.pdown.rest")
@@ -59,18 +64,23 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       : (OsUtil.isMac() ? "mac" : "linux");
   private static final String ICON_NAME = OS + "/logo.png";
 
+  public static DownApplication INSTANCE;
+
   private Stage stage;
   private Browser browser;
   private TrayIcon trayIcon;
 
   private CountDownLatch countDownLatch;
   //前端页面http服务器端口
-  public static int FRONT_PORT;
+  public int FRONT_PORT;
   //native api服务器端口
-  public static int API_PORT;
+  public int API_PORT;
+  //代理服务器端口
+  public int PROXY_PORT;
 
   @Override
   public void start(Stage primaryStage) throws Exception {
+    INSTANCE = this;
     stage = primaryStage;
     Platform.setImplicitExit(false);
     //load config
@@ -81,7 +91,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     initTray();
     initWindow();
     initBrowser();
-    show();
+    show(true);
   }
 
 
@@ -103,8 +113,6 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     }
   }
 
-  public static int proxyPort;
-
   //读取扩展信息和启动代理服务器
   private void initExtension() {
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -117,20 +125,19 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       }
     }));
     new Thread(() -> {
+      //检查是否安装了证书
       try {
-        proxyPort = OsUtil.getFreePort(9999);
-        PDownProxyServer.start(proxyPort);
+        if (AppUtil.checkIsInstalledCert()) {
+          AppUtil.startProxyServer();
+        }
       } catch (Exception e) {
         LOGGER.error("Init extension error", e);
-        alertAndExit("Init extension error：" + e.getMessage());
       }
     }).start();
+    //根据扩展生成pac文件并切换系统代理
     try {
       ExtensionContent.load();
-      //切换系统pac代理
-      if (PDownConfigContent.getInstance().get().getProxyMode() == 1) {
-        ExtensionProxyUtil.enabledPACProxy("http://127.0.0.1:" + API_PORT + "/pac/pdown.pac?t=" + System.currentTimeMillis());
-      }
+      AppUtil.refreshPAC();
     } catch (IOException e) {
       LOGGER.error("Extension content load error", e);
     }
@@ -182,6 +189,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     new Thread(() -> {
       EmbedHttpServer embedHttpServer = new EmbedHttpServer(API_PORT);
       embedHttpServer.addController(new NativeController());
+      embedHttpServer.addController(new ApiController());
       embedHttpServer.addController(new PacController());
       embedHttpServer.start(future -> countDownLatch.countDown());
     }).start();
@@ -200,23 +208,36 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       trayImage = trayImage.getScaledInstance(trayIconSize.width, trayIconSize.height, Image.SCALE_SMOOTH);
       trayIcon = new TrayIcon(trayImage, "Proxyee Down");
       systemTray.add(trayIcon);
-
+      loadPopupMenu();
       //双击事件监听
-      trayIcon.addActionListener(event -> Platform.runLater(() -> show()));
-
-      //添加右键菜单
-      PopupMenu popupMenu = new PopupMenu();
-      MenuItem showItem = new MenuItem(I18nUtil.getMessage("gui.tray.show"));
-      showItem.addActionListener(event -> Platform.runLater(() -> show()));
-      MenuItem closeItem = new MenuItem(I18nUtil.getMessage("gui.tray.exit"));
-      closeItem.addActionListener(event -> {
-        Platform.exit();
-        System.exit(0);
-      });
-      popupMenu.add(showItem);
-      popupMenu.add(closeItem);
-      trayIcon.setPopupMenu(popupMenu);
+      trayIcon.addActionListener(event -> Platform.runLater(() -> show(true)));
     }
+  }
+
+  public void loadPopupMenu() {
+    //添加右键菜单
+    PopupMenu popupMenu = new PopupMenu();
+    MenuItem showItem = new MenuItem(I18nUtil.getMessage("gui.tray.show"));
+    showItem.addActionListener(event -> Platform.runLater(() -> show(true)));
+    MenuItem setItem = new MenuItem(I18nUtil.getMessage("gui.tray.set"));
+    setItem.addActionListener(event -> Platform.runLater(() -> loadUri("/#/setting")));
+    MenuItem aboutItem = new MenuItem(I18nUtil.getMessage("gui.tray.about"));
+    aboutItem.addActionListener(event -> Platform.runLater(() -> loadUri("/#/about")));
+    MenuItem supportItem = new MenuItem(I18nUtil.getMessage("gui.tray.support"));
+    supportItem.addActionListener(event -> Platform.runLater(() -> loadUri("/#/support")));
+    MenuItem closeItem = new MenuItem(I18nUtil.getMessage("gui.tray.exit"));
+    closeItem.addActionListener(event -> {
+      Platform.exit();
+      System.exit(0);
+    });
+    popupMenu.add(showItem);
+    popupMenu.addSeparator();
+    popupMenu.add(setItem);
+    popupMenu.add(aboutItem);
+    popupMenu.add(supportItem);
+    popupMenu.addSeparator();
+    popupMenu.add(closeItem);
+    trayIcon.setPopupMenu(popupMenu);
   }
 
   //加载webView
@@ -227,18 +248,20 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       countDownLatch.await();
     } catch (InterruptedException e) {
     }
-    browser.load("http://127.0.0.1:" + FRONT_PORT);
   }
 
   //加载gui窗口
   private void initWindow() {
     stage.setTitle("Proxyee Down");
     Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-    stage.setX(bounds.getMinX());
-    stage.setY(bounds.getMinY());
-    stage.setWidth(bounds.getWidth());
-    stage.setHeight(bounds.getHeight());
+    int width = 1024;
+    int height = 576;
+    stage.setX((bounds.getWidth() - width) / 2);
+    stage.setY((bounds.getHeight() - height) / 2);
+    stage.setWidth(width);
+    stage.setHeight(height);
     stage.getIcons().add(new javafx.scene.image.Image(Thread.currentThread().getContextClassLoader().getResourceAsStream(ICON_NAME)));
+    stage.setResizable(false);
     //关闭窗口监听
     stage.setOnCloseRequest(event -> {
       event.consume();
@@ -246,23 +269,51 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     });
   }
 
-  //显示gui窗口
-  private void show() {
+  /**
+   * 显示gui窗口
+   *
+   * @param isTray 是否从托盘按钮打开的(windows下如果非托盘按钮调用窗口可能不会置顶)
+   */
+  public void show(boolean isTray) {
+    if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
+      loadUri("");
+      return;
+    }
+    //是否需要调用窗口置顶
+    boolean isFront = false;
     if (stage.isShowing()) {
       if (stage.isIconified()) {
         stage.setIconified(false);
       } else {
+        isFront = true;
         stage.toFront();
       }
     } else {
+      isFront = true;
       stage.show();
       stage.toFront();
     }
-    /*//避免有时候窗口不弹出
+    //避免有时候窗口不弹出
     if (isFront && !isTray && OsUtil.isWindows()) {
       stage.setIconified(true);
       stage.setIconified(false);
-    }*/
+    }
+    if(!browser.isLoad()){
+      loadUri("");
+    }
+  }
+
+  public void loadUri(String uri) {
+    String url = "http://127.0.0.1:" + FRONT_PORT + uri;
+    if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
+      try {
+        Desktop.getDesktop().browse(URI.create(url));
+      } catch (IOException e) {
+        LOGGER.error("Open browse error", e);
+      }
+    } else {
+      browser.load(url);
+    }
   }
 
   //提示并退出程序
@@ -311,7 +362,11 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   public static void main(String[] args) {
     //init rest server config
     RestWebServerFactoryCustomizer.init(null);
-    ConfigContent.getInstance().get().setPort(REST_PORT);
+    ServerConfigInfo serverConfigInfo = ConfigContent.getInstance().get();
+    serverConfigInfo.setPort(REST_PORT);
+    if (StringUtils.isEmpty(serverConfigInfo.getFilePath())) {
+      serverConfigInfo.setFilePath(System.getProperty("user.home") + File.separator + "Downloads");
+    }
     //get free port
     doCheck();
     launch(DownApplication.class, null, args);

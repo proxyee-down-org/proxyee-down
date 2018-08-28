@@ -33,7 +33,7 @@ public class PacController {
   @RequestMapping("pdown.pac")
   public FullHttpResponse build(Channel channel, FullHttpRequest request) throws Exception {
     Set<String> domains = ExtensionContent.getWildCards();
-    String pacContent = PAC_TEMPLATE.replace("{port}", DownApplication.proxyPort + "");
+    String pacContent = PAC_TEMPLATE.replace("{port}", DownApplication.INSTANCE.PROXY_PORT + "");
     if (domains != null && domains.size() > 0) {
       StringBuilder domainsBuilder = new StringBuilder();
       for (String domain : domains) {

@@ -40,28 +40,10 @@ const getInitConfig = () => {
   })
 }
 
-const getLocale = () => {
-  return new Promise((resolve, reject) => {
-    client
-      .get('/native/getLocale')
-      .then(response => resolve(response.data.locale))
-      .catch(error => reject(error))
-  })
-}
-
-const setLocale = locale => {
-  return new Promise((resolve, reject) => {
-    client
-      .post('/native/setLocale', { locale: locale })
-      .then(response => resolve(response.data))
-      .catch(error => reject(error))
-  })
-}
-
 const showFile = path => {
   return new Promise((resolve, reject) => {
     client
-      .get('/native/showFile', { path: path })
+      .post('/native/showFile', { path: path })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -121,6 +103,15 @@ const installExtension = data => {
   })
 }
 
+const updateExtension = data => {
+  return new Promise((resolve, reject) => {
+    clientNoSpin
+      .post('/native/updateExtension', data)
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
 const toggleExtension = data => {
   return new Promise((resolve, reject) => {
     client
@@ -130,11 +121,18 @@ const toggleExtension = data => {
   })
 }
 
+const openUrl = url => {
+  if (window.navigator.userAgent.indexOf('JavaFX') != -1) {
+    clientNoSpin.post('/native/openUrl', { url: encodeURIComponent(url) })
+  } else {
+    window.open(url)
+  }
+}
+
 export { showFileChooser }
 export { showDirChooser }
+export { openUrl }
 export { getInitConfig }
-export { getLocale }
-export { setLocale }
 export { showFile }
 export { checkCert }
 export { installCert }
@@ -142,4 +140,5 @@ export { getProxyMode }
 export { changeProxyMode }
 export { getExtensions }
 export { installExtension }
+export { updateExtension }
 export { toggleExtension }

@@ -68,4 +68,8 @@ public class Browser extends Region {
   public void load(String url) {
     webEngine.load(url);
   }
+
+  public boolean isLoad() {
+    return webEngine.getLocation() != null;
+  }
 }

@@ -1,5 +1,5 @@
 <template>
-  <Modal title="创建任务"
+  <Modal :title="$t('tasks.createTask')"
     :value="value"
     @input="$emit('input', arguments[0])"
     :closable="false"
@@ -9,16 +9,16 @@
       :rules="rules"
       :model="form"
       :label-width="60">
-      <FormItem label="链接"
+      <FormItem :label="$t('tasks.url')"
         prop="url">
         <Input v-model="form.url" />
       </FormItem>
-      <FormItem label="附加">
-        <Checkbox v-model="hasHead">请求头</Checkbox>
-        <Checkbox v-model="hasBody">请求体</Checkbox>
+      <FormItem :label="$t('tasks.option')">
+        <Checkbox v-model="hasHead">{{$t('tasks.head')}}</Checkbox>
+        <Checkbox v-model="hasBody">{{$t('tasks.body')}}</Checkbox>
       </FormItem>
       <FormItem v-show="hasHead"
-        label="请求头"
+        :label="$t('tasks.head')"
         prop="heads">
         <div v-for="(head, index) in form.heads"
           :key="index"
@@ -38,18 +38,17 @@
         </div>
       </FormItem>
       <FormItem v-show="hasBody"
-        label="请求体"
+        :label="$t('tasks.body')"
         prop="body">
         <Input type="textarea"
           :autosize="{ minRows: 2, maxRows: 4}"
-          placeholder="请输入内容"
           v-model="form.body" />
       </FormItem>
     </Form>
     <div slot="footer">
       <Button type="primary"
-        @click="onSubmit">确定</Button>
-      <Button @click="$emit('input', false);">取消</Button>
+        @click="onSubmit">{{$t('tip.ok')}}</Button>
+      <Button @click="$emit('input', false);">{{$t('tip.cancel')}}</Button>
     </div>
     <Spin size="large"
       fix
@@ -77,8 +76,8 @@ export default {
       },
       rules: {
         url: [
-          { required: true, message: '不能为空' },
-          { pattern: /^https?:\/\/.*$/i, message: '格式不正确' }
+          { required: true, message: this.$t('tip.notNull') },
+          { pattern: /^https?:\/\/.*$/i, message: this.$t('tip.fmtErr') }
         ]
       }
     }

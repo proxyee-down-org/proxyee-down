@@ -4,7 +4,7 @@
       <i-button type="dashed"
         icon="plus"
         class="tasks-button"
-        @click="resolveVisible=true">{{$t("tasks.createTasks")}}</i-button>
+        @click="resolveVisible=true">{{$t("tasks.createTask")}}</i-button>
       <i-button type="dashed"
         icon="ios-pause"
         class="tasks-button"
@@ -64,28 +64,45 @@ export default {
       if (!this.taskList) {
         return
       }
-      //过滤出正在下载的任务ID
+      //过滤出正在下载的任务ID列表
       const downloadingIds = this.taskList
         .filter(task => task.info.status == 1)
         .map(task => task.id)
-      if (downloadingIds && downloadingIds.length) {
-        progressClient
-          .get('http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds)
-          .then(result => {
-            //匹配并更新正在下载的任务信息
-            result.data.forEach(task => {
-              const index = this.getIndexByTaskId(task.id)
-              if (index >= 0) {
-                this.taskList[index].info = task.info
-              }
-            })
-          })
-          .catch(error => {
-            if (!error.response || error.response.status == 504) {
-              clearInterval(intervalId)
+      progressClient
+        .get('http://127.0.0.1:26339/tasks?status=1')
+        .then(result => {
+          //获取服务器正在下载的任务ID列表
+          const serverDownloadingIds = result.data.map(task => task.id)
+          serverDownloadingIds.forEach(serverTaskId => {
+            if (
+              downloadingIds.findIndex(
+                localTaskId => localTaskId == serverTaskId
+              ) == -1
+            ) {
+              downloadingIds.push(serverTaskId)
             }
           })
-      }
+          if (downloadingIds && downloadingIds.length) {
+            progressClient
+              .get(
+                'http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds
+              )
+              .then(result => {
+                //匹配并更新正在下载的任务信息
+                result.data.forEach(task => {
+                  const index = this.getIndexByTaskId(task.id)
+                  if (index >= 0) {
+                    this.taskList[index].info = task.info
+                  }
+                })
+              })
+          }
+        })
+        .catch(error => {
+          if (!error.response || error.response.status == 504) {
+            clearInterval(intervalId)
+          }
+        })
     }, 1000)
   },
   destroyed() {

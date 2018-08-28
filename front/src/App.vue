@@ -21,11 +21,11 @@
         {{$t("nav.about")}}
       </i-menu-item>
       <i-menu-item name="support">
-        <Icon type="social-yen"></Icon>
+        <Icon type="social-usd"></Icon>
         {{$t("nav.support")}}
       </i-menu-item>
     </i-menu>
-    <div style="padding: 20px 50px">
+    <div style="padding: 1.25rem 1.25rem">
       <router-view/>
     </div>
   </div>
@@ -45,6 +45,11 @@ export default {
 i.action-icon {
   cursor: pointer;
   font-size: 1.25rem;
+}
+i.tip-icon {
+  position: relative;
+  top: 5px;
+  padding-left: 5px;
 }
 i.action-icon + i.action-icon{
   padding-left: 0.625rem;

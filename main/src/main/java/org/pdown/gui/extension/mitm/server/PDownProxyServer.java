@@ -17,6 +17,7 @@ public class PDownProxyServer {
   private static final Logger LOGGER = LoggerFactory.getLogger(PDownProxyServer.class);
 
   private static HttpProxyServer httpProxyServer;
+  public static volatile boolean isStart = false;
 
   public static void start(int port) {
     if (httpProxyServer == null) {
@@ -48,11 +49,13 @@ public class PDownProxyServer {
             }
           });
     }
+    isStart = true;
     httpProxyServer.start(port);
   }
 
   public static void close() {
     httpProxyServer.close();
+    isStart = false;
   }
 
   public static void setProxyConfig(ProxyConfig proxyConfig) {
