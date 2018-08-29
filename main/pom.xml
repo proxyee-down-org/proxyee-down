@@ -41,7 +41,7 @@
         <environment>prd</environment>
       </properties>
     </profile>
-    <!--<profile>
+    <profile>
       <id>windows</id>
       <properties>
         <osType>windows</osType>
@@ -61,7 +61,7 @@
       <properties>
         <osType>linux</osType>
       </properties>
-    </profile>-->
+    </profile>
   </profiles>
 
   <dependencies>
@@ -103,6 +103,7 @@
           <exclude>application-prd.yml</exclude>
           <exclude>logback-dev.xml</exclude>
           <exclude>logback-prd.xml</exclude>
+          <exclude>tool/mac-tool.so</exclude>
         </excludes>
       </resource>
       <resource>
@@ -112,25 +113,29 @@
           <include>logback-${environment}.xml</include>
           <include>application-${environment}.yml</include>
           <include>application.yml</include>
+          <include>tool/${osType}-tool.so</include>
         </includes>
       </resource>
-      <!--<resource>
-        <filtering>true</filtering>
-        <directory>src/main/resources</directory>
-        <excludes>
-          <exclude>tool/mac-tool</exclude>
-        </excludes>
-      </resource>
-      <resource>
-        <filtering>true</filtering>
-        <directory>src/main/resources</directory>
-        <includes>
-          <include>tool/${osType}-tool</include>
-        </includes>
-      </resource>-->
     </resources>
     <finalName>proxyee-down-main</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <nonFilteredFileExtensions>
+            <nonFilteredFileExtension>so</nonFilteredFileExtension>
+            <nonFilteredFileExtension>css</nonFilteredFileExtension>
+            <nonFilteredFileExtension>js</nonFilteredFileExtension>
+            <nonFilteredFileExtension>eot</nonFilteredFileExtension>
+            <nonFilteredFileExtension>woff</nonFilteredFileExtension>
+            <nonFilteredFileExtension>ttf</nonFilteredFileExtension>
+            <nonFilteredFileExtension>ico</nonFilteredFileExtension>
+            <nonFilteredFileExtension>html</nonFilteredFileExtension>
+            <nonFilteredFileExtension>svg</nonFilteredFileExtension>
+          </nonFilteredFileExtensions>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

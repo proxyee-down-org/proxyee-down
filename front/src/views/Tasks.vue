@@ -40,13 +40,11 @@
 </template>
 
 <script>
-import axios from 'axios'
 import Table from '../components/Table'
 import Resolve from '../components/Task/Resolve'
 import Create from '../components/Task/Create'
 import { showFile } from '../common/native'
 
-const progressClient = axios.create()
 let intervalId
 
 export default {
@@ -68,7 +66,7 @@ export default {
       const downloadingIds = this.taskList
         .filter(task => task.info.status == 1)
         .map(task => task.id)
-      progressClient
+      this.$noSpinHttp
         .get('http://127.0.0.1:26339/tasks?status=1')
         .then(result => {
           //获取服务器正在下载的任务ID列表
@@ -83,7 +81,7 @@ export default {
             }
           })
           if (downloadingIds && downloadingIds.length) {
-            progressClient
+            this.$noSpinHttp
               .get(
                 'http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds
               )

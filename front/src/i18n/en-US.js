@@ -87,6 +87,15 @@ export default {
     checkUpdateStartup: 'Every time startup',
     checkUpdateNever: 'Never'
   },
+  update: {
+    checkNew: 'New version',
+    version: 'version',
+    changeLog: 'Change log',
+    update: 'Update',
+    done: 'Update completed',
+    restart: 'Is it restarted?',
+    error: 'Update failed, please try again'
+  },
   alert: {
     refused: 'Program exception,Connect Refused',
     timeout: 'Program exception,Connect Time Out',
@@ -103,6 +112,18 @@ export default {
         4006: 'Not enough disk space',
         4007: 'File already exists'
       }
+    }
+  },
+  'util/resolve': {
+    put: {
+      4000: 'Params parse error',
+      4001: 'Request URL is empty',
+      4002: 'Response status code exception'
+    }
+  },
+  '/config': {
+    put: {
+      4000: 'Params parse error'
     }
   }
 }

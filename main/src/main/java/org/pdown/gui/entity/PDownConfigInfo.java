@@ -15,7 +15,7 @@ public class PDownConfigInfo implements Serializable {
   //插件文件服务器(用于下载插件相关文件)
   private List<String> extFileServers;
   //检测更新频率 0.从不 1.一周检查一次 2.每次打开检查
-  private int updateCheckRate = 1;
+  private int updateCheckRate = 2;
   //最后一次检查更新时间
   private long lastUpdateCheck;
 

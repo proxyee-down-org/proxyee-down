@@ -4,4 +4,4 @@ front:
   port: 7478
 api:
   port: 7478
-adminServer: http://pdown.org/
+adminServer: http://api.pdown.org/

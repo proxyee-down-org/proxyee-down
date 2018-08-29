@@ -6,14 +6,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import org.pdown.core.util.FileUtil;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.Meta;
+import org.pdown.gui.util.AppUtil;
 
 public class ExtensionUtil {
 
@@ -67,28 +66,11 @@ public class ExtensionUtil {
    */
   private static void download(String server, String path, String writePath, String files) throws Exception {
     String extDir = ExtensionContent.EXT_DIR + File.separator + writePath;
-    if(!FileUtil.exists(extDir)){
+    if (!FileUtil.exists(extDir)) {
       Files.createDirectories(Paths.get(extDir));
     }
     for (String fileName : files.split(",")) {
-      URL url = new URL(server + path + fileName);
-      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-      connection.setConnectTimeout(30000);
-      connection.setReadTimeout(60000);
-      File file = new File(extDir + File.separator + fileName);
-      if (!file.exists() || file.isDirectory()) {
-        FileUtil.createFileSmart(file.getPath());
-      }
-      try (
-          InputStream input = connection.getInputStream();
-          FileOutputStream output = new FileOutputStream(file)
-      ) {
-        byte[] bts = new byte[8192];
-        int len;
-        while ((len = input.read(bts)) != -1) {
-          output.write(bts, 0, len);
-        }
-      }
+      AppUtil.download(server + path + fileName, extDir + File.separator + fileName);
     }
   }
 

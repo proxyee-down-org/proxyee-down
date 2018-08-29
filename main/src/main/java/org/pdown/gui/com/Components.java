@@ -22,7 +22,7 @@ public class Components {
    */
   public static void alert(String msg) {
     Alert alert = new Alert(AlertType.INFORMATION);
-    alert.setTitle("提示");
+//    alert.setTitle("提示");
     alert.setHeaderText(null);
     alert.setContentText(msg);
 

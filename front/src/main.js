@@ -3,6 +3,7 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 import iView from 'iview'
+import axios from 'axios'
 import VueI18n from 'vue-i18n'
 import numeral from 'numeral'
 
@@ -27,6 +28,7 @@ const i18n = new VueI18n({
   }
 })
 
+Vue.prototype.$noSpinHttp = axios.create()
 Vue.prototype.$http = http.build()
 Vue.prototype.$http.interceptors.response.use(
   response => {

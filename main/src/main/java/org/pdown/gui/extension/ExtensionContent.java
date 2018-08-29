@@ -8,11 +8,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.pdown.rest.util.PathUtil;
 
 public class ExtensionContent {
 
-//  public static final String EXT_DIR = PathUtil.ROOT_PATH + File.separator + "extensions";
-  public static final String EXT_DIR = "E:\\study\\proxyee-down-extension";
+  public static final String EXT_DIR = PathUtil.ROOT_PATH + File.separator + "extensions";
+  //public static final String EXT_DIR = "E:\\study\\proxyee-down-extension";
   private static final String EXT_MANIFEST = "manifest.json";
 
   private static List<ExtensionInfo> EXTENSION_INFO_LIST;

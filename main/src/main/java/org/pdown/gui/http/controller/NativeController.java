@@ -16,6 +16,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
+import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.com.Components;
@@ -30,6 +31,7 @@ import org.pdown.gui.http.util.HttpHandlerUtil;
 import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
+import org.pdown.rest.util.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -75,17 +77,36 @@ public class NativeController {
     return null;
   }
 
+  //启动的时候检查一次
+  private boolean checkFlag = true;
+  private static final long WEEK = 7 * 24 * 60 * 60 * 1000L;
+
   @RequestMapping("getInitConfig")
   public FullHttpResponse getInitConfig(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
+    PDownConfigInfo configInfo = PDownConfigContent.getInstance().get();
     //语言
-    data.put("locale", PDownConfigContent.getInstance().get().getLocale());
+    data.put("locale", configInfo.getLocale());
     //后台管理API请求地址
     data.put("adminServer", ConfigUtil.getString("adminServer"));
+    //是否要检查更新
+    boolean needCheckUpdate = false;
+    if (checkFlag) {
+      int rate = configInfo.getUpdateCheckRate();
+      if (rate == 2
+          || (rate == 1 && (System.currentTimeMillis() - configInfo.getLastUpdateCheck()) > WEEK)) {
+        needCheckUpdate = true;
+        checkFlag = false;
+        configInfo.setLastUpdateCheck(System.currentTimeMillis());
+        PDownConfigContent.getInstance().save();
+      }
+    }
+    data.put("needCheckUpdate", needCheckUpdate);
     //扩展下载服务器列表
-    data.put("extFileServers", PDownConfigContent.getInstance().get().getExtFileServers());
+    data.put("extFileServers", configInfo.getExtFileServers());
     //软件版本
     data.put("version", ConfigUtil.getString("version"));
+    //
     return HttpHandlerUtil.buildJson(data);
   }
 
@@ -130,6 +151,29 @@ public class NativeController {
     Map<String, Object> map = getJSONParams(request);
     String url = (String) map.get("url");
     Desktop.getDesktop().browse(URI.create(URLDecoder.decode(url, "UTF-8")));
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
+  @RequestMapping("doUpdate")
+  public FullHttpResponse doUpdate(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> map = getJSONParams(request);
+    String url = (String) map.get("path");
+    String path = PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.bak";
+    try {
+      AppUtil.download(url, PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.bak");
+    } catch (Exception e) {
+      File file = new File(path);
+      if (file.exists()) {
+        file.delete();
+      }
+      throw e;
+    }
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
+  @RequestMapping("doRestart")
+  public FullHttpResponse doRestart(Channel channel, FullHttpRequest request) throws Exception {
+    System.out.println("proxyee-down-exit");
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 

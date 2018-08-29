@@ -86,6 +86,15 @@ export default {
     checkUpdateStartup: '每次启动',
     checkUpdateNever: '从不'
   },
+  update: {
+    checkNew: '检测到新版本',
+    version: '版本号',
+    changeLog: '更新内容',
+    update: '更新',
+    done: '更新完毕',
+    restart: '是否重新启动？',
+    error: '更新失败，请重试'
+  },
   alert: {
     refused: '程序异常，拒绝访问',
     timeout: '程序异常，连接超时',
@@ -101,6 +110,18 @@ export default {
         4005: '无写入权限',
         4006: '磁盘空间不足',
         4007: '文件已存在'
+      }
+    },
+    'util/resolve': {
+      put: {
+        4000: '参数解析错误',
+        4001: '请求地址不能为空',
+        4002: '响应状态码异常'
+      }
+    },
+    '/config': {
+      put: {
+        4000: '参数解析错误'
       }
     }
   }

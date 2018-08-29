@@ -40,6 +40,8 @@ import org.pdown.gui.http.EmbedHttpServer;
 import org.pdown.gui.http.controller.ApiController;
 import org.pdown.gui.http.controller.NativeController;
 import org.pdown.gui.http.controller.PacController;
+import org.pdown.gui.update.CheckUpdate;
+import org.pdown.gui.update.VersionInfo;
 import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
@@ -149,7 +151,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   private void initMacTool() {
     if (OsUtil.isMac()) {
       new Thread(() -> {
-        String toolUri = "tool/mac-tool";
+        String toolUri = "tool/mac-tool.so";
         Path toolPath = Paths.get(PathUtil.ROOT_PATH + File.separator + toolUri);
         try {
           if (!toolPath.toFile().exists()) {
@@ -269,6 +271,16 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     });
   }
 
+  //检查更新
+  private void doCheckUpdate() {
+    new Thread(() -> {
+      VersionInfo versionInfo = CheckUpdate.doCheck();
+      if (versionInfo != null) {
+
+      }
+    }).start();
+  }
+
   /**
    * 显示gui窗口
    *
@@ -298,7 +310,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       stage.setIconified(true);
       stage.setIconified(false);
     }
-    if(!browser.isLoad()){
+    if (!browser.isLoad()) {
       loadUri("");
     }
   }

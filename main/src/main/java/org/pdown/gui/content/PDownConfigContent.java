@@ -39,7 +39,7 @@ public class PDownConfigContent extends PersistenceContent<PDownConfigInfo, PDow
     //插件文件服务器
     List<String> extFileServers = new ArrayList<>();
     extFileServers.add("https://github.com/proxyee-down-org/proxyee-down-extension/raw/master");
-    extFileServers.add("http://pdown.org/extensions");
+    extFileServers.add("http://static.pdown.org/extensions");
     pDownConfigInfo.setExtFileServers(extFileServers);
     return pDownConfigInfo;
   }

@@ -43,7 +43,6 @@
 </template>
 <script>
 import { Icon, Tag } from 'iview'
-import axios from 'axios'
 import {
   checkCert,
   installCert,
@@ -54,8 +53,6 @@ import {
   updateExtension,
   toggleExtension
 } from '../common/native.js'
-
-const clientNoSpin = axios.create()
 
 export default {
   name: 'extension',
@@ -238,7 +235,7 @@ export default {
               closable: true
             })
             //上报至服务器
-            clientNoSpin.get(
+            this.$noSpinHttp.get(
               this.$config.adminServer +
                 'extension/down?ext_id=' +
                 row.id +

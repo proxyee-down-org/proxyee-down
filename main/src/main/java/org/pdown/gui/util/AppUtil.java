@@ -1,7 +1,11 @@
 package org.pdown.gui.util;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
@@ -42,5 +46,29 @@ public class AppUtil {
   public static void startProxyServer() throws IOException {
     DownApplication.INSTANCE.PROXY_PORT = OsUtil.getFreePort(9999);
     PDownProxyServer.start(DownApplication.INSTANCE.PROXY_PORT);
+  }
+
+  /**
+   * 下载http资源
+   */
+  public static void download(String url,String path) throws IOException {
+    URL u = new URL(url);
+    HttpURLConnection connection = (HttpURLConnection) u.openConnection();
+    connection.setConnectTimeout(30000);
+    connection.setReadTimeout(60000);
+    File file = new File(path);
+    if (!file.exists() || file.isDirectory()) {
+      FileUtil.createFileSmart(file.getPath());
+    }
+    try (
+        InputStream input = connection.getInputStream();
+        FileOutputStream output = new FileOutputStream(file)
+    ) {
+      byte[] bts = new byte[8192];
+      int len;
+      while ((len = input.read(bts)) != -1) {
+        output.write(bts, 0, len);
+      }
+    }
   }
 }

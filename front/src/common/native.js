@@ -129,9 +129,29 @@ const openUrl = url => {
   }
 }
 
+const doUpdate = path => {
+  return new Promise((resolve, reject) => {
+    client
+      .post('/native/doUpdate', { path: path })
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
+const doRestart = () => {
+  return new Promise((resolve, reject) => {
+    client
+      .get('/native/doRestart')
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
 export { showFileChooser }
 export { showDirChooser }
 export { openUrl }
+export { doUpdate }
+export { doRestart }
 export { getInitConfig }
 export { showFile }
 export { checkCert }
