@@ -16,7 +16,6 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
-import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.com.Components;

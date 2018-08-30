@@ -13,7 +13,6 @@
             <div class="th">{{ $t("tasks.fileSize") }}</div>
             <div class="th">{{ $t("tasks.taskProgress") }}</div>
             <div class="th">{{ $t("tasks.downloadSpeed") }}</div>
-            <div class="th">{{ $t("tasks.createTime") }}</div>
             <div class="th">{{ $t("tasks.status") }}</div>
             <div class="th">{{ $t("tasks.operate") }}</div>
           </div>
@@ -35,7 +34,6 @@
             <div class="td">{{ $numeral(task.response.totalSize).format('0.00b') }}</div>
             <div class="td">{{ calcProgress(task) }}</div>
             <div class="td">{{ $numeral(task.info.speed).format('0.00b') }}/S</div>
-            <div class="td">{{ new Date(task.info.startTime).format('yyyy-MM-dd hh:mm:ss')}}</div>
             <div class="td">{{ calcStatus(task) }}</div>
             <div class="td">
               <Icon v-if="task.info.status==1"
@@ -53,6 +51,49 @@
               <Icon type="ios-trash"
                 class="action-icon"
                 @click="$emit('on-delete',task)"></Icon>
+              <Poptip placement="right-end"
+                :title="$t('tasks.detail')"
+                width="400"
+                trigger="click">
+                <Icon type="ios-eye-outline"
+                  style="padding-left: 0.625rem;"
+                  class="action-icon"></Icon>
+                <div class="file-detail"
+                  slot="content">
+                  <p>
+                    <b>{{$t('tasks.url')}}：</b>
+                    <span>{{task.request.url}}</span>
+                  </p>
+                  <p>
+                    <b>{{$t('tasks.fileName')}}：</b>
+                    <span>{{task.response.fileName}}</span>
+                  </p>
+                  <p>
+                    <b>{{$t('tasks.filePath')}}：</b>
+                    <span>{{task.config.filePath}}</span>
+                  </p>
+                  <p>
+                    <b>{{$t('tasks.fileSize')}}：</b>
+                    <span>{{$numeral(task.response.totalSize).format('0.00b')}}</span>
+                  </p>
+                  <p>
+                    <b>{{$t('tasks.connections')}}：</b>
+                    <span>{{task.config.connections}}</span>
+                  </p>
+                  <p>
+                    <b>{{$t('tasks.downloadSpeed')}}：</b>
+                    <span>{{$numeral(task.info.speed).format('0.00b')}}/S</span>
+                  </p>
+                  <p>
+                    <b>{{$t('tasks.status')}}：</b>
+                    <span>{{calcStatus(task)}}</span>
+                  </p>
+                  <p>
+                    <b>{{ $t("tasks.createTime") }}：</b>
+                    <span>{{new Date(task.info.startTime).format('yyyy-MM-dd hh:mm:ss')}}</span>
+                  </p>
+                </div>
+              </Poptip>
             </div>
           </div>
         </div>
@@ -193,21 +234,18 @@ export default {
             width: 30%;
           }
           &:nth-child(3) {
-            width: 10%;
-          }
-          &:nth-child(4) {
-            width: 10%;
-          }
-          &:nth-child(5) {
-            width: 10%;
-          }
-          &:nth-child(6) {
             width: 15%;
           }
-          &:nth-child(7) {
+          &:nth-child(4) {
+            width: 15%;
+          }
+          &:nth-child(5) {
+            width: 15%;
+          }
+          &:nth-child(6) {
             width: 10%;
           }
-          &:nth-child(8) {
+          &:nth-child(7) {
             width: 10%;
           }
         }
@@ -229,3 +267,14 @@ export default {
   }
 }
 </style>
+
+<style>
+.file-detail p {
+  padding: 2px;
+}
+.file-detail b {
+  display: inline-block;
+  width: 60px;
+}
+</style>
+

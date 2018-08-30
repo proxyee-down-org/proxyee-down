@@ -7,6 +7,7 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -118,14 +119,9 @@ public class ExtensionProxyUtil {
       if (entry.getValue().contains(socket.getLocalAddress().getHostAddress())) {
         String remoteInterface = entry.getKey();
         if (OsUtil.isWindows()) {
-          if (remoteInterface.matches("^WAN\\sMiniport")) {
-            String result = ExecUtil.exec("wmic", "nic", "where", "\"ProductName = '" + remoteInterface + "'\"", "get", "NetConnectionID");
-            if (result != null) {
-              result = result.replaceAll("\\r\\n", "").replaceAll("\\s", "").replaceAll("^NetConnectionID", "");
-              if (result.length() > 0) {
-                return result;
-              }
-            }
+          String result = ExecUtil.exec("rasdial");
+          if (result != null && Arrays.stream(result.split("\r\n")).anyMatch(line -> line.equals(remoteInterface))) {
+            return remoteInterface;
           }
         } else if (OsUtil.isMac()) {
           String result = ExecUtil.exec("networksetup", "-listnetworkserviceorder");
@@ -165,10 +161,8 @@ public class ExtensionProxyUtil {
     return interfacesInfo;
   }
 
-  //wmic nic
-  //wmic nic where "ProductName like 'Realtek PCIe GBE Family Controller'" get NetConnectionID
   public static void main(String[] args) throws Exception {
-    disabledProxy();
+    System.out.println(getRemoteInterface());
   }
 
   private static INTERNET_PER_CONN_OPTION_LIST buildOptionList(String connectionName, int size) {

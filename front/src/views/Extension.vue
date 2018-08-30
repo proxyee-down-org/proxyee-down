@@ -51,7 +51,8 @@ import {
   getExtensions,
   installExtension,
   updateExtension,
-  toggleExtension
+  toggleExtension,
+  openUrl
 } from '../common/native.js'
 
 export default {
@@ -137,7 +138,7 @@ export default {
                   class="action-icon"
                   title={_this.$t('extension.actionDetail')}
                   nativeOnClick={() => {
-                    window.open(
+                    _this.openUrl(
                       'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' +
                         params.row.path +
                         '/README.md'
@@ -296,6 +297,9 @@ export default {
             }
           })
         })
+    },
+    openUrl(url){
+      openUrl(url)
     }
   },
   created() {

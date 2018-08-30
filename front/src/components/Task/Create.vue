@@ -46,13 +46,7 @@
 <script>
 import FileChoose from '../FileChoose'
 
-const defualtConfig = {
-  filePath: 'F:\\down',
-  connections: 32,
-  timeout: 0,
-  retryCount: 0,
-  autoRename: false
-}
+let defaultConfig = {}
 
 export default {
   props: {
@@ -69,10 +63,12 @@ export default {
       form: {
         request: this.request,
         response: this.response,
-        config: { ...defualtConfig }
+        config: {}
       },
       rules: {
-        'response.fileName': [{ required: true, message: this.$t('tip.notNull') }],
+        'response.fileName': [
+          { required: true, message: this.$t('tip.notNull') }
+        ],
         'config.filePath': [{ required: true, message: this.$t('tip.notNull') }]
       }
     }
@@ -81,7 +77,7 @@ export default {
     request() {
       this.form.request = this.request
       this.form.response = this.response
-      this.form.config = { ...defualtConfig }
+      this.form.config = { ...defaultConfig }
     }
   },
   computed: {
@@ -115,6 +111,20 @@ export default {
         }
       })
     }
+  },
+  created() {
+    this.$http.get('http://127.0.0.1:26339/config').then(result => {
+      const serverConfig = result.data
+      defaultConfig = {
+        filePath: serverConfig.filePath,
+        connections: serverConfig.connections,
+        timeout: serverConfig.timeout,
+        retryCount: serverConfig.retryCount,
+        autoRename: serverConfig.autoRename,
+        speedLimit: serverConfig.speedLimit
+      }
+      this.form.config = { ...defaultConfig }
+    })
   }
 }
 </script>
