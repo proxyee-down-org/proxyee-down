@@ -3,41 +3,49 @@
   var FRONT_PORT = '${frontPort}'
   var REST_PORT = '26339'
   window.pdown = {
-    resolveTask: function (request, onSuccess, onError) {
-      ajax.send('put', 'http://127.0.0.1:' + REST_PORT + '/util/resolve',
-          request, onSuccess, onError)
+    resolve: function (request) {
+      return ajax.put('http://127.0.0.1:' + REST_PORT + '/util/resolve', request)
     },
-    createTask: function (request, response, onSuccess, onError) {
+    resolveAsync: function (request, onSucc, onErr) {
+      ajax.putAsync('http://127.0.0.1:' + REST_PORT + '/util/resolve', request, onSucc, onErr)
+    },
+    createTask: function (request, response) {
       var requestStr = encodeURIComponent(JSON.stringify(request))
       var responseStr = encodeURIComponent(JSON.stringify(response))
       if ('${uiMode}' == '1') {
-        ajax.get('http://127.0.0.1:' + API_PORT + '/api/createTask?request='
-            + requestStr + '&response=' + responseStr, true, onSuccess, onError)
+        ajax.get('http://127.0.0.1:' + API_PORT + '/api/createTask?request=' + requestStr + '&response=' + responseStr)
       } else {
-        window.open('http://127.0.0.1:' + FRONT_PORT + '/#/tasks?request='
-            + requestStr + '&response=' + responseStr)
+        window.open('http://127.0.0.1:' + FRONT_PORT + '/#/tasks?request=' + requestStr + '&response=' + responseStr)
       }
     },
-    pushTask: function (request, response, onSuccess, onError) {
-      ajax.send('post', 'http://127.0.0.1:' + REST_PORT + '/tasks',
-          {request: request, response: response, config: {autoRename: true}},
-          onSuccess, onError)
+    pushTask: function (taskForm, onSucc, onErr) {
+      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks', taskForm, onSucc, onErr)
+    },
+    getDownConfig: function () {
+      var config = ajax.get('http://127.0.0.1:' + REST_PORT + '/config')
+      delete config['port']
+      delete config['proxyConfig']
+      delete config['speedLimit']
+      delete config['taskLimit']
+      delete config['totalSpeedLimit']
+      return config
     },
     getCookie: function (url) {
       var cookie = ''
       var xhr = ajax.buildXHR()
       xhr.withCredentials = true
       xhr.open('get', url, false)
-      xhr.setRequestHeader('Accept', 'application/x-sniff-cookie,*/*')
+      //https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS#%E7%AE%80%E5%8D%95%E8%AF%B7%E6%B1%82
+      xhr.setRequestHeader('Accept', 'application/x-sniff-cookie,*/*;q=0.8')
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            cookie = xhr.getResponseHeader("Content-Type")
+            cookie = xhr.getResponseHeader('X-Sniff-Cookie')
           }
         }
       }
       xhr.send()
-      return cookie;
+      return cookie
     }
   }
 })((function () {
@@ -49,40 +57,72 @@
       } else {
         xhr = new ActiveXObject('Microsoft.XMLHTTP')
       }
-      return xhr;
+      return xhr
     },
-    get: function (url, async, onSuccess, onError) {
-      var xhr = this.buildXHR();
-      xhr.open('get', url, async)
+    get: function (url) {
+      return this.send('get', url)
+    },
+    jsonSend: function (method, url, data) {
+      return this.send(method, url, 'application/json; charset=utf-8', data)
+    },
+    jsonSendAsync: function (method, url, data, onSucc, onErr) {
+      this.sendAsync(method, url, 'application/json; charset=utf-8', data, onSucc, onErr)
+    },
+    post: function (url, data) {
+      return this.jsonSend('post', url, data)
+    },
+    postAsync: function (url, data, onSucc, onErr) {
+      this.jsonSendAsync('post', url, data, onSucc, onErr)
+    },
+    put: function (url, data) {
+      return this.jsonSend('put', url, data)
+    },
+    putAsync: function (url, data, onSucc, onErr) {
+      this.jsonSendAsync('put', url, data, onSucc, onErr)
+    },
+    send: function (method, url, contentType, data) {
+      var result = null
+      var error = true
+      var xhr = this.buildXHR()
+      xhr.open(method, url, false)
+      if (contentType) {
+        xhr.setRequestHeader('Content-Type', contentType)
+      }
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            if (onSuccess) {
-              onSuccess(JSON.parse(xhr.responseText))
-            }
-          } else {
-            if (onError) {
-              onError(xhr)
-            }
+            error = false
+            result = xhr.responseText ? JSON.parse(xhr.responseText) : {}
           }
         }
       }
-      xhr.send()
+      xhr.send(data ? JSON.stringify(data) : null)
+      if (error) {
+        throw xhr
+      } else {
+        return result
+      }
     },
-    send: function (method, url, data, onSuccess, onError) {
+    sendAsync: function (method, url, contentType, data, onSucc, onErr) {
       var xhr = this.buildXHR()
       xhr.open(method, url)
-      xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8')
+      if (contentType) {
+        xhr.setRequestHeader('Content-Type', contentType)
+      }
       xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            onSuccess(JSON.parse(xhr.responseText))
+            if (onSucc) {
+              onSucc(xhr.responseText ? JSON.parse(xhr.responseText) : {})
+            }
           } else {
-            onError(xhr)
+            if (onErr) {
+              onErr(xhr)
+            }
           }
         }
       }
-      xhr.send(JSON.stringify(data))
+      xhr.send(data ? JSON.stringify(data) : null)
     }
   }
 })())
