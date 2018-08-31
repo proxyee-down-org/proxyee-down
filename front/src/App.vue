@@ -89,7 +89,7 @@ export default {
     //检查更新
     if (this.$config.needCheckUpdate) {
       this.$noSpinHttp
-        .get(this.$config.adminServer + 'checkUpdate')
+        .get(this.$config.adminServer + 'version/checkUpdate')
         .then(result => {
           const versionInfo = result.data
           if (versionInfo && versionInfo.version > this.$config.version) {
