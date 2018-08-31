@@ -153,8 +153,10 @@ export default {
       }
     },
     calcProgress(task) {
-      return this.$numeral(task.info.downSize / task.response.totalSize).format(
-        '0.00%'
+      return (
+        this.$numeral(task.info.downSize / task.response.totalSize).format(
+          '0.00%'
+        ) || '0%'
       )
     },
     calcStatus(task) {

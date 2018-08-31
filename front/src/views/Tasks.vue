@@ -71,6 +71,16 @@ export default {
         .then(result => {
           //获取服务器正在下载的任务ID列表
           const serverDownloadingIds = result.data.map(task => task.id)
+          //删除服务器不存在但本地存在的任务
+          this.taskList.forEach((task, index) => {
+            if (
+              serverDownloadingIds.findIndex(
+                serverTaskId => serverTaskId == task.id
+              ) == -1
+            ) {
+              this.taskList.splice(index, 1)
+            }
+          })
           serverDownloadingIds.forEach(serverTaskId => {
             if (
               downloadingIds.findIndex(
@@ -91,6 +101,11 @@ export default {
                   const index = this.getIndexByTaskId(task.id)
                   if (index >= 0) {
                     this.taskList[index].info = task.info
+                  } else {
+                    //加载新创建的任务
+                    this.$noSpinHttp
+                      .get('http://127.0.0.1:26339/tasks/' + task.id)
+                      .then(result => this.taskList.push(result.data))
                   }
                 })
               })

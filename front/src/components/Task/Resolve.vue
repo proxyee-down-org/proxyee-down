@@ -119,8 +119,8 @@ export default {
             .put('http://127.0.0.1:26339/util/resolve', requestData)
             .then(result => {
               this.$emit('input', false)
-              const request = JSON.stringify(requestData)
-              const response = JSON.stringify(result.data)
+              const request = JSON.stringify(result.data.request)
+              const response = JSON.stringify(result.data.response)
               this.$router.push({
                 path: '/',
                 query: { request: request, response: response }

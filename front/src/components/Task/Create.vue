@@ -14,7 +14,7 @@
         <Input v-model="form.response.fileName" />
       </FormItem>
       <FormItem :label="$t('tasks.fileSize')">{{$numeral(form.response.totalSize).format('0.00b')}}</FormItem>
-      <FormItem :label="$t('tasks.connectios')"
+      <FormItem :label="$t('tasks.connections')"
         prop="config.connections">
         <Slider v-if="response.supportRange"
           v-model="form.config.connections"

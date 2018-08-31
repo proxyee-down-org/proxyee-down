@@ -23,7 +23,7 @@ export default {
     url: 'URL',
     fileName: 'Name',
     fileSize: 'Size',
-    connectios: 'Connectios',
+    connections: 'Connections',
     filePath: 'Path',
     status: 'Status',
     operate: 'Operate',
