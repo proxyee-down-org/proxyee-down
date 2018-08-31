@@ -77,9 +77,9 @@
           <FormItem :label="$t('setting.checkUpdate')"
             prop="appConfig.updateCheckRate">
             <Select v-model="form.appConfig.updateCheckRate">
-              <Option :value="2">{{$t('setting.checkUpdateWeek')}}</Option>
-              <Option :value="1">{{$t('setting.checkUpdateStartup')}}</Option>
               <Option :value="0">{{$t('setting.checkUpdateNever')}}</Option>
+              <Option :value="1">{{$t('setting.checkUpdateWeek')}}</Option>
+              <Option :value="2">{{$t('setting.checkUpdateStartup')}}</Option>
             </Select>
           </FormItem>
         </div>

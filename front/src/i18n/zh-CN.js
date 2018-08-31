@@ -113,7 +113,7 @@ export default {
         4007: '文件已存在'
       }
     },
-    'util/resolve': {
+    '/util/resolve': {
       put: {
         4000: '参数解析错误',
         4001: '请求地址不能为空',

@@ -115,7 +115,7 @@ export default {
       }
     }
   },
-  'util/resolve': {
+  '/util/resolve': {
     put: {
       4000: 'Params parse error',
       4001: 'Request URL is empty',
