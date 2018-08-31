@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.util.AsciiString;
 
 public class CookieIntercept extends HttpProxyIntercept {
 
@@ -28,7 +29,10 @@ public class CookieIntercept extends HttpProxyIntercept {
     if (sniffFlag) {
       httpResponse.setStatus(HttpResponseStatus.OK);
       httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0);
-      httpResponse.headers().set("Content-Type", pipeline.getHttpRequest().headers().get(HttpHeaderNames.COOKIE));
+      //https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
+      AsciiString customHeadKey = AsciiString.cached("X-Sniff-Cookie");
+      httpResponse.headers().set(customHeadKey, pipeline.getHttpRequest().headers().get(HttpHeaderNames.COOKIE));
+      httpResponse.headers().set(HttpHeaderNames.ACCESS_CONTROL_EXPOSE_HEADERS, customHeadKey);
       proxyChannel.close();
       super.afterResponse(clientChannel, proxyChannel, httpResponse, pipeline);
       clientChannel.write(new DefaultLastHttpContent());
