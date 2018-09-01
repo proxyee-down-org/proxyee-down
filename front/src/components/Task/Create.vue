@@ -13,7 +13,7 @@
         prop="response.fileName">
         <Input v-model="form.response.fileName" />
       </FormItem>
-      <FormItem :label="$t('tasks.fileSize')">{{$numeral(form.response.totalSize).format('0.00b')}}</FormItem>
+      <FormItem :label="$t('tasks.fileSize')">{{ $numeral(form.response.totalSize).format('0.00b') }}</FormItem>
       <FormItem :label="$t('tasks.connections')"
         prop="config.connections">
         <Slider v-if="response.supportRange"
@@ -34,8 +34,8 @@
     </Form>
     <div slot="footer">
       <Button type="primary"
-        @click="onSubmit">{{$t('tip.ok')}}</Button>
-      <Button @click="closeModal">{{$t('tip.cancel')}}</Button>
+        @click="onSubmit">{{ $t('tip.ok') }}</Button>
+      <Button @click="closeModal">{{ $t('tip.cancel') }}</Button>
     </div>
     <Spin size="large"
       fix

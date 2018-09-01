@@ -9,12 +9,12 @@
               <Checkbox v-model="all"
                 @on-change="setAll"></Checkbox>
             </div>
-            <div class="th">{{ $t("tasks.fileName") }}</div>
-            <div class="th">{{ $t("tasks.fileSize") }}</div>
-            <div class="th">{{ $t("tasks.taskProgress") }}</div>
-            <div class="th">{{ $t("tasks.downloadSpeed") }}</div>
-            <div class="th">{{ $t("tasks.status") }}</div>
-            <div class="th">{{ $t("tasks.operate") }}</div>
+            <div class="th">{{  $t("tasks.fileName")  }}</div>
+            <div class="th">{{  $t("tasks.fileSize")  }}</div>
+            <div class="th">{{  $t("tasks.taskProgress")  }}</div>
+            <div class="th">{{  $t("tasks.downloadSpeed")  }}</div>
+            <div class="th">{{  $t("tasks.status")  }}</div>
+            <div class="th">{{  $t("tasks.operate")  }}</div>
           </div>
         </div>
       </div>
@@ -36,21 +36,21 @@
             <div class="td">{{ $numeral(task.info.speed).format('0.00b') }}/S</div>
             <div class="td">{{ calcStatus(task) }}</div>
             <div class="td">
-              <Icon v-if="task.info.status==1"
+              <Icon v-if="task.info.status === 1"
                 class="action-icon"
                 type="ios-pause"
-                @click="$emit('on-pause',task)"></Icon>
-              <Icon v-else-if="task.info.status==4"
+                @click="$emit('on-pause', task)"></Icon>
+              <Icon v-else-if="task.info.status === 4"
                 class="action-icon"
                 type="ios-folder"
-                @click="$emit('on-open',task)"></Icon>
+                @click="$emit('on-open', task)"></Icon>
               <Icon v-else
                 class="action-icon"
                 type="ios-play"
-                @click="$emit('on-resume',task)"></Icon>
+                @click="$emit('on-resume', task)"></Icon>
               <Icon type="ios-trash"
                 class="action-icon"
-                @click="$emit('on-delete',task)"></Icon>
+                @click="$emit('on-delete', task)"></Icon>
               <Poptip placement="right-end"
                 :title="$t('tasks.detail')"
                 width="400"
@@ -61,36 +61,36 @@
                 <div class="file-detail"
                   slot="content">
                   <p>
-                    <b>{{$t('tasks.url')}}：</b>
-                    <span>{{task.request.url}}</span>
+                    <b>{{ $t('tasks.url') }}：</b>
+                    <span>{{ task.request.url }}</span>
                   </p>
                   <p>
-                    <b>{{$t('tasks.fileName')}}：</b>
-                    <span>{{task.response.fileName}}</span>
+                    <b>{{ $t('tasks.fileName') }}：</b>
+                    <span>{{ task.response.fileName }}</span>
                   </p>
                   <p>
-                    <b>{{$t('tasks.filePath')}}：</b>
-                    <span>{{task.config.filePath}}</span>
+                    <b>{{ $t('tasks.filePath') }}：</b>
+                    <span>{{ task.config.filePath }}</span>
                   </p>
                   <p>
-                    <b>{{$t('tasks.fileSize')}}：</b>
-                    <span>{{$numeral(task.response.totalSize).format('0.00b')}}</span>
+                    <b>{{ $t('tasks.fileSize') }}：</b>
+                    <span>{{ $numeral(task.response.totalSize).format('0.00b') }}</span>
                   </p>
                   <p>
-                    <b>{{$t('tasks.connections')}}：</b>
-                    <span>{{task.config.connections}}</span>
+                    <b>{{ $t('tasks.connections') }}：</b>
+                    <span>{{ task.config.connections }}</span>
                   </p>
                   <p>
-                    <b>{{$t('tasks.downloadSpeed')}}：</b>
-                    <span>{{$numeral(task.info.speed).format('0.00b')}}/S</span>
+                    <b>{{ $t('tasks.downloadSpeed') }}：</b>
+                    <span>{{ $numeral(task.info.speed).format('0.00b') }}/S</span>
                   </p>
                   <p>
-                    <b>{{$t('tasks.status')}}：</b>
-                    <span>{{calcStatus(task)}}</span>
+                    <b>{{ $t('tasks.status') }}：</b>
+                    <span>{{ calcStatus(task) }}</span>
                   </p>
                   <p>
-                    <b>{{ $t("tasks.createTime") }}：</b>
-                    <span>{{new Date(task.info.startTime).format('yyyy-MM-dd hh:mm:ss')}}</span>
+                    <b>{{  $t("tasks.createTime")  }}：</b>
+                    <span>{{ new Date(task.info.startTime).format('yyyy-MM-dd hh:mm:ss') }}</span>
                   </p>
                 </div>
               </Poptip>
@@ -122,7 +122,7 @@ export default {
 
   watch: {
     taskList() {
-      if (this.taskList.length == 0) {
+      if (this.taskList.length === 0) {
         this.checkedMap = {}
         this.all = false
       }
@@ -140,6 +140,7 @@ export default {
         }
       }
     },
+
     toggleAll(checked) {
       if (checked) {
         for (let key in this.checkedMap) {
@@ -152,6 +153,7 @@ export default {
         this.all = false
       }
     },
+
     calcProgress(task) {
       return (
         this.$numeral(task.info.downSize / task.response.totalSize).format(
@@ -159,6 +161,7 @@ export default {
         ) || '0%'
       )
     },
+
     calcStatus(task) {
       switch (task.info.status) {
         case 0:
@@ -179,10 +182,11 @@ export default {
           return this.$t('tasks.statusDone')
       }
     },
+
     getCheckedTasks() {
       return this.taskList.filter(task => {
         for (let key in this.checkedMap) {
-          if (key == task.id && this.checkedMap[key] === true) {
+          if (this.checkedMap.hasOwnProperty(key) && this.checkedMap[key]  && key === task.id) {
             return true
           }
         }

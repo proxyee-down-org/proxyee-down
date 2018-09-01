@@ -25,7 +25,7 @@
       </li>
       <li>
         <b>当前版本：</b>
-        <span>{{$config.version}}</span>
+        <span>{{ $config.version }}</span>
       </li>
     </ul>
   </div>

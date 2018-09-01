@@ -4,19 +4,19 @@
       <i-button type="dashed"
         icon="plus"
         class="tasks-button"
-        @click="resolveVisible=true">{{$t("tasks.createTask")}}</i-button>
+        @click="resolveVisible=true">{{ $t("tasks.createTask") }}</i-button>
       <i-button type="dashed"
         icon="ios-pause"
         class="tasks-button"
-        @click="onPauseBatch">{{$t("tasks.pauseDownloads")}}</i-button>
+        @click="onPauseBatch">{{ $t("tasks.pauseDownloads") }}</i-button>
       <i-button type="dashed"
         icon="ios-play"
         class="tasks-button"
-        @click="onResumeBatch">{{$t("tasks.continueDownloading")}}</i-button>
+        @click="onResumeBatch">{{ $t("tasks.continueDownloading") }}</i-button>
       <i-button type="dashed"
         icon="ios-trash"
         class="tasks-button"
-        @click="onDeleteBatch">{{$t("tasks.deleteTask")}}</i-button>
+        @click="onDeleteBatch">{{ $t("tasks.deleteTask") }}</i-button>
     </div>
 
     <Table :taskList="taskList"
@@ -30,7 +30,7 @@
       :title="$t('tasks.deleteTask')"
       @on-ok="doDelete(delTaskId)">
       <Checkbox :value="delFile"></Checkbox>
-      <span @click="delFile=!delFile">{{$t('tasks.deleteTaskTip')}}</span>
+      <span @click="delFile=!delFile">{{ $t('tasks.deleteTaskTip') }}</span>
     </Modal>
     <Resolve v-model="resolveVisible" />
     <Create :request="createForm.request"
@@ -54,28 +54,29 @@ export default {
     Resolve,
     Create
   },
+
   mounted() {
-    /**
-     * 每秒读取下载进度
-     */
+    // Download progress per second
     intervalId = setInterval(() => {
       if (!this.taskList) {
         return
       }
-      //过滤出正在下载的任务ID列表
+
+      // Filter out the list of task IDs being downloaded
       const downloadingIds = this.taskList
-        .filter(task => task.info.status == 1)
+        .filter(task => task.info.status === 1)
         .map(task => task.id)
+
       this.$noSpinHttp
         .get('http://127.0.0.1:26339/tasks?status=1')
         .then(result => {
-          //获取服务器正在下载的任务ID列表
+          // Get the list of task IDs that the server is downloading
           const serverDownloadingIds = result.data.map(task => task.id)
           serverDownloadingIds.forEach(serverTaskId => {
             if (
               downloadingIds.findIndex(
                 localTaskId => localTaskId == serverTaskId
-              ) == -1
+              ) === -1
             ) {
               downloadingIds.push(serverTaskId)
             }
@@ -86,13 +87,13 @@ export default {
                 'http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds
               )
               .then(result => {
-                //匹配并更新正在下载的任务信息
+                // Match and update the task information being downloaded
                 result.data.forEach(task => {
                   const index = this.getIndexByTaskId(task.id)
                   if (index >= 0) {
                     this.taskList[index].info = task.info
                   } else {
-                    //加载新创建的任务
+                    // Load newly created tasks
                     this.$noSpinHttp
                       .get('http://127.0.0.1:26339/tasks/' + task.id)
                       .then(result => this.taskList.push(result.data))
@@ -102,15 +103,17 @@ export default {
           }
         })
         .catch(error => {
-          if (!error.response || error.response.status == 504) {
+          if (!error.response || error.response.status === 504) {
             clearInterval(intervalId)
           }
         })
     }, 1000)
   },
+
   destroyed() {
     clearInterval(intervalId)
   },
+
   data() {
     return {
       taskList: [],
@@ -124,91 +127,90 @@ export default {
       }
     }
   },
+
   watch: {
     $route() {
       this.onRouteChange(this.$route.query)
     }
   },
+
   methods: {
     showResolve() {
       this.resolveVisible = true
     },
+
     getAllTask() {
       this.$http
         .get('http://127.0.0.1:26339/tasks')
         .then(result => (this.taskList = result.data))
     },
+
     onRouteChange(query) {
-      if (query.request && query.response) {
-        this.createForm = {
-          request: JSON.parse(query.request),
-          response: JSON.parse(query.response)
-        }
-      } else {
-        this.createForm = {
-          request: null,
-          response: null
-        }
-        this.getAllTask()
+      const flag = !!(query.request && query.response)
+      this.createForm = {
+        request: flag ? JSON.parse(query.request) : null,
+        response: flag ? JSON.parse(query.response) : null
       }
+      flag || this.getAllTask()
     },
+
     onPause(task) {
       this.doPause(task.id)
     },
+
     onResume(task) {
       this.doResume(task.id)
     },
+
     onDelete(task) {
       this.delTaskId = task.id
       this.delFile = false
       this.deleteModal = true
     },
+
     onOpen(task) {
-      showFile(task.config.filePath + '/' + task.response.fileName)
+      showFile(`${task.config.filePath}/${task.response.fileName}`)
     },
+
     onPauseBatch() {
       this.doPause(this.getCheckedIds())
     },
+
     onResumeBatch() {
       this.doResume(this.getCheckedIds())
     },
+
     onDeleteBatch() {
       this.delTaskId = this.getCheckedIds()
       this.delFile = false
       this.deleteModal = true
     },
+
     doPause(ids) {
-      this.$http.put('http://127.0.0.1:26339/tasks/' + ids + '/pause')
+      this.$http.put(`http://127.0.0.1:26339/tasks/${ids}/pause`)
     },
+
     doResume(ids) {
       this.$http
-        .put('http://127.0.0.1:26339/tasks/' + ids + '/resume')
+        .put(`http://127.0.0.1:26339/tasks/${ids}/resume`)
         .then(result => {
-          let pauseIds = result.data.pauseIds
-          let resumeIds = result.data.resumeIds
-          if (pauseIds) {
-            pauseIds.forEach(pauseId => {
-              const index = this.getIndexByTaskId(pauseId)
+          const { pauseIds, resumeIds } = result.data
+          const modifyTaskStatus = (behavior, status) => {
+            result.data[behavior].forEach(id => {
+              const index = this.getIndexByTaskId(id)
               if (index >= 0) {
-                this.taskList[index].info.status = 2
+                this.taskList[index].info.status = status
               }
             })
           }
-          if (resumeIds) {
-            resumeIds.forEach(resumeId => {
-              const index = this.getIndexByTaskId(resumeId)
-              if (index >= 0) {
-                this.taskList[index].info.status = 1
-              }
-            })
-          }
+          pauseIds && modifyTaskStatus('pauseIds', 2)
+          resumeIds && modifyTaskStatus('resumeIds', 1)
         })
     },
+
     doDelete(ids) {
       this.$http
-        .delete(
-          'http://127.0.0.1:26339/tasks/' + ids + '?delFile=' + this.delFile
-        )
+        .delete(`http://127.0.0.1:26339/tasks/${ids}?delFile=${this.delFile}`)
         .then(() => {
           ids.split(',').forEach(id => {
             const index = this.getIndexByTaskId(id)
@@ -218,16 +220,20 @@ export default {
           })
         })
     },
+
     getCheckedIds() {
-      return this.$refs['taskTable']
+      return this.$refs.taskTable
         .getCheckedTasks()
         .map(task => task.id)
         .join(',')
     },
+
     getIndexByTaskId(taskId) {
-      return this.taskList.findIndex(t => t.id == taskId)
+      return this.taskList.findIndex(t => t.id === taskId)
     }
+
   },
+
   created() {
     this.onRouteChange(this.$route.query)
   }

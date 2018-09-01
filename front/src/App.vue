@@ -6,49 +6,52 @@
       @on-select="forward">
       <i-menu-item name="tasks">
         <Icon type="ios-download-outline"></Icon>
-        {{$t("nav.tasks")}}
+        {{ $t("nav.tasks") }}
       </i-menu-item>
       <i-menu-item name="extension">
         <Icon type="social-windows"></Icon>
-        {{$t("nav.extension")}}
+        {{ $t("nav.extension") }}
       </i-menu-item>
       <i-menu-item name="setting">
         <Icon type="settings"></Icon>
-        {{$t("nav.setting")}}
+        {{ $t("nav.setting") }}
       </i-menu-item>
       <i-menu-item name="about">
         <Icon type="information-circled"></Icon>
-        {{$t("nav.about")}}
+        {{ $t("nav.about") }}
       </i-menu-item>
       <i-menu-item name="support">
         <Icon type="social-usd"></Icon>
-        {{$t("nav.support")}}
+        {{ $t("nav.support") }}
       </i-menu-item>
     </i-menu>
+
     <Modal v-model="hasUpdate"
       :title="$t('update.checkNew')">
-      <b>{{$t('update.version')}}：</b>
-      <span>{{versionInfo.version}}</span>
+      <b>{{ $t('update.version') }}：</b>
+      <span>{{ versionInfo.version }}</span>
       <br>
       <br>
-      <b>{{$t('update.changeLog')}}：</b>
+      <b>{{ $t('update.changeLog') }}：</b>
       <div style="padding-top:10px;"
         v-html="versionInfo.description"></div>
       <span slot="footer">
-        <Button @click="hasUpdate = false">{{$t('tip.cancel')}}</Button>
+        <Button @click="hasUpdate = false">{{ $t('tip.cancel') }}</Button>
         <Button type="primary"
-          @click="doUpdate()">{{$t('update.update')}}</Button>
+          @click="doUpdate()">{{ $t('update.update') }}</Button>
       </span>
     </Modal>
+
     <Modal v-model="restatModel"
       :title="$t('update.done')">
-      <h3>{{$t('update.restart')}}</h3>
+      <h3>{{ $t('update.restart') }}</h3>
       <span slot="footer">
-        <Button @click="restatModel = false">{{$t('tip.cancel')}}</Button>
+        <Button @click="restatModel = false">{{ $t('tip.cancel') }}</Button>
         <Button type="primary"
-          @click="doRestart()">{{$t('tip.ok')}}</Button>
+          @click="doRestart()">{{ $t('tip.ok') }}</Button>
       </span>
     </Modal>
+
     <div style="padding: 1.25rem 1.25rem">
       <router-view/>
     </div>
@@ -59,9 +62,10 @@
 import { doUpdate, doRestart } from './common/native.js'
 export default {
   methods: {
-    forward(a) {
-      this.$router.push(a)
+    forward(route) {
+      this.$router.push(route)
     },
+
     doUpdate() {
       doUpdate(this.versionInfo.path)
         .then(() => {
@@ -74,10 +78,12 @@ export default {
           this.$Message.error(this.$t('update.error'))
         })
     },
+
     doRestart() {
       doRestart().then((this.restatModel = false))
     }
   },
+
   data() {
     return {
       hasUpdate: false,
@@ -85,8 +91,9 @@ export default {
       restatModel: false
     }
   },
+ 
   created() {
-    //检查更新
+    // Check Update
     if (this.$config.needCheckUpdate) {
       this.$noSpinHttp
         .get(this.$config.adminServer + 'version/checkUpdate')

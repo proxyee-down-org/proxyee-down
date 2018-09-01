@@ -1,7 +1,7 @@
 module.exports = {
-  productionSourceMap: true, // 生产环境不生成source map
+  productionSourceMap: true, // Production environment does not generate source-map
   css: {
-    sourceMap: false // css不生成source map
+    sourceMap: false // CSS does not generate source-map
   },
   outputDir: '../main/src/main/resources/http',
   devServer: {

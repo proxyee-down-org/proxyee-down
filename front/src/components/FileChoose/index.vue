@@ -7,7 +7,7 @@
     <Button type="primary"
       class="file-choose-button"
       :disabled="disabled||chooserWait"
-      @click="showChooser">{{$t('tip.choose')}}</Button>
+      @click="showChooser">{{ $t('tip.choose') }}</Button>
   </div>
 </template>
 
