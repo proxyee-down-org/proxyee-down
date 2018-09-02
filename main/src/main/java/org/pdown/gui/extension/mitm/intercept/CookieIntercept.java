@@ -11,6 +11,9 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.AsciiString;
 
+/**
+ * 嗅探目标网站cookie，支持HTTP only
+ */
 public class CookieIntercept extends HttpProxyIntercept {
 
   private boolean sniffFlag;

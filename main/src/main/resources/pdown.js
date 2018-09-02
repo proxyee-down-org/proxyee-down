@@ -6,8 +6,8 @@
     resolve: function (request) {
       return ajax.put('http://127.0.0.1:' + REST_PORT + '/util/resolve', request)
     },
-    resolveAsync: function (request, onSucc, onErr) {
-      ajax.putAsync('http://127.0.0.1:' + REST_PORT + '/util/resolve', request, onSucc, onErr)
+    resolveAsync: function (request, onSuccess, onError) {
+      ajax.putAsync('http://127.0.0.1:' + REST_PORT + '/util/resolve', request, onSuccess, onError)
     },
     createTask: function (request, response) {
       var requestStr = encodeURIComponent(JSON.stringify(request))
@@ -18,8 +18,8 @@
         window.open('http://127.0.0.1:' + FRONT_PORT + '/#/tasks?request=' + requestStr + '&response=' + responseStr)
       }
     },
-    pushTask: function (taskForm, onSucc, onErr) {
-      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks', taskForm, onSucc, onErr)
+    pushTask: function (taskForm, onSuccess, onError) {
+      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks', taskForm, onSuccess, onError)
     },
     getDownConfig: function () {
       var config = ajax.get('http://127.0.0.1:' + REST_PORT + '/config')
@@ -59,70 +59,54 @@
       }
       return xhr
     },
+    proxySend(async, method, url, data, onSuccess, onError) {
+      var xhr = this.buildXHR();
+      xhr.open('post', '/', async)
+      var data = {method: method, url: url, data: data}
+      xhr.setRequestHeader('X-Proxy-Send', encodeURIComponent(JSON.stringify(data)))
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            if (onSuccess) {
+              onSuccess(xhr.responseText ? JSON.parse(xhr.responseText) : {})
+            }
+          } else if (onError) {
+            onError(xhr)
+          }
+        }
+      }
+      xhr.send()
+    },
     get: function (url) {
       return this.send('get', url)
     },
-    jsonSend: function (method, url, data) {
-      return this.send(method, url, 'application/json; charset=utf-8', data)
-    },
-    jsonSendAsync: function (method, url, data, onSucc, onErr) {
-      this.sendAsync(method, url, 'application/json; charset=utf-8', data, onSucc, onErr)
-    },
     post: function (url, data) {
-      return this.jsonSend('post', url, data)
+      return this.send('post', url, data)
     },
-    postAsync: function (url, data, onSucc, onErr) {
-      this.jsonSendAsync('post', url, data, onSucc, onErr)
+    postAsync: function (url, data, onSuccess, onError) {
+      this.sendAsync('post', url, data, onSuccess, onError)
     },
     put: function (url, data) {
-      return this.jsonSend('put', url, data)
+      return this.send('put', url, data)
     },
-    putAsync: function (url, data, onSucc, onErr) {
-      this.jsonSendAsync('put', url, data, onSucc, onErr)
+    putAsync: function (url, data, onSuccess, onError) {
+      this.sendAsync('put', url, data, onSuccess, onError)
     },
-    send: function (method, url, contentType, data) {
+    send: function (method, url, data) {
       var result = null
-      var error = true
-      var xhr = this.buildXHR()
-      xhr.open(method, url, false)
-      if (contentType) {
-        xhr.setRequestHeader('Content-Type', contentType)
-      }
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            error = false
-            result = xhr.responseText ? JSON.parse(xhr.responseText) : {}
-          }
-        }
-      }
-      xhr.send(data ? JSON.stringify(data) : null)
+      var error = null
+      this.proxySend(false, method, url, data, function (data) {
+        result = data
+      }, function (xhr) {
+        error = xhr
+      })
       if (error) {
-        throw xhr
-      } else {
-        return result
+        throw error
       }
+      return result
     },
-    sendAsync: function (method, url, contentType, data, onSucc, onErr) {
-      var xhr = this.buildXHR()
-      xhr.open(method, url)
-      if (contentType) {
-        xhr.setRequestHeader('Content-Type', contentType)
-      }
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            if (onSucc) {
-              onSucc(xhr.responseText ? JSON.parse(xhr.responseText) : {})
-            }
-          } else {
-            if (onErr) {
-              onErr(xhr)
-            }
-          }
-        }
-      }
-      xhr.send(data ? JSON.stringify(data) : null)
+    sendAsync: function (method, url, data, onSuccess, onError) {
+      this.proxySend(true, method, url, data, onSuccess, onError)
     }
   }
 })())

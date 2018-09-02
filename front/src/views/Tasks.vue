@@ -134,7 +134,7 @@ export default {
       this.resolveVisible = true
     },
     getAllTask() {
-      this.$http
+      this.$noSpinHttp
         .get('http://127.0.0.1:26339/tasks')
         .then(result => (this.taskList = result.data))
     },

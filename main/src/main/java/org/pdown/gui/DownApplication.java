@@ -371,6 +371,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     }
   }
 
+  //-Dio.netty.leakDetection.level=PARANOID
   public static void main(String[] args) {
     //init rest server config
     RestWebServerFactoryCustomizer.init(null);

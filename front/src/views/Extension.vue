@@ -276,7 +276,7 @@ export default {
     },
     searchExtensions(pageSize) {
       pageSize = pageSize ? pageSize : 1
-      this.$http
+      this.$noSpinHttp
         .get(this.$config.adminServer + 'extension/search?pageSize=' + pageSize)
         .then(result => {
           this.page = result.data
@@ -297,8 +297,21 @@ export default {
             }
           })
         })
+        .catch(() => {
+          this.localExts.forEach(localExt=>{
+            localExt.installed = true
+            localExt.currVersion = localExt.version
+          })
+          this.page = {
+            pageNum: 1,
+            pageSize: 10,
+            totalPage: 1,
+            totalCount: this.localExts.length,
+            data: [...this.localExts]
+          }
+        })
     },
-    openUrl(url){
+    openUrl(url) {
       openUrl(url)
     }
   },

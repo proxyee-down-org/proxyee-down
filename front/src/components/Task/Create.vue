@@ -2,6 +2,7 @@
   <Modal :title="$t('tasks.createTask')"
     :value="visible"
     @input="closeModal"
+    @on-visible-change="loadConfig"
     :closable="false"
     :mask-closable="false">
     <Form v-if="visible"
@@ -110,21 +111,23 @@ export default {
             })
         }
       })
-    }
-  },
-  created() {
-    this.$http.get('http://127.0.0.1:26339/config').then(result => {
-      const serverConfig = result.data
-      defaultConfig = {
-        filePath: serverConfig.filePath,
-        connections: serverConfig.connections,
-        timeout: serverConfig.timeout,
-        retryCount: serverConfig.retryCount,
-        autoRename: serverConfig.autoRename,
-        speedLimit: serverConfig.speedLimit
+    },
+    loadConfig(visible) {
+      if (visible) {
+        this.$http.get('http://127.0.0.1:26339/config').then(result => {
+          const serverConfig = result.data
+          defaultConfig = {
+            filePath: serverConfig.filePath,
+            connections: serverConfig.connections,
+            timeout: serverConfig.timeout,
+            retryCount: serverConfig.retryCount,
+            autoRename: serverConfig.autoRename,
+            speedLimit: serverConfig.speedLimit
+          }
+          this.form.config = { ...defaultConfig }
+        })
       }
-      this.form.config = { ...defaultConfig }
-    })
+    }
   }
 }
 </script>

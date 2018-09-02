@@ -7,6 +7,7 @@ import com.github.monkeywie.proxyee.proxy.ProxyConfig;
 import com.github.monkeywie.proxyee.server.HttpProxyServer;
 import com.github.monkeywie.proxyee.server.HttpProxyServerConfig;
 import io.netty.channel.Channel;
+import org.pdown.gui.extension.mitm.intercept.AjaxIntercept;
 import org.pdown.gui.extension.mitm.intercept.CookieIntercept;
 import org.pdown.gui.extension.mitm.intercept.ScriptIntercept;
 import org.pdown.gui.extension.mitm.ssl.PDownCACertFactory;
@@ -36,6 +37,7 @@ public class PDownProxyServer {
             @Override
             public void init(HttpProxyInterceptPipeline pipeline) {
               pipeline.addLast(new CookieIntercept());
+              pipeline.addLast(new AjaxIntercept());
               pipeline.addLast(new ScriptIntercept());
             }
           })
