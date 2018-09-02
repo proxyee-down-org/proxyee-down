@@ -15,7 +15,7 @@ export default {
     save: 'Save'
   },
   tasks: {
-    createTasks: 'Create Task',
+    createTask: 'Create Task',
     continueDownloading: 'Continue Downloading',
     pauseDownloads: 'Pause Downloads',
     deleteTask: 'Delete Task',
@@ -87,6 +87,22 @@ export default {
     checkUpdateWeek: 'Every week',
     checkUpdateStartup: 'Every time startup',
     checkUpdateNever: 'Never'
+  },
+  about: {
+    project: {
+      title: 'Project',
+      content: 'Proxyee-Down is an open source, free software based on the software\'s high-speed download kernel and extensions to easily and quickly download the required resources.',
+      githubAddress: 'Project Homepage: ',
+      tutorial: 'Use Tutorial: ',
+      feedback: 'Feedback: ',
+      currentVersion: 'Current Version: '
+    },
+    team: {
+      title: 'Team',
+      monkeyWie: 'Java programmer',
+      blackhole: 'Security oriented front-end developers',
+      NISAL: 'Front-end developer',
+    }
   },
   update: {
     checkNew: 'New version',

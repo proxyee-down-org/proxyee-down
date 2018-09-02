@@ -257,7 +257,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     stage.setTitle("Proxyee Down");
     Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
     int width = 1024;
-    int height = 576;
+    int height = 768;
     stage.setX((bounds.getWidth() - width) / 2);
     stage.setY((bounds.getHeight() - height) / 2);
     stage.setWidth(width);
