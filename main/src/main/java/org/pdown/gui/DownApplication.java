@@ -260,10 +260,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     int height = 768;
     stage.setX((bounds.getWidth() - width) / 2);
     stage.setY((bounds.getHeight() - height) / 2);
-    stage.setWidth(width);
-    stage.setHeight(height);
+    stage.setMinWidth(width);
+    stage.setMinHeight(height);
     stage.getIcons().add(new javafx.scene.image.Image(Thread.currentThread().getContextClassLoader().getResourceAsStream(ICON_NAME)));
-    stage.setResizable(false);
+    stage.setResizable(true);
     //关闭窗口监听
     stage.setOnCloseRequest(event -> {
       event.consume();
