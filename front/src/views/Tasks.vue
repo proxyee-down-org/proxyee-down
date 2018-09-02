@@ -32,6 +32,7 @@
       <Checkbox :value="delFile"></Checkbox>
       <span @click="delFile=!delFile">{{ $t('tasks.deleteTaskTip') }}</span>
     </Modal>
+
     <Resolve v-model="resolveVisible" />
     <Create :request="createForm.request"
       :response="createForm.response"
@@ -72,6 +73,7 @@ export default {
         .then(result => {
           // Get the list of task IDs that the server is downloading
           const serverDownloadingIds = result.data.map(task => task.id)
+
           serverDownloadingIds.forEach(serverTaskId => {
             if (
               downloadingIds.findIndex(
@@ -81,6 +83,8 @@ export default {
               downloadingIds.push(serverTaskId)
             }
           })
+
+
           if (downloadingIds && downloadingIds.length) {
             this.$noSpinHttp
               .get(
@@ -107,7 +111,7 @@ export default {
             clearInterval(intervalId)
           }
         })
-    }, 1000)
+    }, 5000)
   },
 
   destroyed() {
@@ -173,17 +177,26 @@ export default {
     },
 
     onPauseBatch() {
-      this.doPause(this.getCheckedIds())
+      const ids = this.getCheckedIds()
+      if (ids) {
+        this.doPause(ids)
+      }
     },
 
     onResumeBatch() {
-      this.doResume(this.getCheckedIds())
+      const ids = this.getCheckedIds()
+      if (ids) {
+        this.doResume(ids)
+      }
     },
 
     onDeleteBatch() {
-      this.delTaskId = this.getCheckedIds()
-      this.delFile = false
-      this.deleteModal = true
+      const ids = this.getCheckedIds()
+      if (ids) {
+        this.delTaskId = this.getCheckedIds()
+        this.delFile = false
+        this.deleteModal = true
+      }
     },
 
     doPause(ids) {
