@@ -46,8 +46,6 @@ import Resolve from '../components/Task/Resolve'
 import Create from '../components/Task/Create'
 import { showFile } from '../common/native'
 
-let intervalId
-
 export default {
   name: 'tasks',
   components: {
@@ -58,7 +56,7 @@ export default {
 
   mounted() {
     // Download progress per second
-    intervalId = setInterval(() => {
+    this.intervalId = setInterval(() => {
       if (!this.taskList) {
         return
       }
@@ -108,14 +106,14 @@ export default {
         })
         .catch(error => {
           if (!error.response || error.response.status === 504) {
-            clearInterval(intervalId)
+            clearInterval(this.intervalId)
           }
         })
     }, 5000)
   },
 
   destroyed() {
-    clearInterval(intervalId)
+    clearInterval(this.intervalId)
   },
 
   data() {
@@ -128,7 +126,8 @@ export default {
       createForm: {
         request: null,
         response: null
-      }
+      },
+      intervalId: ''
     }
   },
 
