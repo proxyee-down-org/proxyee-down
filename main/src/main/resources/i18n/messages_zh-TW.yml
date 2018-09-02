@@ -1,0 +1,12 @@
+gui:
+  warning: 警告
+  alert:
+    startError: 啟動失敗：{0}
+    restPortBusy: 端口 26339 被占用，請勿重複啟動軟體
+    noFreePort: 系統無法分配 TCP 端口
+  tray:
+    show: 顯示
+    set: 設定
+    about: 關於
+    support: 打賞
+    exit: 結束
