@@ -18,8 +18,7 @@ Vue.use(iView)
 
 Vue.config.productionTip = false
 
-// 设置i18n
-// setting i18n
+// Setting i18n
 const i18n = new VueI18n({
   locale: 'zh-CN',
   messages: {
@@ -61,13 +60,13 @@ Vue.prototype.$http.interceptors.response.use(
 Vue.prototype.$numeral = numeral
 Date.prototype.format = function(fmt) {
   var o = {
-    'M+': this.getMonth() + 1, //月份
-    'd+': this.getDate(), //日
-    'h+': this.getHours(), //小时
-    'm+': this.getMinutes(), //分
-    's+': this.getSeconds(), //秒
-    'q+': Math.floor((this.getMonth() + 3) / 3), //季度
-    S: this.getMilliseconds() //毫秒
+    'M+': this.getMonth() + 1, // Month
+    'd+': this.getDate(), // Day
+    'h+': this.getHours(), // Hour
+    'm+': this.getMinutes(), // Minute
+    's+': this.getSeconds(), // Second
+    'q+': Math.floor((this.getMonth() + 3) / 3), // Quarter
+    S: this.getMilliseconds() // Millisecond
   }
   if (/(y+)/.test(fmt)) {
     fmt = fmt.replace(
@@ -79,7 +78,7 @@ Date.prototype.format = function(fmt) {
     if (new RegExp('(' + k + ')').test(fmt)) {
       fmt = fmt.replace(
         RegExp.$1,
-        RegExp.$1.length == 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length)
+        RegExp.$1.length === 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length)
       )
     }
   }
@@ -97,8 +96,7 @@ Promise.prototype.finally = function(callback) {
   )
 }
 
-// 路由发生变化修改页面title
-// change the page according to the routing changes title
+// Change the page according to the routing changes title
 router.beforeEach((to, from, next) => {
   if (to.meta.title) {
     document.title = `Proxyee Down-${to.meta.title}`
@@ -106,12 +104,11 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
-//取客户端配置信息
+// Get client configuration information
 getInitConfig().then(result => {
   Vue.prototype.$config = result
-  //设置默认语言
+  // Set default language
   i18n.locale = result.locale
-  //加载vue
   new Vue({
     router,
     store,

@@ -122,7 +122,7 @@ const toggleExtension = data => {
 }
 
 const openUrl = url => {
-  if (window.navigator.userAgent.indexOf('JavaFX') != -1) {
+  if (window.navigator.userAgent.indexOf('JavaFX') !== -1) {
     clientNoSpin.post('/native/openUrl', { url: encodeURIComponent(url) })
   } else {
     window.open(url)

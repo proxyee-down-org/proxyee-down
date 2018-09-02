@@ -1,33 +1,61 @@
 <template>
-  <div>
-    <h2 class="title">Proxyee Down是一款开源的免费软件，基于本软件的高速下载内核和扩展，可以方便并快速的下载所需资源。</h2>
-    <ul class="list">
-      <li>
-        <b>项目主页：</b>
-        <a href="#"
-          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down')">
-          GitHub@proxyee-down
-        </a>
-      </li>
-      <li>
-        <b>使用教程：</b>
-        <a href="#"
-          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/blob/master/README.md')">
-          GitHub@proxyee-down/README.md
-        </a>
-      </li>
-      <li>
-        <b>BUG提交：</b>
-        <a href="#"
-          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/issues')">
-          GitHub@proxyee-down/issues
-        </a>
-      </li>
-      <li>
-        <b>当前版本：</b>
-        <span>{{$config.version}}</span>
-      </li>
-    </ul>
+  <div class="v-about">
+    <Card>
+      <p slot="title">{{ $t("about.project.title") }}</p>
+      <p>{{ $t("about.project.content") }}</p>
+      <br>
+
+      <span>{{ $t("about.project.githubAddress") }}</span>
+      <a href="javascript:void(0)" @click="openUrl('https://github.com/proxyee-down-org/proxyee-down')">
+        GitHub@proxyee-down
+      </a>
+      <br>
+
+      <span>{{ $t("about.project.tutorial") }}</span>
+      <a href="javascript:void(0)"
+        @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/blob/master/README.md')">
+        GitHub@proxyee-down/README.md
+      </a>
+      <br>
+
+      <span>{{ $t("about.project.feedback") }}</span>
+      <a href="javascript:void(0)"
+        @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/issues')">
+        GitHub@proxyee-down/issues
+      </a>
+      <br>
+
+      <span>{{ $t("about.project.currentVersion") }}</span>
+      <span> {{ $config.version }}</span>
+    </Card>
+    
+    <br>
+
+    <Card class="team">
+      <p slot="title">{{ $t("about.team.title") }}</p>
+      <Card class="item">
+        <div>
+          <img src="team_header/monkeyWie.png" @click="openUrl('https://github.com/monkeyWie')">
+          <b>monkeyWie</b>
+          <span>{{ $t("about.team.monkeyWie") }}</span>
+        </div>
+      </Card>
+      <Card class="item">
+        <div>
+          <img src="team_header/Black-Hole.png" @click="openUrl('https://github.com/BlackHole1')">
+          <b>Black-Hole</b>
+          <span>{{ $t("about.team.blackhole") }}</span>
+        </div>
+      </Card>
+      <Card class="item">
+        <div>
+          <img src="team_header/NISAL.png" @click="openUrl('https://github.com/hiNISAL')">
+          <b>NISAL</b>
+          <span>{{ $t("about.team.NISAL") }}</span>
+        </div>
+      </Card>
+      <br>
+    </Card>
   </div>
 </template>
 <script>
@@ -42,16 +70,30 @@ export default {
   }
 }
 </script>
-<style scoped>
-.list {
-  padding: 1.25rem;
-}
-.list b {
-  display: inline-block;
-  width: 4.5rem;
-}
-.list li {
-  padding: 0.5rem;
-}
+<style lang="less" scoped>
+  .v-about {
+    .team {
+      .item {
+        display: inline-grid;
+        margin-right: 8px;
+        width: 12rem;
+        height: 12.875rem;
+        div {
+          text-align: center;
+          img {
+            width: 6.25rem;
+            border-radius: 50px;
+            cursor: pointer;
+          }
+          b, span {
+            display: block;
+          }
+          b{
+            margin-bottom: 5px;
+          }
+        }
+      } 
+    }
+  }
 </style>
 

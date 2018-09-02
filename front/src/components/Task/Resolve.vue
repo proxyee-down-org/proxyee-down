@@ -14,25 +14,25 @@
         <Input v-model="form.url" />
       </FormItem>
       <FormItem :label="$t('tasks.option')">
-        <Checkbox v-model="hasHead">{{$t('tasks.head')}}</Checkbox>
-        <Checkbox v-model="hasBody">{{$t('tasks.body')}}</Checkbox>
+        <Checkbox v-model="hasHead">{{ $t('tasks.head') }}</Checkbox>
+        <Checkbox v-model="hasBody">{{ $t('tasks.body') }}</Checkbox>
       </FormItem>
       <FormItem v-show="hasHead"
         :label="$t('tasks.head')"
         prop="heads">
         <div v-for="(head, index) in form.heads"
           :key="index"
-          :class="index==0?null:'head-margin'">
+          :class="index === 0 ? null : 'head-margin' ">
           <Input class="head-input"
             v-model="head.key"
             placeholder="key" />
           <Input class="head-input"
             v-model="head.value"
             placeholder="value" />
-          <Icon v-if="index!=0"
+          <Icon v-if="index !== 0"
             type="minus-circled"
             @click="delHead(index)"></Icon>
-          <Icon v-if="index==form.heads.length-1"
+          <Icon v-if="index === form.heads.length - 1"
             type="plus-circled"
             @click="addHead"></Icon>
         </div>
@@ -47,8 +47,8 @@
     </Form>
     <div slot="footer">
       <Button type="primary"
-        @click="onSubmit">{{$t('tip.ok')}}</Button>
-      <Button @click="$emit('input', false);">{{$t('tip.cancel')}}</Button>
+        @click="onSubmit">{{ $t('tip.ok') }}</Button>
+      <Button @click="$emit('input', false)">{{ $t('tip.cancel') }}</Button>
     </div>
     <Spin size="large"
       fix
@@ -84,7 +84,7 @@ export default {
   },
   watch: {
     hasHead(val) {
-      if (val && this.form.heads.length == 0) {
+      if (val && this.form.heads.length === 0) {
         this.addHead()
       }
     }

@@ -1,16 +1,16 @@
 <template>
   <div v-if="!certStatus">
     <Card shadow>
-      <p slot="title">{{$t('extension.conditions')}}</p>
-      <p>{{$t('extension.conditionsContent')}}</p>
+      <p slot="title">{{ $t('extension.conditions') }}</p>
+      <p>{{ $t('extension.conditionsContent') }}</p>
     </Card>
     <Button type="primary"
       class="install-button"
-      @click="installCert">{{$t('extension.install')}}</Button>
+      @click="installCert">{{ $t('extension.install') }}</Button>
   </div>
   <div v-else>
     <div class="proxy-switch-div">
-      <b>{{$t('extension.globalProxy')}}</b>
+      <b>{{ $t('extension.globalProxy') }}</b>
       <Switch v-model="proxySwitch"
         @on-change="changeProxyMode"></Switch>
       <Tooltip placement="right">
@@ -18,8 +18,8 @@
           class="action-icon tip-icon" />
         <div slot="content"
           style="white-space: normal;text-indent: 2em;">
-          <p>{{$t('extension.proxyTip1')}}</p>
-          <p>{{$t('extension.proxyTip2')}}</p>
+          <p>{{ $t('extension.proxyTip1') }}</p>
+          <p>{{ $t('extension.proxyTip2') }}</p>
         </div>
       </Tooltip>
     </div>
@@ -37,7 +37,7 @@
       v-if="spinShow">
       <Icon type="load-c"
         class="spin-icon-load"></Icon>
-      <div>{{spinTip}}</div>
+      <div>{{ spinTip }}</div>
     </Spin>
   </div>
 </template>
@@ -143,7 +143,7 @@ export default {
                         params.row.path +
                         '/README.md'
                     )
-                  }}
+                   }}
                 />
               </div>
             )
@@ -182,25 +182,25 @@ export default {
       installCert().then(status => {
         this.certStatus = status
         if (status) {
-          //安装成功
+          // Install Success
           this.loadExtensions()
         }
       })
     },
+
     buildPacUrl() {
-      return (
-        window.location.protocol +
-        '//' +
-        window.location.host +
-        '/pac/pdown.pac'
-      )
+      const { protocol, host } = window.location
+      return `${protocol}//${host}/pac/pdown.pac`
     },
+
     changeProxyMode(val) {
       changeProxyMode(val ? 1 : 0)
     },
+
     changeEnabled(enabled, row) {
       toggleExtension({ path: row.meta.path, enabled: enabled })
     },
+
     downExtension(isUpdate, row, index) {
       let _this = this
       let extFileServers = this.$config.extFileServers
@@ -235,7 +235,7 @@ export default {
               content: this.$t('extension.downloadOk'),
               closable: true
             })
-            //上报至服务器
+            // Update info to server
             this.$noSpinHttp.get(
               this.$config.adminServer +
                 'extension/down?ext_id=' +
@@ -266,9 +266,9 @@ export default {
       }
     },
     loadExtensions() {
-      //加载代理模式
-      getProxyMode().then(mode => (this.proxySwitch = mode == 1))
-      //取本地已安装的插件
+      // Loading agent mode
+      getProxyMode().then(mode => (this.proxySwitch = mode === 1))
+      // Get local installed plug-ins
       getExtensions().then(localExts => {
         this.localExts = localExts
         this.searchExtensions()
@@ -286,8 +286,8 @@ export default {
             let index = this.localExts.findIndex(
               localExt => localExt.meta.path == serverExt.path
             )
-            //本地已经安装该插件
-            if (index != -1) {
+            // The plug-in has already been installed locally.
+            if (index !== -1) {
               let localExt = this.localExts[index]
               serverExt.currVersion = localExt.version
               serverExt.installed = true
@@ -316,10 +316,10 @@ export default {
     }
   },
   created() {
-    //检查证书是否已安装
+    // Check whether the certificate has been installed
     checkCert().then(status => {
       this.certStatus = status
-      //已安装
+      // Already installed
       if (status) {
         this.loadExtensions()
       }

@@ -6,7 +6,7 @@
     class="setting-form">
     <Collapse :value="['down','app']">
       <Panel name="down">
-        {{$t('setting.downSetting')}}
+        {{ $t('setting.downSetting') }}
         <div slot="content">
           <FormItem :label="$t('setting.path')"
             prop="downConfig.filePath">
@@ -17,7 +17,7 @@
               <Icon type="help-circled"
                 class="action-icon tip-icon" />
               <div slot="content">
-                <p>{{$t('setting.pathTip')}}</p>
+                <p>{{ $t('setting.pathTip') }}</p>
               </div>
             </Tooltip>
           </FormItem>
@@ -35,7 +35,7 @@
               <Icon type="help-circled"
                 class="action-icon tip-icon" />
               <div slot="content">
-                <p>{{$t('setting.connectionsTip')}}</p>
+                <p>{{ $t('setting.connectionsTip') }}</p>
               </div>
             </Tooltip>
           </FormItem>
@@ -48,17 +48,17 @@
           <FormItem :label="$t('setting.taskSpeedLimit')"
             prop="downConfig.speedLimit">
             <Input v-model="form.downConfig.speedLimit" />
-            <span style="padding-left:5px">KB/S({{$t('setting.speedLimitTip')}})</span>
+            <span style="padding-left:5px">KB/S({{ $t('setting.speedLimitTip') }})</span>
           </FormItem>
           <FormItem :label="$t('setting.globalSpeedLimit')"
             prop="downConfig.totalSpeedLimit">
             <Input v-model="form.downConfig.totalSpeedLimit" />
-            <span style="padding-left:5px">KB/S({{$t('setting.speedLimitTip')}})</span>
+            <span style="padding-left:5px">KB/S({{ $t('setting.speedLimitTip') }})</span>
           </FormItem>
         </div>
       </Panel>
       <Panel name="app">
-        {{$t('setting.appSetting')}}
+        {{ $t('setting.appSetting') }}
         <div slot="content">
           <FormItem :label="$t('setting.language')"
             prop="appConfig.locale">
@@ -70,16 +70,16 @@
           <FormItem :label="$t('setting.uiMode')"
             prop="appConfig.uiMode">
             <Select v-model="form.appConfig.uiMode">
-              <Option :value="1">{{$t('setting.uiModeWindows')}}</Option>
-              <Option :value="0">{{$t('setting.uiModeBrowser')}}</Option>
+              <Option :value="1">{{ $t('setting.uiModeWindows') }}</Option>
+              <Option :value="0">{{ $t('setting.uiModeBrowser') }}</Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('setting.checkUpdate')"
             prop="appConfig.updateCheckRate">
             <Select v-model="form.appConfig.updateCheckRate">
-              <Option :value="0">{{$t('setting.checkUpdateNever')}}</Option>
-              <Option :value="1">{{$t('setting.checkUpdateWeek')}}</Option>
-              <Option :value="2">{{$t('setting.checkUpdateStartup')}}</Option>
+              <Option :value="0">{{ $t('setting.checkUpdateNever') }}</Option>
+              <Option :value="1">{{ $t('setting.checkUpdateWeek') }}</Option>
+              <Option :value="2">{{ $t('setting.checkUpdateStartup') }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -87,7 +87,7 @@
     </Collapse>
     <div style="padding-top:1.25rem;">
       <Button type="primary"
-        @click="setConfig">{{$t('tip.save')}}</Button>
+        @click="setConfig">{{ $t('tip.save') }}</Button>
     </div>
   </Form>
 </template>
