@@ -9,7 +9,7 @@ import javax.swing.JOptionPane;
 public class Runner {
 
   private static final String JAVA_CMD_PATH = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
-  private static final String MAIN_JAR_PATH = "../main/proxyee-down-main.jar";
+  private static final String MAIN_JAR_PATH = "main/proxyee-down-main.jar";
   private static final String MAIN_JAR_BAK_PATH = MAIN_JAR_PATH + ".bak";
 
   public static void main(String[] args) throws IOException {

@@ -1,7 +1,7 @@
 export default {
   nav: {
     tasks: '任務管理',
-    extension: '擴充功能管理',
+    extension: '擴充管理',
     setting: '軟體設定',
     about: '關於專案',
     support: '支援我們'

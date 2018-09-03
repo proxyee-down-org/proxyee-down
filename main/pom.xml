@@ -41,27 +41,6 @@
         <environment>prd</environment>
       </properties>
     </profile>
-    <profile>
-      <id>windows</id>
-      <properties>
-        <osType>windows</osType>
-      </properties>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-    </profile>
-    <profile>
-      <id>mac</id>
-      <properties>
-        <osType>mac</osType>
-      </properties>
-    </profile>
-    <profile>
-      <id>linux</id>
-      <properties>
-        <osType>linux</osType>
-      </properties>
-    </profile>
   </profiles>
 
   <dependencies>
@@ -103,7 +82,6 @@
           <exclude>application-prd.yml</exclude>
           <exclude>logback-dev.xml</exclude>
           <exclude>logback-prd.xml</exclude>
-          <exclude>tool/mac-tool.so</exclude>
         </excludes>
       </resource>
       <resource>
@@ -113,7 +91,6 @@
           <include>logback-${environment}.xml</include>
           <include>application-${environment}.yml</include>
           <include>application.yml</include>
-          <include>tool/${osType}-tool.so</include>
         </includes>
       </resource>
     </resources>
@@ -124,7 +101,7 @@
         <artifactId>maven-resources-plugin</artifactId>
         <configuration>
           <nonFilteredFileExtensions>
-            <nonFilteredFileExtension>so</nonFilteredFileExtension>
+            <nonFilteredFileExtension>bin</nonFilteredFileExtension>
             <nonFilteredFileExtension>css</nonFilteredFileExtension>
             <nonFilteredFileExtension>js</nonFilteredFileExtension>
             <nonFilteredFileExtension>eot</nonFilteredFileExtension>

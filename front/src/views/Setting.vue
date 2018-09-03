@@ -64,6 +64,7 @@
             prop="appConfig.locale">
             <Select v-model="form.appConfig.locale">
               <Option value="zh-CN">中文(简体)</Option>
+              <Option value="zh-TW">中文(繁體)</Option>
               <Option value="en-US">English(USA)</Option>
             </Select>
           </FormItem>

@@ -59,7 +59,7 @@
       }
       return xhr
     },
-    proxySend(async, method, url, data, onSuccess, onError) {
+    proxySend: function (async, method, url, data, onSuccess, onError) {
       var xhr = this.buildXHR();
       xhr.open('post', '/', async)
       var data = {method: method, url: url, data: data}

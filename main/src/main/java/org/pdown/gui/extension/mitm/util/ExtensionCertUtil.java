@@ -24,7 +24,6 @@ import sun.security.x509.X500Name;
 public class ExtensionCertUtil {
 
 
-
   /**
    * 在指定目录生成一个ca证书和私钥
    */
@@ -49,7 +48,7 @@ public class ExtensionCertUtil {
   public static void installCert(File file) throws IOException {
     String path = file.getPath();
     if (OsUtil.isWindows()) {
-      ExecUtil.execSync("certutil",
+      ExecUtil.execBlock("certutil",
           "-addstore",
           "-user",
           "root",
@@ -98,7 +97,7 @@ public class ExtensionCertUtil {
       Matcher matcher = pattern.matcher(certList);
       while (matcher.find()) {
         String hash = matcher.group(1).replaceAll("\\s", "");
-        ExecUtil.execSync("certutil",
+        ExecUtil.execBlock("certutil",
             "-delstore",
             "-user",
             "root",
@@ -125,13 +124,14 @@ public class ExtensionCertUtil {
           "root",
           subjectName);
     } else if (OsUtil.isMac()) {
-      return ExecUtil.exec("/bin/bash",
-          "security find-certificate "
-              + "-a "
-              + "-c " + subjectName + " "
-              + "-p "
-              + "-Z "
-              + "/Library/Keychains/System.keychain");
+      return ExecUtil.exec("security",
+          "find-certificate",
+          "-a",
+          "-c",
+          subjectName,
+          "-p",
+          "-Z",
+          "/Library/Keychains/System.keychain");
     }
     return null;
   }

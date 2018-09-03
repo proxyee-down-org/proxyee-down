@@ -35,7 +35,7 @@ public class ExecUtil {
   /**
    * 同步执行shell，阻塞当前线程
    */
-  public static void execSync(String... shell) throws IOException {
+  public static void execBlock(String... shell) throws IOException {
     Process process = Runtime.getRuntime().exec(shell);
     try (
         InputStream inputStream = process.getInputStream()
@@ -52,7 +52,7 @@ public class ExecUtil {
   /**
    * 以管理员权限，同步执行shell，阻塞当前线程
    */
-  public static void execSyncWithAdmin(String shell) throws IOException {
+  public static void execBlockWithAdmin(String shell) throws IOException {
     //osascript -e "do shell script \"shell\" with administrator privileges"
     Process process = Runtime.getRuntime().exec(new String[]{
         "osascript",

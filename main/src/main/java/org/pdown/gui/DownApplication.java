@@ -87,7 +87,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     Platform.setImplicitExit(false);
     //load config
     initConfig();
-    initMacTool();
+    initMacMITMTool();
     initEmbedHttpServer();
     initExtension();
     initTray();
@@ -148,10 +148,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   public static int macToolPort;
 
   //加载mac tool
-  private void initMacTool() {
+  private void initMacMITMTool() {
     if (OsUtil.isMac()) {
       new Thread(() -> {
-        String toolUri = "tool/mac-tool.so";
+        String toolUri = "mac/mitm-tool.bin";
         Path toolPath = Paths.get(PathUtil.ROOT_PATH + File.separator + toolUri);
         try {
           if (!toolPath.toFile().exists()) {
@@ -168,7 +168,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
             }
           }
           //取一个空闲端口来运行mac tool
-          macToolPort = OsUtil.getFreePort(9393);
+          macToolPort = OsUtil.getFreePort();
           //程序退出监听
           Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -176,10 +176,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
             } catch (IOException e) {
             }
           }));
-          ExecUtil.execSyncWithAdmin("'" + toolPath.toFile().getPath() + "' " + macToolPort);
+          ExecUtil.execBlockWithAdmin("'" + toolPath.toFile().getPath() + "' " + macToolPort);
         } catch (Exception e) {
-          LOGGER.error("initMacTool error", e);
-          alertAndExit("initMacTool error：" + e.getMessage());
+          LOGGER.error("initMacMITMTool error", e);
+          alertAndExit("Init mitm-tool error：" + e.getMessage());
         }
         System.exit(0);
       }).start();

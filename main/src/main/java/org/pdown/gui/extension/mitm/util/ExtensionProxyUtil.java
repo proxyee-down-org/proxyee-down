@@ -49,7 +49,7 @@ public class ExtensionProxyUtil {
       refreshOptions(list);
     } else if (OsUtil.isMac()) {
       String networkService = disabledProxy();
-      ExecUtil.httpGet("http://127.0.0.1:" + DownApplication.macToolPort + "/proxy/enabledHTTP"
+      ExecUtil.httpGet("http://127.0.0.1:" + DownApplication.macToolPort + "/proxy/enabledPAC"
           + "?ns=" + networkService
           + "&url=" + url);
     }

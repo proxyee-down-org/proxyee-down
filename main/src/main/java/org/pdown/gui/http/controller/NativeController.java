@@ -137,9 +137,9 @@ public class NativeController {
       if (!file.exists() || OsUtil.isUnix()) {
         Desktop.getDesktop().open(file.getParentFile());
       } else if (OsUtil.isWindows()) {
-        ExecUtil.execSync("explorer.exe", "/select,", file.getPath());
+        ExecUtil.execBlock("explorer.exe", "/select,", file.getPath());
       } else if (OsUtil.isMac()) {
-        ExecUtil.execSync("open", "-R", file.getPath());
+        ExecUtil.execBlock("open", "-R", file.getPath());
       }
     }
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
