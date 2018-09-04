@@ -119,8 +119,8 @@ export default {
   },
   methods: {
     async getConfig() {
-      let downConfig = await this.$http.get('http://127.0.0.1:26339/config')
-      let appConfig = await this.$http.get('/native/getConfig')
+      let downConfig = await this.$noSpinHttp.get('http://127.0.0.1:26339/config')
+      let appConfig = await this.$noSpinHttp.get('/native/getConfig')
       this.form = {
         downConfig: { ...downConfig.data },
         appConfig: { ...appConfig.data }
@@ -142,8 +142,8 @@ export default {
           if (downConfig.totalSpeedLimit > 0) {
             downConfig.totalSpeedLimit *= 1024
           }
-          await this.$http.put('http://127.0.0.1:26339/config', downConfig)
-          await this.$http.put('/native/setConfig', this.form.appConfig)
+          await this.$noSpinHttp.put('http://127.0.0.1:26339/config', downConfig)
+          await this.$noSpinHttp.put('/native/setConfig', this.form.appConfig)
           this.$i18n.locale = this.form.appConfig.locale
         }
       })

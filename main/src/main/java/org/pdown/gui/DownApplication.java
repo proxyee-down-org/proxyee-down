@@ -316,6 +316,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   }
 
   public void loadUri(String uri) {
+    stage.show();
     String url = "http://127.0.0.1:" + FRONT_PORT + uri;
     if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
       try {
