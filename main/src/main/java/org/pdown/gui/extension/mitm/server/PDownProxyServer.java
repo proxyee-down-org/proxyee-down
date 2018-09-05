@@ -10,6 +10,7 @@ import io.netty.channel.Channel;
 import org.pdown.gui.extension.mitm.intercept.AjaxIntercept;
 import org.pdown.gui.extension.mitm.intercept.CookieIntercept;
 import org.pdown.gui.extension.mitm.intercept.ScriptIntercept;
+import org.pdown.gui.extension.mitm.intercept.SniffIntercept;
 import org.pdown.gui.extension.mitm.ssl.PDownCACertFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ public class PDownProxyServer {
               pipeline.addLast(new CookieIntercept());
               pipeline.addLast(new AjaxIntercept());
               pipeline.addLast(new ScriptIntercept());
+              pipeline.addLast(new SniffIntercept());
             }
           })
           .httpProxyExceptionHandle(new HttpProxyExceptionHandle() {

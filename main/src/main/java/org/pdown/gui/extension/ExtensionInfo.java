@@ -8,6 +8,7 @@ public class ExtensionInfo {
   private double version; //扩展版本号
   private String description; //扩展描述
   private List<String> proxyWildcards;  //扩展生效配置的域名通配符列表
+  private List<String> sniffRegexs;  //扩展嗅探下载的url正则表达式列表
   private List<ContentScript> contentScripts;
   private Meta meta;
 
@@ -44,6 +45,15 @@ public class ExtensionInfo {
 
   public ExtensionInfo setProxyWildcards(List<String> proxyWildcards) {
     this.proxyWildcards = proxyWildcards;
+    return this;
+  }
+
+  public List<String> getSniffRegexs() {
+    return sniffRegexs;
+  }
+
+  public ExtensionInfo setSniffRegexs(List<String> sniffRegexs) {
+    this.sniffRegexs = sniffRegexs;
     return this;
   }
 

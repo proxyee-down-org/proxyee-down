@@ -217,7 +217,7 @@ public class NativeController {
       ExtensionUtil.install(server, path, files);
     }
     //刷新扩展content
-    ExtensionContent.refreshExtensionInfo(path);
+    ExtensionContent.refresh(path);
     //刷新系统pac代理
     AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
@@ -240,7 +240,7 @@ public class NativeController {
         .setEnabled(enabled)
         .save();
     //刷新pac
-    ExtensionContent.refreshProxyWildcards();
+    ExtensionContent.refresh();
     AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }

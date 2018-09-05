@@ -16,7 +16,10 @@ public class ExtensionContent {
   private static final String EXT_MANIFEST = "manifest.json";
 
   private static List<ExtensionInfo> EXTENSION_INFO_LIST;
-  private static Set<String> WILDCARDS;
+  //代理服务器域名通配符列表
+  private static Set<String> PROXY_WILDCARDS;
+  //需要嗅探下载的url正则表达式列表
+  private static Set<String> SNIFF_REGEXS;
 
   public static void load() throws IOException {
     File file = new File(EXT_DIR);
@@ -36,11 +39,11 @@ public class ExtensionContent {
           }
         }
       }
-      refreshProxyWildcards();
+      refresh();
     }
   }
 
-  public synchronized static void refreshExtensionInfo(String path) throws IOException {
+  public synchronized static void refresh(String path) throws IOException {
     if (EXTENSION_INFO_LIST != null && path != null) {
       boolean match = false;
       for (int i = 0; i < EXTENSION_INFO_LIST.size(); i++) {
@@ -54,22 +57,35 @@ public class ExtensionContent {
       if (!match) {
         EXTENSION_INFO_LIST.add(parseExtensionDir(new File(EXT_DIR + path)));
       }
-      refreshProxyWildcards();
+      refresh();
     }
   }
 
-  public synchronized static void refreshProxyWildcards() throws IOException {
-    if (WILDCARDS == null) {
-      WILDCARDS = new HashSet<>();
+  public synchronized static void refresh() throws IOException {
+    if (PROXY_WILDCARDS == null) {
+      PROXY_WILDCARDS = new HashSet<>();
     } else {
-      WILDCARDS.clear();
+      PROXY_WILDCARDS.clear();
+    }
+    if (SNIFF_REGEXS == null) {
+      SNIFF_REGEXS = new HashSet<>();
+    } else {
+      SNIFF_REGEXS.clear();
     }
     if (EXTENSION_INFO_LIST != null) {
       for (ExtensionInfo extensionInfo : EXTENSION_INFO_LIST) {
-        if (extensionInfo.getMeta().isEnabled() && extensionInfo.getProxyWildcards() != null) {
+        if (extensionInfo.getMeta().isEnabled()) {
           //读取需要代理的域名匹配符
-          for (String wildcard : extensionInfo.getProxyWildcards()) {
-            WILDCARDS.add(wildcard.trim());
+          if (extensionInfo.getProxyWildcards() != null) {
+            for (String wildcard : extensionInfo.getProxyWildcards()) {
+              PROXY_WILDCARDS.add(wildcard.trim());
+            }
+          }
+          //读取需要嗅探下载的url正则表达式
+          if (extensionInfo.getSniffRegexs() != null) {
+            for (String regex : extensionInfo.getSniffRegexs()) {
+              SNIFF_REGEXS.add(regex.trim());
+            }
           }
         }
       }
@@ -82,7 +98,6 @@ public class ExtensionContent {
     try {
       extensionInfo = objectMapper.readValue(new FileInputStream(extendDir + File.separator + EXT_MANIFEST), ExtensionInfo.class);
     } catch (IOException e) {
-
     }
     if (extensionInfo != null) {
       Meta meta = Meta.load(extendDir.getPath());
@@ -95,7 +110,11 @@ public class ExtensionContent {
     return EXTENSION_INFO_LIST;
   }
 
-  public static Set<String> getWildCards() {
-    return WILDCARDS;
+  public static Set<String> getProxyWildCards() {
+    return PROXY_WILDCARDS;
+  }
+
+  public static Set<String> getSniffRegexs() {
+    return SNIFF_REGEXS;
   }
 }
