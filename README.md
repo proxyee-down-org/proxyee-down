@@ -9,15 +9,15 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
 
 ## 使用说明
 
-- windows:
-  下载好 windows 版本的压缩包之后，解压至任意目录，会得到一个文件夹，执行文件夹里面的`Proxyee Down.exe`文件即可。
+- windows:  
+  下载好 windows 版本的压缩包之后，解压至任意目录，会得到一个文件夹，执行文件夹里面的`Proxyee Down.exe`文件即可。  
   (_注：360 可能会报毒，需要加入白名单_)
   ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-13-49-38.png)
-- mac:
-  下载好 mac 版本的压缩包之后，解压至任意目录，会得到一个`Proxyee Down`App，双击运行即可。
+- mac:  
+  下载好 mac 版本的压缩包之后，解压至任意目录，会得到一个`Proxyee Down`App，双击运行即可。  
   (_注：mac 系统切换代理和安装证书需要管理员权限，所以在启动时会提示输入密码_)
   ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-13-51-38.png)
-- linux:
+- linux:  
   linux 系统目前没有打原生包，要自行下载 jar 包运行，需安装 JRE 或 JDK(_要求版本不低于 1.8_)，下载完成后在命令行中运行：
   ```
   java -jar proxyee-down-main.jar
@@ -63,8 +63,10 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
   ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-30-30.png)
   3. 切换情景模式进行下载
   ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-32-00.png)
+
 - 参与扩展开发
  详见[proxyee-down-extension](https://github.com/proxyee-down-org/proxyee-down-extension)
+ 
 - 扩展实现原理
 扩展功能是由 MITM(中间人攻击)技术实现的，使用[proxyee](https://github.com/monkeyWie/proxyee)框架拦截和修改`HTTP`、`HTTPS`的请求和响应报文，从而实现对应的扩展脚本注入。
 
