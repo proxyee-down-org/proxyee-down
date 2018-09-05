@@ -98,10 +98,7 @@ export default {
       currentVersion: 'Current Version: '
     },
     team: {
-      title: 'Team',
-      monkeyWie: 'Java programmer',
-      blackhole: 'Security oriented front-end developers',
-      NISAL: 'Front-end developer',
+      title: 'Team'
     }
   },
   update: {

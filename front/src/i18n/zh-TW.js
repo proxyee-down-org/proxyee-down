@@ -21,7 +21,7 @@ export default {
     deleteTask: '刪除任務',
     deleteTaskTip: '是否刪除任務和檔案？',
     url: '链接',
-    fileName: '檔案名稱',
+    fileName: '名稱',
     fileSize: '大小',
     connections: '連接數',
     filePath: '路徑',

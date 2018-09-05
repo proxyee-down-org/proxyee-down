@@ -97,10 +97,7 @@ export default {
       currentVersion: '当前版本：'
     },
     team: {
-      title: '团队',
-      monkeyWie: 'Java程序员',
-      blackhole: '面向安全的前端开发者',
-      NISAL: '前端开发程序员'
+      title: '团队'
     }
   },
   update: {

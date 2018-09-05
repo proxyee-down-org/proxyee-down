@@ -37,21 +37,18 @@
         <div>
           <img src="team_header/monkeyWie.png" @click="openUrl('https://github.com/monkeyWie')">
           <b>monkeyWie</b>
-          <span>{{ $t("about.team.monkeyWie") }}</span>
         </div>
       </Card>
       <Card class="item">
         <div>
           <img src="team_header/Black-Hole.png" @click="openUrl('https://github.com/BlackHole1')">
           <b>Black-Hole</b>
-          <span>{{ $t("about.team.blackhole") }}</span>
         </div>
       </Card>
       <Card class="item">
         <div>
           <img src="team_header/NISAL.png" @click="openUrl('https://github.com/hiNISAL')">
           <b>NISAL</b>
-          <span>{{ $t("about.team.NISAL") }}</span>
         </div>
       </Card>
       <br>
@@ -77,7 +74,7 @@ export default {
         display: inline-grid;
         margin-right: 8px;
         width: 12rem;
-        height: 12.875rem;
+        height: 10rem;
         div {
           text-align: center;
           img {
