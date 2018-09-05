@@ -40,8 +40,6 @@ import org.pdown.gui.http.EmbedHttpServer;
 import org.pdown.gui.http.controller.ApiController;
 import org.pdown.gui.http.controller.NativeController;
 import org.pdown.gui.http.controller.PacController;
-import org.pdown.gui.update.CheckUpdate;
-import org.pdown.gui.update.VersionInfo;
 import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
@@ -222,11 +220,11 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     MenuItem showItem = new MenuItem(I18nUtil.getMessage("gui.tray.show"));
     showItem.addActionListener(event -> Platform.runLater(() -> show(true)));
     MenuItem setItem = new MenuItem(I18nUtil.getMessage("gui.tray.set"));
-    setItem.addActionListener(event -> Platform.runLater(() -> loadUri("/#/setting")));
+    setItem.addActionListener(event -> Platform.runLater(() -> guiLoadUri("/#/setting")));
     MenuItem aboutItem = new MenuItem(I18nUtil.getMessage("gui.tray.about"));
-    aboutItem.addActionListener(event -> Platform.runLater(() -> loadUri("/#/about")));
+    aboutItem.addActionListener(event -> Platform.runLater(() -> guiLoadUri("/#/about")));
     MenuItem supportItem = new MenuItem(I18nUtil.getMessage("gui.tray.support"));
-    supportItem.addActionListener(event -> Platform.runLater(() -> loadUri("/#/support")));
+    supportItem.addActionListener(event -> Platform.runLater(() -> guiLoadUri("/#/support")));
     MenuItem closeItem = new MenuItem(I18nUtil.getMessage("gui.tray.exit"));
     closeItem.addActionListener(event -> {
       Platform.exit();
@@ -257,7 +255,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     stage.setTitle("Proxyee Down");
     Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
     int width = 1024;
-    int height = 768;
+    int height = 576;
     stage.setX((bounds.getWidth() - width) / 2);
     stage.setY((bounds.getHeight() - height) / 2);
     stage.setMinWidth(width);
@@ -271,19 +269,8 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     });
   }
 
-  //检查更新
-  private void doCheckUpdate() {
-    new Thread(() -> {
-      VersionInfo versionInfo = CheckUpdate.doCheck();
-      if (versionInfo != null) {
-
-      }
-    }).start();
-  }
-
   /**
    * 显示gui窗口
-   *
    * @param isTray 是否从托盘按钮打开的(windows下如果非托盘按钮调用窗口可能不会置顶)
    */
   public void show(boolean isTray) {
@@ -326,6 +313,11 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     } else {
       browser.load(url);
     }
+  }
+
+  public void guiLoadUri(String uri){
+    show(true);
+    loadUri(uri);
   }
 
   //提示并退出程序
