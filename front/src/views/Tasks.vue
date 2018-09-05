@@ -27,10 +27,14 @@
       @on-open="onOpen" />
 
     <Modal v-model="deleteModal"
-      :title="$t('tasks.deleteTask')"
-      @on-ok="doDelete(delTaskId)">
+      :title="$t('tasks.deleteTask')">
       <Checkbox :value="delFile"></Checkbox>
       <span @click="delFile=!delFile">{{ $t('tasks.deleteTaskTip') }}</span>
+      <div slot="footer">
+        <Button type="primary"
+          @click="doDelete(delTaskId)">{{ $t('tip.ok') }}</Button>
+        <Button @click="deleteModal=false">{{ $t('tip.cancel') }}</Button>
+      </div>
     </Modal>
 
     <Resolve v-model="resolveVisible" />
@@ -73,21 +77,14 @@ export default {
           const serverDownloadingIds = result.data.map(task => task.id)
 
           serverDownloadingIds.forEach(serverTaskId => {
-            if (
-              downloadingIds.findIndex(
-                localTaskId => localTaskId == serverTaskId
-              ) === -1
-            ) {
+            if (downloadingIds.findIndex(localTaskId => localTaskId == serverTaskId) === -1) {
               downloadingIds.push(serverTaskId)
             }
           })
 
-
           if (downloadingIds && downloadingIds.length) {
             this.$noSpinHttp
-              .get(
-                'http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds
-              )
+              .get('http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds)
               .then(result => {
                 // Match and update the task information being downloaded
                 result.data.forEach(task => {
@@ -109,7 +106,7 @@ export default {
             clearInterval(this.intervalId)
           }
         })
-    }, 5000)
+    }, 1000)
   },
 
   destroyed() {
@@ -203,21 +200,19 @@ export default {
     },
 
     doResume(ids) {
-      this.$http
-        .put(`http://127.0.0.1:26339/tasks/${ids}/resume`)
-        .then(result => {
-          const { pauseIds, resumeIds } = result.data
-          const modifyTaskStatus = (behavior, status) => {
-            result.data[behavior].forEach(id => {
-              const index = this.getIndexByTaskId(id)
-              if (index >= 0) {
-                this.taskList[index].info.status = status
-              }
-            })
-          }
-          pauseIds && modifyTaskStatus('pauseIds', 2)
-          resumeIds && modifyTaskStatus('resumeIds', 1)
-        })
+      this.$http.put(`http://127.0.0.1:26339/tasks/${ids}/resume`).then(result => {
+        const { pauseIds, resumeIds } = result.data
+        const modifyTaskStatus = (behavior, status) => {
+          result.data[behavior].forEach(id => {
+            const index = this.getIndexByTaskId(id)
+            if (index >= 0) {
+              this.taskList[index].info.status = status
+            }
+          })
+        }
+        pauseIds && modifyTaskStatus('pauseIds', 2)
+        resumeIds && modifyTaskStatus('resumeIds', 1)
+      })
     },
 
     doDelete(ids) {
@@ -231,6 +226,7 @@ export default {
             }
           })
         })
+        .finally((this.deleteModal = false))
     },
 
     getCheckedIds() {
@@ -243,7 +239,6 @@ export default {
     getIndexByTaskId(taskId) {
       return this.taskList.findIndex(t => t.id === taskId)
     }
-
   },
 
   created() {
