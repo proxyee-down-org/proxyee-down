@@ -9,7 +9,7 @@
       ref="form"
       :model="form"
       :rules="rules"
-      :label-width="60">
+      :label-width="70">
       <FormItem :label="$t('tasks.fileName')"
         prop="response.fileName">
         <Input v-model="form.response.fileName" />
@@ -128,6 +128,9 @@ export default {
         })
       }
     }
+  },
+  created() {
+    this.loadConfig(this.visible)
   }
 }
 </script>
