@@ -3,6 +3,7 @@ package org.pdown.gui.extension.mitm.util;
 import com.github.monkeywie.proxyee.crt.CertUtil;
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyPair;
@@ -54,8 +55,7 @@ public class ExtensionCertUtil {
           "root",
           path);
     } else if (OsUtil.isMac()) {
-      ExecUtil.httpGet("http://127.0.0.1:" + DownApplication.macToolPort + "/cert/install"
-          + "?path=" + path);
+      ExecUtil.httpGet("http://127.0.0.1:" + DownApplication.macToolPort + "/cert/install?path=" + URLEncoder.encode(path, "utf-8"));
     }
   }
 
