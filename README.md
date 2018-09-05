@@ -3,6 +3,7 @@
 Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`开发，支持自定义 HTTP 请求下载且支持扩展功能，可以通过安装扩展实现特殊的下载需求。
 
 ## 软件下载
+
 - [windows](http://api.pdown.org/download/release?os=windows)
 - [mac](http://api.pdown.org/download/release?os=mac)
 - [linux](https://github.com/proxyee-down-org/proxyee-down/releases)
@@ -43,10 +44,11 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
 
 #### 扩展商店
 
-安装完证书后会进入扩展商店页面，目前扩展商店只有一款百度云下载扩展，以后会陆续开发更多的扩展(_例如：各大网站的视频下载扩展、其他网盘的下载扩展等等)。
+安装完证书后会进入扩展商店页面，目前扩展商店只有一款百度云下载扩展，以后会陆续开发更多的扩展(\_例如：各大网站的视频下载扩展、其他网盘的下载扩展等等)。
 ![扩展商城](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-12-21.png)
 
 #### 扩展安装
+
 在操作栏找到安装按钮，点击安装即可安装扩展。
 ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-26-44.png)
 
@@ -56,19 +58,21 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
 如果不使用全局代理，可以点击`复制PAC链接`，配合[SwitchyOmega 插件](https://www.switchyomega.com/)来使用。
 
 #### 相关
-- SwitchyOmega设置教程
-  1. 新建情景模式，选择PAC情景模式类型。
-  ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-25-34.png)
-  2. 把复制的PAC链接粘贴进来并点击立即更新情景模式然后保存。
-  ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-30-30.png)
-  3. 切换情景模式进行下载
-  ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-32-00.png)
 
-- 参与扩展开发
- 详见[proxyee-down-extension](https://github.com/proxyee-down-org/proxyee-down-extension)
- 
-- 扩展实现原理
-扩展功能是由 MITM(中间人攻击)技术实现的，使用[proxyee](https://github.com/monkeyWie/proxyee)框架拦截和修改`HTTP`、`HTTPS`的请求和响应报文，从而实现对应的扩展脚本注入。
+- SwitchyOmega 设置教程
+
+  1. 新建情景模式，选择 PAC 情景模式类型。
+     ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-25-34.png)
+  2. 把复制的 PAC 链接粘贴进来并点击立即更新情景模式然后保存。
+     ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-30-30.png)
+  3. 切换情景模式进行下载  
+     ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-14-32-00.png)
+
+- 参与扩展开发  
+  详见[proxyee-down-extension](https://github.com/proxyee-down-org/proxyee-down-extension)
+
+- 扩展实现原理  
+  扩展功能是由 MITM(中间人攻击)技术实现的，使用[proxyee](https://github.com/monkeyWie/proxyee)框架拦截和修改`HTTP`、`HTTPS`的请求和响应报文，从而实现对应的扩展脚本注入。
 
 ## QQ 群
 
