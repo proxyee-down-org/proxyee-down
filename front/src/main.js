@@ -10,6 +10,7 @@ import numeral from 'numeral'
 import 'iview/dist/styles/iview.css'
 import en_US from 'iview/dist/locale/en-US'
 import zh_CN from 'iview/dist/locale/zh-CN'
+import zh_TW from 'iview/dist/locale/zh-TW'
 import http from './common/http'
 import { getInitConfig } from './common/native'
 
@@ -23,7 +24,8 @@ const i18n = new VueI18n({
   locale: 'zh-CN',
   messages: {
     'en-US': Object.assign(require('./i18n/en-US').default, en_US),
-    'zh-CN': Object.assign(require('./i18n/zh-CN').default, zh_CN)
+    'zh-CN': Object.assign(require('./i18n/zh-CN').default, zh_CN),
+    'zh-TW': Object.assign(require('./i18n/zh-TW').default, zh_TW)
   }
 })
 
