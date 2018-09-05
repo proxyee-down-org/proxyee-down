@@ -8,6 +8,10 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.awt.Desktop;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -300,6 +304,18 @@ public class NativeController {
       }).start();
     }
     return HttpHandlerUtil.buildJson(data);
+  }
+
+  @RequestMapping("copy")
+  public FullHttpResponse copy(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> map = getJSONParams(request);
+    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    Transferable selection = null;
+    if ("text".equalsIgnoreCase((String) map.get("type"))) {
+      selection = new StringSelection((String) map.get("data"));
+    }
+    clipboard.setContents(selection, null);
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
   private Map<String, Object> getJSONParams(FullHttpRequest request) throws IOException {

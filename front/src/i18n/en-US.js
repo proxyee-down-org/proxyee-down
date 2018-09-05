@@ -12,7 +12,9 @@ export default {
     notNull: 'Can not be empty',
     fmtErr: 'Incorrect format',
     choose: 'Choose',
-    save: 'Save'
+    save: 'Save',
+    copySucc: 'Copy success',
+    copyFail: 'Copy fail'
   },
   tasks: {
     createTask: 'Create Task',
@@ -51,6 +53,7 @@ export default {
       'Proxyee Down will modify the system\'s global proxy settings, which may conflict with the same mechanism software.(e.g SS,SSR)',
     proxyTip2:
       'If you turn off the global proxy, you need to use the browser proxy plugin to use(e.g SwitchyOmega)',
+    copyPac: 'Copy PAC URL',
     title: 'Title',
     description: 'Desc',
     currVersion: 'Curr Ver',
@@ -91,7 +94,8 @@ export default {
   about: {
     project: {
       title: 'Project',
-      content: 'Proxyee-Down is an open source, free software based on the software\'s high-speed download kernel and extensions to easily and quickly download the required resources.',
+      content:
+        'Proxyee-Down is an open source, free software based on the software\'s high-speed download kernel and extensions to easily and quickly download the required resources.',
       githubAddress: 'Project Homepage: ',
       tutorial: 'Use Tutorial: ',
       feedback: 'Feedback: ',

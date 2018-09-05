@@ -12,7 +12,9 @@ export default {
     notNull: '不能为空',
     fmtErr: '格式不正确',
     choose: '选择',
-    save: '保存'
+    save: '保存',
+    copySucc: '复制成功',
+    copyFail: '复制失败'
   },
   tasks: {
     createTask: '创建任务',
@@ -39,7 +41,7 @@ export default {
     option: '附加',
     head: '请求头',
     body: '请求体',
-    detail:'下载详情'
+    detail: '下载详情'
   },
   extension: {
     conditions: '使用须知',
@@ -50,6 +52,7 @@ export default {
     proxyTip1:
       'Proxyee Down会修改系统全局的代理设置，可能会与相同机制的软件发生冲突(例如：SS、SSR)',
     proxyTip2: '若关闭全局代理，需配合浏览器代理插件来使用(例如：SwitchyOmega)',
+    copyPac: '复制PAC链接',
     title: '名称',
     description: '描述',
     currVersion: '当前版本',
@@ -90,7 +93,8 @@ export default {
   about: {
     project: {
       title: '项目',
-      content: 'Proxyee Down是一款开源的免费软件，基于本软件的高速下载内核和扩展，可以方便并快速的下载所需资源。',
+      content:
+        'Proxyee Down是一款开源的免费软件，基于本软件的高速下载内核和扩展，可以方便并快速的下载所需资源。',
       githubAddress: '项目主页：',
       tutorial: '使用教程：',
       feedback: '问题反馈：',

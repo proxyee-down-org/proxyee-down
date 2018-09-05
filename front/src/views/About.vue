@@ -73,7 +73,7 @@ export default {
       .item {
         display: inline-grid;
         margin-right: 8px;
-        width: 12rem;
+        width: 10rem;
         height: 10rem;
         div {
           text-align: center;

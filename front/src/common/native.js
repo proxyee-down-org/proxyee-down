@@ -210,7 +210,20 @@ const setConfig = config => {
   return new Promise((resolve, reject) => {
     client
       .put('/native/setConfig',config)
-      .then(response => resolve(response.data))
+      .then(response => resolve(response))
+      .catch(error => reject(error))
+  })
+}
+
+/**
+ * 复制数据到系统剪贴板
+ * @param {object} data 
+ */
+const copy = data => {
+  return new Promise((resolve, reject) => {
+    clientNoSpin
+      .put('/native/copy',data)
+      .then(response => resolve(response))
       .catch(error => reject(error))
   })
 }
@@ -232,3 +245,4 @@ export { updateExtension }
 export { toggleExtension }
 export { getConfig }
 export { setConfig }
+export { copy }

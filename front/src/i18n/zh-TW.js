@@ -12,7 +12,9 @@ export default {
     notNull: '不能為空',
     fmtErr: '格式不正確',
     choose: '選擇',
-    save: '儲存'
+    save: '儲存',
+    copySucc: '複製成功',
+    copyFail: '複製失敗'
   },
   tasks: {
     createTask: '建立任務',
@@ -39,7 +41,7 @@ export default {
     option: '附加',
     head: '請求頭',
     body: '請求體',
-    detail:'下載細節'
+    detail: '下載細節'
   },
   extension: {
     conditions: '使用須知',
@@ -50,6 +52,7 @@ export default {
     proxyTip1:
       'Proxyee Down 會修改系統全域的代理設定，可能會與相同機制的軟體發生衝突(例如：SS、SSR)',
     proxyTip2: '若關閉全域代理，需配合瀏覽器代理插件來使用(例如：SwitchyOmega)',
+    copyPac: '複製PAC鏈接',
     title: '名稱',
     description: '描述',
     currVersion: '目前版本',

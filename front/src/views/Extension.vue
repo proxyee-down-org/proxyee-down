@@ -22,6 +22,9 @@
           <p>{{ $t('extension.proxyTip2') }}</p>
         </div>
       </Tooltip>
+      <Button v-show="!proxySwitch"
+        type="primary"
+        @click="copyPac">{{ $t('extension.copyPac') }}</Button>
     </div>
     <Table :columns="columns"
       :data="page.data"></Table>
@@ -52,7 +55,8 @@ import {
   installExtension,
   updateExtension,
   toggleExtension,
-  openUrl
+  openUrl,
+  copy
 } from '../common/native.js'
 
 export default {
@@ -92,9 +96,7 @@ export default {
             return (
               <div>
                 {params.row.installed ? (
-                  <Tag color="green">
-                    {_this.$t('extension.installStatusTrue')}
-                  </Tag>
+                  <Tag color="green">{_this.$t('extension.installStatusTrue')}</Tag>
                 ) : (
                   <Tag>{_this.$t('extension.installStatusFalse')}</Tag>
                 )}
@@ -116,9 +118,7 @@ export default {
                       type="ios-cloud-upload-outline"
                       class="action-icon"
                       title={_this.$t('extension.actionUpdate')}
-                      nativeOnClick={() =>
-                        _this.downExtension(true, params.row, 0)
-                      }
+                      nativeOnClick={() => _this.downExtension(true, params.row, 0)}
                     />
                   ) : (
                     ''
@@ -128,9 +128,7 @@ export default {
                     type="ios-cloud-download-outline"
                     class="action-icon"
                     title={_this.$t('extension.actionInstall')}
-                    nativeOnClick={() =>
-                      _this.downExtension(false, params.row, 0)
-                    }
+                    nativeOnClick={() => _this.downExtension(false, params.row, 0)}
                   />
                 )}
                 <Icon
@@ -143,7 +141,7 @@ export default {
                         params.row.path +
                         '/README.md'
                     )
-                   }}
+                  }}
                 />
               </div>
             )
@@ -159,9 +157,7 @@ export default {
               <Switch
                 disabled={!params.row.installed}
                 v-model={params.row.meta.enabled}
-                onOn-change={enabled =>
-                  _this.changeEnabled(enabled, params.row)
-                }
+                onOn-change={enabled => _this.changeEnabled(enabled, params.row)}
               />
             )
           }
@@ -186,11 +182,6 @@ export default {
           this.loadExtensions()
         }
       })
-    },
-
-    buildPacUrl() {
-      const { protocol, host } = window.location
-      return `${protocol}//${host}/pac/pdown.pac`
     },
 
     changeProxyMode(val) {
@@ -221,9 +212,7 @@ export default {
           path: row.path,
           files: row.files
         }
-        let downPromise = isUpdate
-          ? updateExtension(params)
-          : installExtension(params)
+        let downPromise = isUpdate ? updateExtension(params) : installExtension(params)
         downPromise
           .then(() => {
             this.$set(row, 'installed', true)
@@ -283,9 +272,7 @@ export default {
           let serverExts = this.page.data
           serverExts.forEach(serverExt => {
             serverExt.newVersion = serverExt.version
-            let index = this.localExts.findIndex(
-              localExt => localExt.meta.path == serverExt.path
-            )
+            let index = this.localExts.findIndex(localExt => localExt.meta.path == serverExt.path)
             // The plug-in has already been installed locally.
             if (index !== -1) {
               let localExt = this.localExts[index]
@@ -298,7 +285,7 @@ export default {
           })
         })
         .catch(() => {
-          this.localExts.forEach(localExt=>{
+          this.localExts.forEach(localExt => {
             localExt.installed = true
             localExt.currVersion = localExt.version
           })
@@ -313,6 +300,15 @@ export default {
     },
     openUrl(url) {
       openUrl(url)
+    },
+    copyPac() {
+      const { protocol, host } = window.location
+      copy({
+        type: 'text',
+        data: `${protocol}//${host}/pac/pdown.pac?t=` + new Date().getTime()
+      })
+        .then(() => this.$Message.success(this.$t('tip.copySucc')))
+        .catch(() => this.$Message.error(this.$t('tip.copyFail')))
     }
   },
   created() {
@@ -337,6 +333,9 @@ export default {
 }
 .proxy-switch-div b {
   padding-right: 10px;
+}
+.proxy-switch-div button {
+  margin-left: 10px;
 }
 .spin-icon-load {
   animation: ani-demo-spin 1s linear infinite;
