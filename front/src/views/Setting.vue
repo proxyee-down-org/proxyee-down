@@ -71,16 +71,17 @@
           <FormItem :label="$t('setting.uiMode')"
             prop="appConfig.uiMode">
             <Select v-model="form.appConfig.uiMode">
-              <Option :value="1">{{ $t('setting.uiModeWindows') }}</Option>
-              <Option :value="0">{{ $t('setting.uiModeBrowser') }}</Option>
+              <Option v-for="option in setting.uiModes"
+                :key="option.value"
+                :value="option.value">{{ option.text }}</Option>
             </Select>
           </FormItem>
           <FormItem :label="$t('setting.checkUpdate')"
             prop="appConfig.updateCheckRate">
             <Select v-model="form.appConfig.updateCheckRate">
-              <Option :value="0">{{ $t('setting.checkUpdateNever') }}</Option>
-              <Option :value="1">{{ $t('setting.checkUpdateWeek') }}</Option>
-              <Option :value="2">{{ $t('setting.checkUpdateStartup') }}</Option>
+              <Option v-for="option in setting.updateChecks"
+                :key="option.value"
+                :value="option.value">{{ option.text }}</Option>
             </Select>
           </FormItem>
         </div>
@@ -94,6 +95,8 @@
 </template>
 <script>
 import FileChoose from '../components/FileChoose'
+import { getConfig, setConfig } from '../common/native.js'
+
 export default {
   name: 'setting',
   components: {
@@ -117,13 +120,28 @@ export default {
       }
     }
   },
+  computed: {
+    setting() {
+      return {
+        uiModes: [
+          { value: 0, text: this.$t('setting.uiModeBrowser') },
+          { value: 1, text: this.$t('setting.uiModeWindows') }
+        ],
+        updateChecks: [
+          { value: 0, text: this.$t('setting.checkUpdateNever') },
+          { value: 1, text: this.$t('setting.checkUpdateWeek') },
+          { value: 2, text: this.$t('setting.checkUpdateStartup') }
+        ]
+      }
+    }
+  },
   methods: {
     async getConfig() {
-      let downConfig = await this.$http.get('http://127.0.0.1:26339/config')
-      let appConfig = await this.$http.get('/native/getConfig')
+      let downConfig = await this.$noSpinHttp.get('http://127.0.0.1:26339/config')
+      let appConfig = await getConfig()
       this.form = {
         downConfig: { ...downConfig.data },
-        appConfig: { ...appConfig.data }
+        appConfig: { ...appConfig }
       }
       if (this.form.downConfig.speedLimit > 0) {
         this.form.downConfig.speedLimit /= 1024
@@ -143,8 +161,19 @@ export default {
             downConfig.totalSpeedLimit *= 1024
           }
           await this.$http.put('http://127.0.0.1:26339/config', downConfig)
-          await this.$http.put('/native/setConfig', this.form.appConfig)
-          this.$i18n.locale = this.form.appConfig.locale
+          await setConfig(this.form.appConfig)
+          if (this.$i18n.locale != this.form.appConfig.locale) {
+            this.$i18n.locale = this.form.appConfig.locale
+            //强制渲染一遍，避免切换语言后下拉框不渲染的问题
+            const uiMode = this.form.appConfig.uiMode
+            const updateCheckRate = this.form.appConfig.updateCheckRate
+            this.form.appConfig.uiMode = null
+            this.form.appConfig.updateCheckRate = null
+            setTimeout(() => {
+              this.form.appConfig.uiMode = uiMode
+              this.form.appConfig.updateCheckRate = updateCheckRate
+            }, 0)
+          }
         }
       })
     }
