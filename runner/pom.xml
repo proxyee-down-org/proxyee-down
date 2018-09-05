@@ -23,7 +23,7 @@
   </repositories>
 
   <build>
-    <finalName>proxyee-down</finalName>
+    <finalName>proxyee-down-runner</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>

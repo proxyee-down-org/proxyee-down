@@ -36,7 +36,7 @@ public class Runner {
       Process process = Runtime.getRuntime().exec(new String[]{
           JAVA_CMD_PATH,
           "-jar",
-          "-Dfile.encoding=GBK",
+          //"-Dfile.encoding=GBK",
           //"-Dapple.awt.UIElement=true",
           "-Xms128m",
           "-Xmx384m",
