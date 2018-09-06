@@ -19,10 +19,7 @@ public class ApiController {
   @RequestMapping("createTask")
   public FullHttpResponse createTask(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, String> map = getQueryParams(request);
-    Platform.runLater(() -> {
-      DownApplication.INSTANCE.show(false);
-      DownApplication.INSTANCE.loadUri("/#/tasks?request=" + map.get("request") + "&response=" + map.get("response"));
-    });
+    DownApplication.INSTANCE.loadUri("/#/tasks?request=" + map.get("request") + "&response=" + map.get("response"), false);
     FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
     response.headers().set("Access-Control-Allow-Origin", "*");
     return response;

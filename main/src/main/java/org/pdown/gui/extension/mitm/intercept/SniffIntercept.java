@@ -1,11 +1,13 @@
 package org.pdown.gui.extension.mitm.intercept;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.monkeywie.proxyee.intercept.HttpProxyIntercept;
 import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
 import com.github.monkeywie.proxyee.util.HttpUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -15,9 +17,15 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
+import java.net.URLEncoder;
 import java.util.Arrays;
 import org.pdown.core.entity.HttpRequestInfo;
+import org.pdown.core.entity.HttpResponseInfo;
+import org.pdown.core.util.HttpDownUtil;
+import org.pdown.core.util.ProtoUtil.RequestProto;
+import org.pdown.gui.DownApplication;
 import org.pdown.gui.extension.ExtensionContent;
+import org.pdown.rest.form.HttpRequestForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,12 +101,16 @@ public class SniffIntercept extends HttpProxyIntercept {
 
       HttpRequestInfo httpRequestInfo = (HttpRequestInfo) pipeline.getHttpRequest();
       if (downFlag) {   //如果是下载
-        proxyChannel.close();//关闭嗅探下载连接
         LOGGER.debug("=====================下载===========================\n" +
             pipeline.getHttpRequest().toString() + "\n" +
             "------------------------------------------------" +
             httpResponse.toString() + "\n" +
             "================================================");
+        proxyChannel.close();//关闭嗅探下载连接
+        httpRequestInfo.setRequestProto(new RequestProto(pipeline.getRequestProto().getHost(), pipeline.getRequestProto().getPort(), pipeline.getRequestProto().getSsl()));
+        HttpRequestForm requestForm = HttpRequestForm.parse(httpRequestInfo);
+        HttpResponseInfo responseInfo = HttpDownUtil.getHttpResponseInfo(httpRequestInfo, null, null, (NioEventLoopGroup) clientChannel.eventLoop().parent());
+        responseInfo.setSupportRange(false);
         httpResponse.headers().clear();
         httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
         httpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
@@ -109,6 +121,11 @@ public class SniffIntercept extends HttpProxyIntercept {
         clientChannel.writeAndFlush(httpResponse);
         clientChannel.writeAndFlush(httpContent);
         clientChannel.close();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String requestParam = URLEncoder.encode(objectMapper.writeValueAsString(requestForm), "utf-8");
+        String responseParam = URLEncoder.encode(objectMapper.writeValueAsString(responseInfo), "utf-8");
+        String uri = "/#/tasks?request=" + requestParam + "&response=" + responseParam;
+        DownApplication.INSTANCE.loadUri(uri, false);
         return;
       } else {
         if (httpRequestInfo.content() != null) {

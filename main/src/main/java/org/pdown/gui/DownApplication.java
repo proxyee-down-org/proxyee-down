@@ -91,7 +91,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     initTray();
     initWindow();
     initBrowser();
-    show(true);
+    loadUri("", true);
   }
 
 
@@ -220,11 +220,11 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     MenuItem showItem = new MenuItem(I18nUtil.getMessage("gui.tray.show"));
     showItem.addActionListener(event -> Platform.runLater(() -> show(true)));
     MenuItem setItem = new MenuItem(I18nUtil.getMessage("gui.tray.set"));
-    setItem.addActionListener(event -> Platform.runLater(() -> guiLoadUri("/#/setting")));
+    setItem.addActionListener(event -> loadUri("/#/setting", true));
     MenuItem aboutItem = new MenuItem(I18nUtil.getMessage("gui.tray.about"));
-    aboutItem.addActionListener(event -> Platform.runLater(() -> guiLoadUri("/#/about")));
+    aboutItem.addActionListener(event -> loadUri("/#/about", true));
     MenuItem supportItem = new MenuItem(I18nUtil.getMessage("gui.tray.support"));
-    supportItem.addActionListener(event -> Platform.runLater(() -> guiLoadUri("/#/support")));
+    supportItem.addActionListener(event -> loadUri("/#/support", true));
     MenuItem closeItem = new MenuItem(I18nUtil.getMessage("gui.tray.exit"));
     closeItem.addActionListener(event -> {
       Platform.exit();
@@ -271,13 +271,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
 
   /**
    * 显示gui窗口
+   *
    * @param isTray 是否从托盘按钮打开的(windows下如果非托盘按钮调用窗口可能不会置顶)
    */
   public void show(boolean isTray) {
-    if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
-      loadUri("");
-      return;
-    }
     //是否需要调用窗口置顶
     boolean isFront = false;
     if (stage.isShowing()) {
@@ -297,12 +294,9 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       stage.setIconified(true);
       stage.setIconified(false);
     }
-    if (!browser.isLoad()) {
-      loadUri("");
-    }
   }
 
-  public void loadUri(String uri) {
+  public void loadUri(String uri, boolean isTray) {
     String url = "http://127.0.0.1:" + FRONT_PORT + uri;
     if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
       try {
@@ -311,13 +305,11 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
         LOGGER.error("Open browse error", e);
       }
     } else {
-      browser.load(url);
+      Platform.runLater(() -> {
+        show(isTray);
+        browser.load(url);
+      });
     }
-  }
-
-  public void guiLoadUri(String uri){
-    show(true);
-    loadUri(uri);
   }
 
   //提示并退出程序
