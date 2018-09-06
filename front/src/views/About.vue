@@ -71,7 +71,7 @@ export default {
   .v-about {
     .team {
       .item {
-        display: inline-grid;
+        display: inline-table;
         margin-right: 8px;
         width: 10rem;
         height: 10rem;
