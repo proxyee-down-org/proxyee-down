@@ -2,7 +2,9 @@
   var API_PORT = '${apiPort}'
   var FRONT_PORT = '${frontPort}'
   var REST_PORT = '26339'
-  window.pdown = {
+  ;(function(pdown){
+    ${content}
+  })({
     resolve: function (request) {
       return ajax.put('http://127.0.0.1:' + REST_PORT + '/util/resolve', request)
     },
@@ -47,7 +49,7 @@
       xhr.send()
       return cookie
     }
-  }
+  })
 })((function () {
   return {
     buildXHR: function () {
@@ -60,7 +62,7 @@
       return xhr
     },
     proxySend: function (async, method, url, data, onSuccess, onError) {
-      var xhr = this.buildXHR();
+      var xhr = this.buildXHR()
       xhr.open('post', '/', async)
       var data = {method: method, url: url, data: data}
       xhr.setRequestHeader('X-Proxy-Send', encodeURIComponent(JSON.stringify(data)))

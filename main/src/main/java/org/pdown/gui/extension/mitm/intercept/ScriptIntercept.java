@@ -6,7 +6,6 @@ import com.github.monkeywie.proxyee.util.ByteUtil;
 import com.github.monkeywie.proxyee.util.HttpUtil;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.AsciiString;
@@ -24,7 +23,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.content.PDownConfigContent;
-import org.pdown.gui.entity.PDownConfigInfo;
 import org.pdown.gui.extension.ContentScript;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.ExtensionInfo;
@@ -77,12 +75,10 @@ public class ScriptIntercept extends FullResponseIntercept {
           for (String script : contentScript.getScripts()) {
             File scriptFile = new File(entry.getKey() + File.separator + script);
             if (scriptFile.exists() && scriptFile.isFile()) {
-              scriptsBuilder.append("<script type=\"text/javascript\">");
               try {
                 scriptsBuilder.append(new String(Files.readAllBytes(scriptFile.toPath()), "UTF-8"));
               } catch (IOException e) {
               }
-              scriptsBuilder.append("</script>");
             }
           }
         }
@@ -91,17 +87,19 @@ public class ScriptIntercept extends FullResponseIntercept {
     if (scriptsBuilder.length() > 0) {
       httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("text/html; charset=utf-8"));
       int index = ByteUtil.findText(httpResponse.content(), "<head>");
+      String pdownJs = "";
       try (
           BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("pdown.js")))
       ) {
-        String pdownJs = reader.lines().collect(Collectors.joining("\r\n"));
+        pdownJs = reader.lines().collect(Collectors.joining("\r\n"));
         pdownJs = pdownJs.replace("${apiPort}", DownApplication.INSTANCE.API_PORT + "");
         pdownJs = pdownJs.replace("${frontPort}", DownApplication.INSTANCE.FRONT_PORT + "");
         pdownJs = pdownJs.replace("${uiMode}", PDownConfigContent.getInstance().get().getUiMode() + "");
-        scriptsBuilder.insert(0, "<script type=\"text/javascript\">" + pdownJs + "</script>");
+        pdownJs = pdownJs.replace("${content}", scriptsBuilder.toString());
+        pdownJs = "<script type=\"text/javascript\">\r\n" + pdownJs + "\r\n</script>";
       } catch (IOException e) {
       }
-      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index, scriptsBuilder.toString(), Charset.forName("UTF-8"));
+      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index, pdownJs, Charset.forName("UTF-8"));
     }
   }
 }
