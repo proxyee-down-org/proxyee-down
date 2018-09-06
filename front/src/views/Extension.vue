@@ -13,13 +13,12 @@
       <b>{{ $t('extension.globalProxy') }}</b>
       <Switch v-model="proxySwitch"
         @on-change="changeProxyMode"></Switch>
-      <Tooltip placement="right">
+      <Tooltip placement="bottom">
         <Icon type="help-circled"
+          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/tree/v3.0#全局代理')"
           class="action-icon tip-icon" />
-        <div slot="content"
-          style="white-space: normal;text-indent: 2em;">
-          <p>{{ $t('extension.proxyTip1') }}</p>
-          <p>{{ $t('extension.proxyTip2') }}</p>
+        <div slot="content">
+          <p>{{ $t('extension.proxyTip') }}</p>
         </div>
       </Tooltip>
       <Button v-show="!proxySwitch"
@@ -335,7 +334,7 @@ export default {
   padding-right: 10px;
 }
 .proxy-switch-div button {
-  margin-left: 10px;
+  margin-left: 25px;
 }
 .spin-icon-load {
   animation: ani-demo-spin 1s linear infinite;

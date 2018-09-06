@@ -49,9 +49,7 @@ export default {
       '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 證書，點擊下面的安裝按鈕並按系統的引導進行確認安裝。(注意：程式會在安裝前檢測作業系統中是否有安裝過證書，當檢測到有安裝的情況會提示刪除對應的舊 CA 證書)',
     install: '安裝',
     globalProxy: '全域代理',
-    proxyTip1:
-      'Proxyee Down 會修改系統全域的代理設定，可能會與相同機制的軟體發生衝突(例如：SS、SSR)',
-    proxyTip2: '若關閉全域代理，需配合瀏覽器代理插件來使用(例如：SwitchyOmega)',
+    proxyTip: '點擊查看說明',
     copyPac: '複製PAC鏈接',
     title: '名稱',
     description: '描述',

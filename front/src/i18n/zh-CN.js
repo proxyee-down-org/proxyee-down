@@ -49,9 +49,7 @@ export default {
       '首次使用扩展模块时，必须安装由Proxyee Down随机生成的一个CA证书，点击下面的安装按钮并按系统的引导进行确认安装。(注意：程序会在安装前检测操作系统中是否有安装过证书，当检测到有安装的情况会提示删除对应的旧CA证书)',
     install: '安装',
     globalProxy: '全局代理',
-    proxyTip1:
-      'Proxyee Down会修改系统全局的代理设置，可能会与相同机制的软件发生冲突(例如：SS、SSR)',
-    proxyTip2: '若关闭全局代理，需配合浏览器代理插件来使用(例如：SwitchyOmega)',
+    proxyTip: '点击查看说明',
     copyPac: '复制PAC链接',
     title: '名称',
     description: '描述',
