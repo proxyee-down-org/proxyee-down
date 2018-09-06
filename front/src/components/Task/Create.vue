@@ -24,9 +24,11 @@
           :step="2"
           show-input />
         <Slider v-else
+          disabled
           v-model="form.config.connections"
           :min="1"
-          :max="1" />
+          :max="1"
+          show-input />
       </FormItem>
       <FormItem :label="$t('tasks.filePath')"
         prop="config.filePath">
@@ -67,9 +69,7 @@ export default {
         config: {}
       },
       rules: {
-        'response.fileName': [
-          { required: true, message: this.$t('tip.notNull') }
-        ],
+        'response.fileName': [{ required: true, message: this.$t('tip.notNull') }],
         'config.filePath': [{ required: true, message: this.$t('tip.notNull') }]
       }
     }
