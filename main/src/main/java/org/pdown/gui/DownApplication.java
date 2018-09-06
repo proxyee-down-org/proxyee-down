@@ -218,7 +218,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     //添加右键菜单
     PopupMenu popupMenu = new PopupMenu();
     MenuItem showItem = new MenuItem(I18nUtil.getMessage("gui.tray.show"));
-    showItem.addActionListener(event -> Platform.runLater(() -> show(true)));
+    showItem.addActionListener(event -> Platform.runLater(() -> loadUri("", true)));
     MenuItem setItem = new MenuItem(I18nUtil.getMessage("gui.tray.set"));
     setItem.addActionListener(event -> loadUri("/#/setting", true));
     MenuItem aboutItem = new MenuItem(I18nUtil.getMessage("gui.tray.about"));
@@ -297,7 +297,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   }
 
   public void loadUri(String uri, boolean isTray) {
-    String url = "http://127.0.0.1:" + FRONT_PORT + uri;
+    String url = "http://127.0.0.1:" + FRONT_PORT + (uri == null ? "" : uri);
     if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
       try {
         Desktop.getDesktop().browse(URI.create(url));
@@ -307,7 +307,9 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     } else {
       Platform.runLater(() -> {
         show(isTray);
-        browser.load(url);
+        if (!browser.isLoad()) {
+          browser.load(url);
+        }
       });
     }
   }

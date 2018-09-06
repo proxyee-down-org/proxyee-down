@@ -15,7 +15,7 @@
         @on-change="changeProxyMode"></Switch>
       <Tooltip placement="bottom">
         <Icon type="help-circled"
-          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/tree/v3.0#全局代理')"
+          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/tree/v3.0#%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86')"
           class="action-icon tip-icon" />
         <div slot="content">
           <p>{{ $t('extension.proxyTip') }}</p>
