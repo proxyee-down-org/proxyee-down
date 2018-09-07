@@ -4,9 +4,13 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
 
 ## 软件下载
 
-- [windows](http://api.pdown.org/download/release?os=windows)
-- [mac](http://api.pdown.org/download/release?os=mac)
-- [linux](https://github.com/proxyee-down-org/proxyee-down/releases)
+- [OneDrive下载](https://imhx-my.sharepoint.com/personal/pd_imhx_onmicrosoft_com/Documents/Forms/All.aspx?slrid=58578c9e-90fc-0000-2541-bbdecb83b89a&FolderCTID=0x012000536DC31294EC264084FE880734F95AEA&id=%2Fpersonal%2Fpd_imhx_onmicrosoft_com%2FDocuments%2Fproxyee-down%2F3%2E0)(推荐)
+  感谢 [惶心|技术博客](https://tech.hxco.de) 提供
+- 官网下载：
+  官网带宽比较低，建议用OneDrive下载
+  - [windows](http://api.pdown.org/download/release?os=windows)
+  - [mac](http://api.pdown.org/download/release?os=mac)
+  - [linux](https://github.com/proxyee-down-org/proxyee-down/releases)
 
 ## 软件下载
 
