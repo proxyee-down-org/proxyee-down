@@ -68,8 +68,6 @@
 <script>
 import FileChoose from '../FileChoose'
 
-let defaultConfig = {}
-
 export default {
   props: {
     request: {
@@ -102,7 +100,7 @@ export default {
     request() {
       this.form.request = this.request
       this.form.response = this.response
-      this.form.config = { ...defaultConfig }
+      this.setDefaultConfig()
     }
   },
   computed: {
@@ -155,9 +153,7 @@ export default {
       this.form.taskId = undefined
       if (visible) {
         //check same task
-        const { data: serverConfig } = await this.$http.get('http://127.0.0.1:26339/config')
         const { data: downTasks } = await this.$http.get('http://127.0.0.1:26339/tasks?status=1,2,3')
-        this.setDefaultConfig(serverConfig)
         this.sameTasks = downTasks
           ? downTasks.filter(task => task.response.supportRange && task.response.totalSize === this.response.totalSize)
           : []
@@ -195,19 +191,22 @@ export default {
         this.selectOldTask = true
       }
     },
-    setDefaultConfig(serverConfig) {
-      const defaultConfig = {
-        filePath: serverConfig.filePath,
-        connections: serverConfig.connections,
-        timeout: serverConfig.timeout,
-        retryCount: serverConfig.retryCount,
-        autoRename: serverConfig.autoRename,
-        speedLimit: serverConfig.speedLimit
-      }
-      this.form.config = { ...defaultConfig }
+    setDefaultConfig() {
+      this.$http.get('http://127.0.0.1:26339/config').then(result => {
+        const serverConfig = result.data
+        this.form.config = {
+          filePath: serverConfig.filePath,
+          connections: serverConfig.connections,
+          timeout: serverConfig.timeout,
+          retryCount: serverConfig.retryCount,
+          autoRename: serverConfig.autoRename,
+          speedLimit: serverConfig.speedLimit
+        }
+      })
     }
   },
   created() {
+    this.setDefaultConfig()
     this.init(this.visible)
   }
 }

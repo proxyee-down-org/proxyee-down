@@ -91,7 +91,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     initTray();
     initWindow();
     initBrowser();
-    loadUri("", true);
+    loadUri(null, true);
   }
 
 
@@ -307,7 +307,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     } else {
       Platform.runLater(() -> {
         show(isTray);
-        if (!browser.isLoad()) {
+        if (uri != null || !browser.isLoad()) {
           browser.load(url);
         }
       });
