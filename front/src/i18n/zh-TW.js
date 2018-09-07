@@ -4,7 +4,7 @@ export default {
     extension: '擴充管理',
     setting: '軟體設定',
     about: '關於專案',
-    support: '支援我們'
+    support: '支持我們'
   },
   tip: {
     tip:'提示',
@@ -23,7 +23,7 @@ export default {
     pauseDownloads: '暫停下載',
     deleteTask: '刪除任務',
     deleteTaskTip: '是否刪除任務和檔案？',
-    url: '链接',
+    url: '連結',
     fileName: '名稱',
     fileSize: '大小',
     connections: '連接數',
@@ -43,18 +43,18 @@ export default {
     head: '請求頭',
     body: '請求體',
     detail: '下載細節',
-    checkSameTask: '檢測到可能相同的下載任務，是否選擇任務進行刷新？',
+    checkSameTask: '檢測到可能相同的下載任務，是否選擇任務進行更新？',
     sameTaskList: '任務列表',
-    sameTaskPlaceholder: '請選擇要刷新的任務'
+    sameTaskPlaceholder: '請選擇要更新的任務'
   },
   extension: {
     conditions: '使用須知',
     conditionsContent:
-      '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 證書，點擊下面的安裝按鈕並按系統的引導進行確認安裝。(注意：程式會在安裝前檢測作業系統中是否有安裝過證書，當檢測到有安裝的情況會提示刪除對應的舊 CA 證書)',
+      '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點擊下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前檢測作業系統中是否有安裝過證書，當檢測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
     install: '安裝',
     globalProxy: '全域代理',
     proxyTip: '點擊查看說明',
-    copyPac: '複製PAC鏈接',
+    copyPac: '複製 PAC 連結',
     title: '名稱',
     description: '描述',
     currVersion: '目前版本',
@@ -84,11 +84,11 @@ export default {
     speedLimitTip: '0 為不限速',
     appSetting: '系統設定',
     language: '語言',
-    uiMode: 'UI模式',
+    uiMode: 'UI 模式',
     uiModeWindows: '視窗',
     uiModeBrowser: '瀏覽器',
     checkUpdate: '檢查更新',
-    checkUpdateWeek: '每周',
+    checkUpdateWeek: '每週',
     checkUpdateStartup: '每次啟動',
     checkUpdateNever: '從不'
   },
@@ -103,7 +103,7 @@ export default {
   },
   alert: {
     refused: '程式異常，拒絕存取',
-    timeout: '程式異常，連接逾時',
+    timeout: '程式異常，連線逾時',
     error: '程式出錯',
     notFound: '任務不存在',
     '/tasks': {
