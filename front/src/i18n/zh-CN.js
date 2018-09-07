@@ -7,6 +7,7 @@ export default {
     support: '支持我们'
   },
   tip: {
+    tip: '提示',
     ok: '确定',
     cancel: '取消',
     notNull: '不能为空',
@@ -41,7 +42,10 @@ export default {
     option: '附加',
     head: '请求头',
     body: '请求体',
-    detail: '下载详情'
+    detail: '下载详情',
+    checkSameTask: '检测到可能相同的下载任务，是否选择任务进行刷新？',
+    sameTaskList: '任务列表',
+    sameTaskPlaceholder: '请选择要刷新的任务'
   },
   extension: {
     conditions: '使用须知',
@@ -91,8 +95,7 @@ export default {
   about: {
     project: {
       title: '项目',
-      content:
-        'Proxyee Down是一款开源的免费软件，基于本软件的高速下载内核和扩展，可以方便并快速的下载所需资源。',
+      content: 'Proxyee Down是一款开源的免费软件，基于本软件的高速下载内核和扩展，可以方便并快速的下载所需资源。',
       githubAddress: '项目主页：',
       tutorial: '使用教程：',
       feedback: '问题反馈：',

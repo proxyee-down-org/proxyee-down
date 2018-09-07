@@ -7,6 +7,7 @@ export default {
     support: 'Support Us'
   },
   tip: {
+    tip: 'Tip',
     ok: 'OK',
     cancel: 'Cancel',
     notNull: 'Can not be empty',
@@ -41,7 +42,10 @@ export default {
     option: 'Option',
     head: 'Head',
     body: 'Body',
-    detail: 'Detail'
+    detail: 'Detail',
+    checkSameTask: 'Detected the same download task, did you choose to refresh the task?',
+    sameTaskList: 'Task List',
+    sameTaskPlaceholder: 'Please select the task to refresh'
   },
   extension: {
     conditions: 'Terms and Conditions',

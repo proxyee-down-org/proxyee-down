@@ -7,6 +7,7 @@ export default {
     support: '支援我們'
   },
   tip: {
+    tip:'提示',
     ok: '確定',
     cancel: '取消',
     notNull: '不能為空',
@@ -41,7 +42,10 @@ export default {
     option: '附加',
     head: '請求頭',
     body: '請求體',
-    detail: '下載細節'
+    detail: '下載細節',
+    checkSameTask: '檢測到可能相同的下載任務，是否選擇任務進行刷新？',
+    sameTaskList: '任務列表',
+    sameTaskPlaceholder: '請選擇要刷新的任務'
   },
   extension: {
     conditions: '使用須知',

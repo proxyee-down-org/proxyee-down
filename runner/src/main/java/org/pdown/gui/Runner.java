@@ -1,9 +1,18 @@
 package org.pdown.gui;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.JOptionPane;
 
 public class Runner {
@@ -11,9 +20,38 @@ public class Runner {
   private static final String JAVA_CMD_PATH = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
   private static final String MAIN_JAR_PATH = "main/proxyee-down-main.jar";
   private static final String MAIN_JAR_BAK_PATH = MAIN_JAR_PATH + ".bak";
+  private static final String VM_OPTIONS_PATH = "main/run.cfg";
+
+  private static List<String> VM_OPTIONS;
 
   public static void main(String[] args) throws IOException {
+    VM_OPTIONS = parseVmOptions();
     fork();
+  }
+
+  private static List<String> parseVmOptions() {
+    File file = Paths.get(VM_OPTIONS_PATH).toFile();
+    if (!file.exists()) {
+      try {
+        file.createNewFile();
+        try (
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)))
+        ) {
+          writer.write("-Xms128m");
+          writer.newLine();
+          writer.write("-Xmx384m");
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    try {
+      return Files.readAllLines(Paths.get(VM_OPTIONS_PATH));
+    } catch (IOException e) {
+    }
+    return null;
   }
 
   private static void fork() {
@@ -33,15 +71,21 @@ public class Runner {
       }
     }
     try {
-      Process process = Runtime.getRuntime().exec(new String[]{
-          JAVA_CMD_PATH,
-          "-jar",
-          //"-Dfile.encoding=GBK",
-          //"-Dapple.awt.UIElement=true",
-          "-Xms128m",
-          "-Xmx384m",
-          MAIN_JAR_PATH
-      });
+      List<String> execParams = new ArrayList<>();
+      execParams.add(JAVA_CMD_PATH);
+      execParams.add("-jar");
+      if (VM_OPTIONS == null) {
+        execParams.add("-Xms128m");
+        execParams.add("-Xmx384m");
+      } else {
+        for (String option : VM_OPTIONS) {
+          execParams.add(option);
+        }
+      }
+      execParams.add(MAIN_JAR_PATH);
+      String[] execArray = new String[execParams.size()];
+      execParams.toArray(execArray);
+      Process process = Runtime.getRuntime().exec(execArray);
       BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
       String line;
       boolean isClose = false;
