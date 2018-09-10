@@ -192,7 +192,7 @@ export default {
       }
     },
     setDefaultConfig() {
-      this.$http.get('http://127.0.0.1:26339/config').then(result => {
+      this.$noSpinHttp.get('http://127.0.0.1:26339/config').then(result => {
         const serverConfig = result.data
         this.form.config = {
           filePath: serverConfig.filePath,

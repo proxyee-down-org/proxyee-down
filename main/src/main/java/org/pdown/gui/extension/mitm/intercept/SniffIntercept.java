@@ -110,7 +110,6 @@ public class SniffIntercept extends HttpProxyIntercept {
         httpRequestInfo.setRequestProto(new RequestProto(pipeline.getRequestProto().getHost(), pipeline.getRequestProto().getPort(), pipeline.getRequestProto().getSsl()));
         HttpRequestForm requestForm = HttpRequestForm.parse(httpRequestInfo);
         HttpResponseInfo responseInfo = HttpDownUtil.getHttpResponseInfo(httpRequestInfo, null, null, (NioEventLoopGroup) clientChannel.eventLoop().parent());
-        responseInfo.setSupportRange(false);
         httpResponse.headers().clear();
         httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
         httpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
