@@ -92,6 +92,19 @@ export default {
     checkUpdateStartup: '每次啟動',
     checkUpdateNever: '從不'
   },
+  about: {
+    project: {
+      title: '項目',
+      content: 'Proxyee Down是一款開源的免費軟件，基於本軟件的高速下載內核和擴展，可以方便并快速的下載所需資源。',
+      githubAddress: '項目主頁：',
+      tutorial: '使用教程：',
+      feedback: '問題反饋：',
+      currentVersion: '當前版本：'
+    },
+    team: {
+      title: '團隊'
+    }
+  },
   update: {
     checkNew: '檢測到新版本',
     version: '版本號',
