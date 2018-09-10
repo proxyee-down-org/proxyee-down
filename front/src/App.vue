@@ -73,8 +73,6 @@ export default {
           this.restatModel = true
         })
         .catch(() => {
-          this.hasUpdate = false
-          this.restatModel = true
           this.$Message.error(this.$t('update.error'))
         })
     },
