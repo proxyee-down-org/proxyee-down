@@ -306,10 +306,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       }
     } else {
       Platform.runLater(() -> {
-        show(isTray);
         if (uri != null || !browser.isLoad()) {
           browser.load(url);
         }
+        show(isTray);
       });
     }
   }

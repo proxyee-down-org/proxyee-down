@@ -66,13 +66,13 @@ public class ExtensionCertUtil {
     if (!file.exists()) {
       return false;
     }
+    if (OsUtil.isUnix()) {
+      return true;
+    }
     X509Certificate cert = CertUtil.loadCert(file.toURI());
     String subjectName = ((X500Name) cert.getSubjectDN()).getCommonName();
     String sha1 = getCertSHA1(cert);
-    if (OsUtil.isWindows() || OsUtil.isMac()) {
-      return findCertList(subjectName).toUpperCase().replaceAll("\\s", "").indexOf(":" + sha1.toUpperCase()) != -1;
-    }
-    return false;
+    return findCertList(subjectName).toUpperCase().replaceAll("\\s", "").indexOf(":" + sha1.toUpperCase()) != -1;
   }
 
   /**

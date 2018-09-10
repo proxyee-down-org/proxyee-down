@@ -278,20 +278,28 @@ public class NativeController {
   public FullHttpResponse installCert(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
     boolean status;
-    //再检测一次，确保不重复安装
-    if (!AppUtil.checkIsInstalledCert()) {
-      if (ExtensionCertUtil.existsCert(AppUtil.SUBJECT)) {
-        //存在无用证书需要卸载
-        ExtensionCertUtil.uninstallCert(AppUtil.SUBJECT);
+    if (OsUtil.isUnix()) {
+      if (!AppUtil.checkIsInstalledCert()) {
+        ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
       }
-      //生成新的证书
-      ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
-      //安装
-      ExtensionCertUtil.installCert(new File(AppUtil.CERT_PATH));
-      //检测是否安装成功，可能点了取消就没安装成功
-      status = AppUtil.checkIsInstalledCert();
-    } else {
+      Desktop.getDesktop().open(new File(AppUtil.SSL_PATH));
       status = true;
+    } else {
+      //再检测一次，确保不重复安装
+      if (!AppUtil.checkIsInstalledCert()) {
+        if (ExtensionCertUtil.existsCert(AppUtil.SUBJECT)) {
+          //存在无用证书需要卸载
+          ExtensionCertUtil.uninstallCert(AppUtil.SUBJECT);
+        }
+        //生成新的证书
+        ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
+        //安装
+        ExtensionCertUtil.installCert(new File(AppUtil.CERT_PATH));
+        //检测是否安装成功，可能点了取消就没安装成功
+        status = AppUtil.checkIsInstalledCert();
+      } else {
+        status = true;
+      }
     }
     data.put("status", status);
     if (status && !PDownProxyServer.isStart) {
