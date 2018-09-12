@@ -19,7 +19,7 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
   (_注：360 可能会报毒，需要加入白名单_)
   ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-13-49-38.png)
 - **mac**:  
-  下载好 mac 版本的压缩包之后，解压至任意目录，会得到一个`Proxyee Down`App，双击运行即可。
+  下载好 mac 版本的压缩包之后，解压至任意目录，会得到一个`Proxyee Down`App，双击运行即可。  
   (_注：1.如果启动闪退，把APP复制到别的目录就可以正常运行。2.mac 系统切换代理和安装证书需要管理员权限，所以在启动时会提示输入密码_)
   ![](https://monkeywie.github.io/2018/09/05/proxyee-down-3-0-guide/2018-09-05-13-51-38.png)
 - **linux**:  
