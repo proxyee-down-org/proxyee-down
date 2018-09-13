@@ -39,7 +39,7 @@
   java -jar proxyee-down-main.jar
   ```
   > 注意：如果使用 `openjdk` 的话需要安装 `openjfx`
-  
+
 
 ## 任务模块
 
@@ -51,7 +51,7 @@
 
 ## 扩展模块
 
-在开启扩展模块时一定要手动安装一个由 Proxyee Down 随机生成的一个 CA 证书用于`HTTPS MITM`的支持。
+在开启扩展模块时一定要手动安装一个由 `Proxyee Down` 随机生成的一个 CA 证书用于`HTTPS MITM`的支持。
 
 - **安装证书**
 
@@ -78,8 +78,10 @@
   - **SwitchyOmega 设置教程**  
     1. 新建情景模式，选择 `PAC` 情景模式类型。
       ![](https://upload.cc/i1/2018/09/14/1Uj25H.png)
+      
     1. 把复制的 PAC 链接粘贴进来并点击立即更新情景模式然后保存。
       ![](https://upload.cc/i1/2018/09/14/ZKdqrU.png)
+      
     1. 切换情景模式进行下载  
       ![](https://upload.cc/i1/2018/09/14/h4qP9F.png)
 
