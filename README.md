@@ -1,18 +1,30 @@
-# HTTP 下载器
+<p align="center">
+<img src="https://i.imgur.com/m7cxr06.jpg" alt="ProxyEE - Down Render Poster">
+</p>
 
-Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`开发，支持自定义 HTTP 请求下载且支持扩展功能，可以通过安装扩展实现特殊的下载需求。
+<a href="https://www.pdown.org" target="_blank"><h1 align="center">ProxyEE Down</h1></a>
 
-## 软件下载
+<p align="center">
+<a href="https://github.com/monkeyWie" target="_blank"><img alt="Author" src="https://img.shields.io/badge/author-monkeyWie-red.svg?style=flat-square"/></a>
+<a href="https://github.com/proxyee-down-org/proxyee-down/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
+<a href="https://github.com/proxyee-down-org/proxyee-down/stargazers"><img alt="Contributors" src="https://img.shields.io/github/stars/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
+<a href="https://github.com/proxyee-down-org/proxyee-down/fork"><img alt="Forks" src="https://img.shields.io/github/forks/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
+<a href="https://github.com/proxyee-down-org/proxyee-down/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
+</p>
 
-- [OneDrive下载](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)(推荐)  
-  感谢 [惶心|技术博客](https://tech.hxco.de) 提供
-- 官网下载：  
-  官网带宽比较低，建议用OneDrive下载  
-  - [windows](http://api.pdown.org/download/release?os=windows)
-  - [mac](http://api.pdown.org/download/release?os=mac)
-  - [linux](https://github.com/proxyee-down-org/proxyee-down/releases)
+> Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`开发，支持自定义 HTTP 请求下载且支持扩展功能，可以通过安装扩展实现特殊的下载需求。
 
-## 使用说明
+
+## 下载
+
+- 使用 HXCO Get 下载（官方源）  
+  官网服务器速度有限，建议用OneDrive下载  
+<a href="https://get.soft.org/proxyeedown"><img src="https://raw.githubusercontent.com/hxco/Get/master/badges/cn/minisize/badge-320x94.png" width="167" height="47"><a>
+
+- [使用 OneDrive 下载](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)【推荐】
+  由 [惶心 技术博客](https://tech.hxco.de) 提供
+
+## 使用
 
 - **windows**:  
   下载好 windows 版本的压缩包之后，解压至任意目录，会得到一个文件夹，执行文件夹里面的`Proxyee Down.exe`文件即可。  
