@@ -80,7 +80,7 @@
 
       ![](https://upload.cc/i1/2018/09/14/1Uj25H.png)
       
-    2. 把复制的 PAC 链接粘贴进来并点击立即更新情景模式然后保存
+    2. 把复制的 `PAC` 链接粘贴进来并点击立即更新情景模式然后保存
 
       ![](https://upload.cc/i1/2018/09/14/ZKdqrU.png)
 
@@ -94,15 +94,15 @@
   - **扩展实现原理**  
     扩展功能是由 `MITM` (中间人攻击)技术实现的，使用 [proxyee](https://github.com/monkeyWie/proxyee) 框架拦截和修改 `HTTP` 或 `HTTPS` 的请求和响应报文，从而实现对应的扩展脚本注入。
 
-## QQ 群
+## 交流群组
 
-1 群**11352304**、2 群**20236964**、3 群**20233754**、4 群**737991056**
+1-4群均已爆满。等待添加 5 群。
 
 ## 开发
 
-本项目后端主要使用 java+spring boot+netty，前端使用 vue.js+iview。
+本项目后端主要使用 `java` + `spring` + `boot` + `netty`，前端使用 `vue.js` + `iview`
 
-###环境
+### 环境
 ![](https://img.shields.io/badge/JAVA-1.8%2B-brightgreen.svg) ![](https://img.shields.io/badge/maven-3.0%2B-brightgreen.svg) ![](https://img.shields.io/badge/node.js-8.0%2B-brightgreen.svg)
 
 ### 编译
