@@ -16,12 +16,11 @@
 
 
 ## 下载
-
-- 使用 HXCO Get 下载（官方源）  
-  官网服务器速度有限，建议用OneDrive下载  
+  
 <a href="https://get.soft.org/proxyeedown"><img src="https://raw.githubusercontent.com/hxco/Get/master/badges/cn/minisize/badge-320x94.png" width="167" height="47"><a>
 
 - [使用 OneDrive 下载](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)【推荐】
+
   由 [惶心 技术博客](https://tech.hxco.de) 提供
 
 ## 使用
