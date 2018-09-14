@@ -15,13 +15,15 @@
 > Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`开发，支持自定义 HTTP 请求下载且支持扩展功能，可以通过安装扩展实现特殊的下载需求。
 
 
-## 下载
+## 下载程序
   
 <a href="https://get.soft.org/proxyeedown"><img src="https://raw.githubusercontent.com/hxco/Get/master/badges/cn/minisize/badge-320x94.png" width="167" height="47"><a>
 
 你也可以使用 [OneDrive 下载](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)，这项服务基于 Onedrive For Business，存储账户由 [惶心 技术博客](https://tech.hxco.de) 提供。
 
-## 使用
+如果你在使用 Linux 系统，请通过 [Release](https://github.com/proxyee-down-org/proxyee-down/releases) 下载相关版本，并且阅读下面的使用说明。
+
+## 使用说明
 
 - **Windows**:   
   下载 Windows 版本的压缩包以后，将压缩包解压至任意目录，执行文件夹里的`Proxyee Down.exe`文件即可。  
