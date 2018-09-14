@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://i.imgur.com/m7cxr06.jpg" alt="ProxyEE - Down Render Poster">
+<img src="https://i.imgur.com/dUvNgmd.jpg" alt="ProxyEE - Down Render Poster">
 </p>
 
 <a href="https://www.pdown.org" target="_blank"><h1 align="center">ProxyEE Down</h1></a>
