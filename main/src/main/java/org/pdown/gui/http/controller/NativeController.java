@@ -161,9 +161,12 @@ public class NativeController {
   public FullHttpResponse doUpdate(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> map = getJSONParams(request);
     String url = (String) map.get("path");
-    String path = PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.bak";
+    String path = PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.tmp";
     try {
-      AppUtil.download(url, PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.bak");
+      AppUtil.download(url, path);
+      File updateTmpJar = new File(path);
+      File updateBakJar = new File(updateTmpJar.getParent() + File.separator + "proxyee-down-main.jar.bak");
+      updateTmpJar.renameTo(updateBakJar);
     } catch (Exception e) {
       File file = new File(path);
       if (file.exists()) {
@@ -174,9 +177,15 @@ public class NativeController {
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
+  @RequestMapping("doReplace")
+  public FullHttpResponse doReplace(Channel channel, FullHttpRequest request) throws Exception {
+    System.out.println("proxyee-down-restart");
+    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  }
+
   @RequestMapping("doRestart")
   public FullHttpResponse doRestart(Channel channel, FullHttpRequest request) throws Exception {
-    System.out.println("proxyee-down-exit");
+    System.out.println("proxyee-down-restart");
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
@@ -278,20 +287,28 @@ public class NativeController {
   public FullHttpResponse installCert(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
     boolean status;
-    //再检测一次，确保不重复安装
-    if (!AppUtil.checkIsInstalledCert()) {
-      if (ExtensionCertUtil.existsCert(AppUtil.SUBJECT)) {
-        //存在无用证书需要卸载
-        ExtensionCertUtil.uninstallCert(AppUtil.SUBJECT);
+    if (OsUtil.isUnix()) {
+      if (!AppUtil.checkIsInstalledCert()) {
+        ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
       }
-      //生成新的证书
-      ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
-      //安装
-      ExtensionCertUtil.installCert(new File(AppUtil.CERT_PATH));
-      //检测是否安装成功，可能点了取消就没安装成功
-      status = AppUtil.checkIsInstalledCert();
-    } else {
+      Desktop.getDesktop().open(new File(AppUtil.SSL_PATH));
       status = true;
+    } else {
+      //再检测一次，确保不重复安装
+      if (!AppUtil.checkIsInstalledCert()) {
+        if (ExtensionCertUtil.existsCert(AppUtil.SUBJECT)) {
+          //存在无用证书需要卸载
+          ExtensionCertUtil.uninstallCert(AppUtil.SUBJECT);
+        }
+        //生成新的证书
+        ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
+        //安装
+        ExtensionCertUtil.installCert(new File(AppUtil.CERT_PATH));
+        //检测是否安装成功，可能点了取消就没安装成功
+        status = AppUtil.checkIsInstalledCert();
+      } else {
+        status = true;
+      }
     }
     data.put("status", status);
     if (status && !PDownProxyServer.isStart) {

@@ -317,10 +317,10 @@ public class DownApplication extends Application {
       }
     } else {
       Platform.runLater(() -> {
-        show(isTray);
         if (uri != null || !browser.isLoad()) {
           browser.load(url);
         }
+        show(isTray);
       });
     }
   }

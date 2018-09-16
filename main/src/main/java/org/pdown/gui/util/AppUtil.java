@@ -51,11 +51,11 @@ public class AppUtil {
   /**
    * 下载http资源
    */
-  public static void download(String url,String path) throws IOException {
+  public static void download(String url, String path) throws IOException {
     URL u = new URL(url);
     HttpURLConnection connection = (HttpURLConnection) u.openConnection();
     connection.setConnectTimeout(30000);
-    connection.setReadTimeout(60000);
+    connection.setReadTimeout(0);
     File file = new File(path);
     if (!file.exists() || file.isDirectory()) {
       FileUtil.createFileSmart(file.getPath());
