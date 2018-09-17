@@ -85,7 +85,7 @@ Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`
 
 本项目后端主要使用 java+spring boot+netty，前端使用 vue.js+iview。
 
-###环境
+### 环境
 ![](https://img.shields.io/badge/JAVA-1.8%2B-brightgreen.svg) ![](https://img.shields.io/badge/maven-3.0%2B-brightgreen.svg) ![](https://img.shields.io/badge/node.js-8.0%2B-brightgreen.svg)
 
 ### 编译
