@@ -86,7 +86,7 @@ public class ScriptIntercept extends FullResponseIntercept {
     }
     if (scriptsBuilder.length() > 0) {
       httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("text/html; charset=utf-8"));
-      int index = ByteUtil.findText(httpResponse.content(), "<head>");
+      int index = ByteUtil.findText(httpResponse.content(), "</head>");
       String pdownJs = "";
       try (
           BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("pdown.js")))
@@ -99,7 +99,7 @@ public class ScriptIntercept extends FullResponseIntercept {
         pdownJs = "<script type=\"text/javascript\">\r\n" + pdownJs + "\r\n</script>";
       } catch (IOException e) {
       }
-      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index, pdownJs, Charset.forName("UTF-8"));
+      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index - 7, pdownJs, Charset.forName("UTF-8"));
     }
   }
 }
