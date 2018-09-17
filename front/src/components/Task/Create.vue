@@ -151,6 +151,7 @@ export default {
       //reset params
       this.sameTasks = []
       this.form.taskId = undefined
+      this.disabledForm = false
       if (visible) {
         //check same task
         const { data: downTasks } = await this.$http.get('http://127.0.0.1:26339/tasks?status=1,2,3')
