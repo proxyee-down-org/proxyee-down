@@ -21,8 +21,7 @@
           <p>{{ $t('extension.proxyTip') }}</p>
         </div>
       </Tooltip>
-      <Button v-show="!proxySwitch"
-        type="primary"
+      <Button type="primary"
         @click="copyPac">{{ $t('extension.copyPac') }}</Button>
     </div>
     <Table :columns="columns"
@@ -178,6 +177,7 @@ export default {
         this.certStatus = status
         if (status) {
           // Install Success
+          changeProxyMode(1).then(() => (this.proxySwitch = true))
           this.loadExtensions()
         }
       })
@@ -199,13 +199,7 @@ export default {
         let extFileServer = extFileServers[index]
         let url = new URL(extFileServer)
         this.spinTip =
-          this.$t('extension.downloadingTip') +
-          (index + 1) +
-          '/' +
-          extFileServers.length +
-          ')：' +
-          url.host +
-          ']'
+          this.$t('extension.downloadingTip') + (index + 1) + '/' + extFileServers.length + ')：' + url.host + ']'
         const params = {
           server: extFileServer,
           path: row.path,
@@ -225,11 +219,7 @@ export default {
             })
             // Update info to server
             this.$noSpinHttp.get(
-              this.$config.adminServer +
-                'extension/down?ext_id=' +
-                row.id +
-                '&version=' +
-                row.newVersion
+              this.$config.adminServer + 'extension/down?ext_id=' + row.id + '&version=' + row.newVersion
             )
           })
           .catch(error => {
