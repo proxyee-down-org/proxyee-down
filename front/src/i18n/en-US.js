@@ -113,7 +113,7 @@ export default {
     update: 'Update',
     done: 'Update completed',
     restart: 'Is it restarted?',
-    error: 'Update failed, please try again'
+    error: 'Update failed, please check the network or manually download the update package'
   },
   alert: {
     refused: 'Program exception,Connect Refused',

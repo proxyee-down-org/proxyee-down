@@ -112,7 +112,7 @@ export default {
     update: '更新',
     done: '更新完畢',
     restart: '是否重新啟動？',
-    error: '更新失敗，請重試'
+    error: '更新失敗，請檢查網絡或手動下載更新包'
   },
   alert: {
     refused: '程式異常，拒絕存取',

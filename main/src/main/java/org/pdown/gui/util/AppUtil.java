@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import org.pdown.core.boot.HttpDownBootstrap;
+import org.pdown.core.boot.URLHttpDownBootstrapBuilder;
+import org.pdown.core.dispatch.HttpDownCallback;
+import org.pdown.core.entity.HttpDownConfigInfo;
+import org.pdown.core.entity.HttpResponseInfo;
 import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
@@ -70,5 +75,18 @@ public class AppUtil {
         output.write(bts, 0, len);
       }
     }
+  }
+
+  /**
+   * 使用pdown-core多连接下载http资源
+   */
+  public static HttpDownBootstrap fastDownload(String url, File file, HttpDownCallback callback) throws IOException {
+    HttpDownBootstrap httpDownBootstrap = new URLHttpDownBootstrapBuilder(url, null, null)
+        .callback(callback)
+        .downConfig(new HttpDownConfigInfo().setFilePath(file.getParent()).setConnections(64))
+        .response(new HttpResponseInfo().setFileName(file.getName()))
+        .build();
+    httpDownBootstrap.start();
+    return httpDownBootstrap;
   }
 }

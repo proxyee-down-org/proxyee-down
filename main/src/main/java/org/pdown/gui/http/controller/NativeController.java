@@ -20,6 +20,8 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
+import org.pdown.core.boot.HttpDownBootstrap;
+import org.pdown.core.dispatch.HttpDownCallback;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.com.Components;
@@ -109,7 +111,6 @@ public class NativeController {
     data.put("extFileServers", configInfo.getExtFileServers());
     //软件版本
     data.put("version", ConfigUtil.getString("version"));
-    //
     return HttpHandlerUtil.buildJson(data);
   }
 
@@ -157,30 +158,52 @@ public class NativeController {
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
+  private static volatile HttpDownBootstrap updateBootstrap;
+
   @RequestMapping("doUpdate")
   public FullHttpResponse doUpdate(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> map = getJSONParams(request);
     String url = (String) map.get("path");
     String path = PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.tmp";
     try {
-      AppUtil.download(url, path);
       File updateTmpJar = new File(path);
-      File updateBakJar = new File(updateTmpJar.getParent() + File.separator + "proxyee-down-main.jar.bak");
-      updateTmpJar.renameTo(updateBakJar);
-    } catch (Exception e) {
-      File file = new File(path);
-      if (file.exists()) {
-        file.delete();
+      if (updateTmpJar.exists()) {
+        updateTmpJar.delete();
       }
+      updateBootstrap = AppUtil.fastDownload(url, updateTmpJar, new HttpDownCallback() {
+        @Override
+        public void onDone(HttpDownBootstrap httpDownBootstrap) {
+          File updateBakJar = new File(updateTmpJar.getParent() + File.separator + "proxyee-down-main.jar.bak");
+          updateTmpJar.renameTo(updateBakJar);
+        }
+
+        @Override
+        public void onError(HttpDownBootstrap httpDownBootstrap) {
+          File file = new File(path);
+          if (file.exists()) {
+            file.delete();
+          }
+          httpDownBootstrap.close();
+        }
+      });
+    } catch (Exception e) {
       throw e;
     }
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
-  @RequestMapping("doReplace")
-  public FullHttpResponse doReplace(Channel channel, FullHttpRequest request) throws Exception {
-    System.out.println("proxyee-down-restart");
-    return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+  @RequestMapping("getUpdateProgress")
+  public FullHttpResponse getUpdateProgress(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> data = new HashMap<>();
+    if (updateBootstrap != null) {
+      data.put("status", updateBootstrap.getTaskInfo().getStatus());
+      data.put("totalSize", updateBootstrap.getResponse().getTotalSize());
+      data.put("downSize", updateBootstrap.getTaskInfo().getDownSize());
+      data.put("speed", updateBootstrap.getTaskInfo().getSpeed());
+    } else {
+      data.put("status", 0);
+    }
+    return HttpHandlerUtil.buildJson(data);
   }
 
   @RequestMapping("doRestart")
@@ -340,4 +363,5 @@ public class NativeController {
     Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
     return map;
   }
+
 }

@@ -171,8 +171,20 @@ const openUrl = url => {
  */
 const doUpdate = path => {
   return new Promise((resolve, reject) => {
-    client
+    clientNoSpin
       .post('/native/doUpdate', { path: path })
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
+/**
+ * 更新软件进度获取
+ */
+const getUpdateProgress = () => {
+  return new Promise((resolve, reject) => {
+    clientNoSpin
+      .get('/native/getUpdateProgress')
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -232,6 +244,7 @@ export { showFileChooser }
 export { showDirChooser }
 export { openUrl }
 export { doUpdate }
+export { getUpdateProgress }
 export { doRestart }
 export { getInitConfig }
 export { showFile }

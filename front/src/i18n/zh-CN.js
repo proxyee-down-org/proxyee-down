@@ -112,7 +112,7 @@ export default {
     update: '更新',
     done: '更新完毕',
     restart: '是否重新启动？',
-    error: '更新失败，请重试'
+    error: '更新失败，请检查网络或手动下载更新包'
   },
   alert: {
     refused: '程序异常，拒绝访问',
