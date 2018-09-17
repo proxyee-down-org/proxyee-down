@@ -103,9 +103,11 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     API_PORT = ConfigUtil.getInt("api.port");
     if ("prd".equals(ConfigUtil.getString("spring.profiles.active"))) {
       try {
-        //打包的情况随机使用一个端口
-        FRONT_PORT = OsUtil.getFreePort(FRONT_PORT);
-        API_PORT = FRONT_PORT;
+        //端口被时占用随机分配一个端口
+        API_PORT = OsUtil.getFreePort(API_PORT);
+        if (FRONT_PORT == -1) {
+          FRONT_PORT = API_PORT;
+        }
       } catch (IOException e) {
         LOGGER.error("initConfig error", e);
         alertAndExit(I18nUtil.getMessage("gui.alert.startError", e.getMessage()));
@@ -210,7 +212,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       systemTray.add(trayIcon);
       loadPopupMenu();
       //双击事件监听
-      trayIcon.addActionListener(event -> Platform.runLater(() -> show(true)));
+      trayIcon.addActionListener(event -> Platform.runLater(() -> loadUri(null, true)));
     }
   }
 
@@ -358,6 +360,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   }
 
   //-Dio.netty.leakDetection.level=PARANOID
+  //https://stackoverflow.com/questions/39192528/how-can-you-send-information-to-the-windows-task-bar-from-java-o-javafx
   public static void main(String[] args) {
     //init rest server config
     RestWebServerFactoryCustomizer.init(null);
