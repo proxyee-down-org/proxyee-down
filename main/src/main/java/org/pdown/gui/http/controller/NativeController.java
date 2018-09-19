@@ -221,7 +221,7 @@ public class NativeController {
 
   @RequestMapping("doRestart")
   public FullHttpResponse doRestart(Channel channel, FullHttpRequest request) throws Exception {
-    System.out.println("proxyee-down-restart");
+    System.out.println("proxyee-down-exit");
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
