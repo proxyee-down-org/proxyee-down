@@ -1,27 +1,21 @@
-<p align="center">
-<img src="https://i.imgur.com/dUvNgmd.jpg" alt="ProxyEE - Down Render Poster">
-</p>
+![](https://i.imgur.com/dUvNgmd.jpg)  
 
-<a href="https://www.pdown.org" target="_blank"><h1 align="center">ProxyEE Down</h1></a>
-
-<p align="center">
-<a href="https://github.com/monkeyWie" target="_blank"><img alt="Author" src="https://img.shields.io/badge/author-monkeyWie-red.svg?style=flat-square"/></a>
-<a href="https://github.com/proxyee-down-org/proxyee-down/graphs/contributors"><img alt="Contributors" src="https://img.shields.io/github/contributors/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
-<a href="https://github.com/proxyee-down-org/proxyee-down/stargazers"><img alt="Contributors" src="https://img.shields.io/github/stars/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
-<a href="https://github.com/proxyee-down-org/proxyee-down/fork"><img alt="Forks" src="https://img.shields.io/github/forks/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
-<a href="https://github.com/proxyee-down-org/proxyee-down/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/proxyee-down-org/proxyee-down.svg?style=flat-square"/></a>
-</p>
+# [Proxyee Down](https://pdown.org)
+[![Author](https://img.shields.io/badge/author-monkeyWie-red.svg?style=flat-square)](https://github.com/monkeyWie)
+[![Contributors](https://img.shields.io/github/contributors/proxyee-down-org/proxyee-down.svg?style=flat-square)](https://github.com/proxyee-down-org/proxyee-down/graphs/contributors)
+[![Stargazers](https://img.shields.io/github/stars/proxyee-down-org/proxyee-down.svg?style=flat-square)](https://github.com/proxyee-down-org/proxyee-down/stargazers)
+[![Fork](https://img.shields.io/github/forks/proxyee-down-org/proxyee-down.svg?style=flat-square)](https://github.com/proxyee-down-org/proxyee-down/fork)
+[![License](https://img.shields.io/github/license/proxyee-down-org/proxyee-down.svg?style=flat-square)](https://github.com/proxyee-down-org/proxyee-down/blob/master/LICENSE)
 
 > Proxyee Down 是一款开源的免费 HTTP 高速下载器，底层使用`netty`开发，支持自定义 HTTP 请求下载且支持扩展功能，可以通过安装扩展实现特殊的下载需求。
 
 
 ## 下载程序
   
-<a href="https://get.soft.org/proxyeedown"><img src="https://raw.githubusercontent.com/hxco/Get/master/badges/cn/minisize/badge-320x94.png" width="167" height="47"><a>
-
-你也可以使用 [OneDrive 下载](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)，这项服务基于 Onedrive For Business，存储账户由 [惶心 技术博客](https://tech.hxco.de) 提供。
-
-如果你在使用 Linux 系统，请通过 [Release](https://github.com/proxyee-down-org/proxyee-down/releases) 下载相关版本，并且阅读下面的使用说明。
+  1. [OneDrive 下载](https://imhx-my.sharepoint.com/:f:/g/personal/pd_imhx_onmicrosoft_com/EnPrybHS3rVFuy_HdcP7RLoBwhb0k5ayJdIzwjU0hCM9-A?e=he0oIz)  
+    感谢 [惶心 技术博客](https://tech.hxco.de) 提供账号。
+  2. [官网下载](http://pdown.org/releases.html)  
+    目前官网带宽非常低所以下载很慢，所以推荐用**OneDriver**下载。(如果有服务器或者CDN赞助的话可以联系我~)
 
 ## 使用说明
 
@@ -98,8 +92,7 @@
 
 ## 交流群组
 
-1-4群均已爆满。等待添加 5 群。
-
+1 群**11352304**、2 群**20236964**、3 群**20233754**、4 群**737991056**
 
 ## 开发参数
 
