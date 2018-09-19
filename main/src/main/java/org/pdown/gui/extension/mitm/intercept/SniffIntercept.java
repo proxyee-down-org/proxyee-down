@@ -19,6 +19,7 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.ReferenceCountUtil;
 import java.net.URLEncoder;
 import java.util.Arrays;
+import java.util.Set;
 import org.pdown.core.entity.HttpRequestInfo;
 import org.pdown.core.entity.HttpResponseInfo;
 import org.pdown.core.util.HttpDownUtil;
@@ -41,7 +42,12 @@ public class SniffIntercept extends HttpProxyIntercept {
   @Override
   public void beforeRequest(Channel clientChannel, HttpRequest httpRequest,
       HttpProxyInterceptPipeline pipeline) throws Exception {
-    matchFlag = ExtensionContent.getSniffRegexs().stream().anyMatch(regex -> HttpUtil.checkUrl(httpRequest, regex));
+    Set<String> sniffRegexs = ExtensionContent.getSniffRegexs();
+    if (sniffRegexs == null) {
+      matchFlag = false;
+    } else {
+      matchFlag = sniffRegexs.stream().anyMatch(regex -> HttpUtil.checkUrl(httpRequest, regex));
+    }
     if (!matchFlag) {
       super.beforeRequest(clientChannel, httpRequest, pipeline);
       return;

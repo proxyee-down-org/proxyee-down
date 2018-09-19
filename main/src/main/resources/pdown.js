@@ -52,6 +52,7 @@
   })
 })((function () {
   return {
+    version:'${version}',
     buildXHR: function () {
       var xhr = null
       if (window.XMLHttpRequest) {
