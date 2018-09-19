@@ -7,7 +7,7 @@ export default {
     support: '支持我們'
   },
   tip: {
-    tip:'提示',
+    tip: '提示',
     ok: '確定',
     cancel: '取消',
     notNull: '不能為空',
@@ -23,10 +23,11 @@ export default {
     pauseDownloads: '暫停下載',
     deleteTask: '刪除任務',
     deleteTaskTip: '是否刪除任務和檔案？',
+    method: '方法',
     url: '連結',
     fileName: '名稱',
     fileSize: '大小',
-    connections: '連接數',
+    connections: '連線數',
     filePath: '路徑',
     status: '狀態',
     operate: '操作',
@@ -35,25 +36,24 @@ export default {
     createTime: '開始時間',
     taskProgress: '任務進度',
     wait: '待下載',
-    unknowLeft: '未知',
+    unknowLeft: '不詳',
     statusPause: '暫停',
     statusFail: '失敗',
     statusDone: '完成',
     option: '附加',
-    head: '請求頭',
-    body: '請求體',
+    head: '要求標頭',
+    body: '要求主體',
     detail: '下載細節',
-    checkSameTask: '檢測到可能相同的下載任務，是否選擇任務進行更新？',
-    sameTaskList: '任務列表',
+    checkSameTask: '偵測到可能相同的下載任務，是否選擇任務進行更新？',
+    sameTaskList: '任務清單',
     sameTaskPlaceholder: '請選擇要更新的任務'
   },
   extension: {
     conditions: '使用須知',
-    conditionsContent:
-      '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點擊下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前檢測作業系統中是否有安裝過證書，當檢測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
+    conditionsContent: '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點選下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前偵測作業系統中是否有安裝過憑證，當偵測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
     install: '安裝',
     globalProxy: '全域代理',
-    proxyTip: '點擊查看說明',
+    proxyTip: '點選檢視說明',
     copyPac: '複製 PAC 連結',
     title: '名稱',
     description: '描述',
@@ -76,12 +76,12 @@ export default {
     downSetting: '下載設定',
     path: '路徑',
     pathTip: '預設下載路徑',
-    connections: '連接數',
-    connectionsTip: '預設連接數',
+    connections: '連線數',
+    connectionsTip: '預設連線數',
     taskLimit: '同時下載任務數',
     taskSpeedLimit: '單任務限速',
     globalSpeedLimit: '全域限速',
-    speedLimitTip: '0 為不限速',
+    speedLimitTip: '0為不限速',
     appSetting: '系統設定',
     language: '語言',
     uiMode: 'UI 模式',
@@ -90,29 +90,38 @@ export default {
     checkUpdate: '檢查更新',
     checkUpdateWeek: '每週',
     checkUpdateStartup: '每次啟動',
-    checkUpdateNever: '從不'
+    checkUpdateNever: '從不',
+    secondProxy: {
+      secondProxy: '二級代理',
+      tip: '配置下載器的二級（前置）代理服務器',
+      type: '類型',
+      host: '服務器',
+      port: '端口',
+      user: '用戶名',
+      pwd: '密碼'
+    }
   },
   about: {
     project: {
       title: '項目',
-      content: 'Proxyee Down是一款開源的免費軟件，基於本軟件的高速下載內核和擴展，可以方便并快速的下載所需資源。',
-      githubAddress: '項目主頁：',
-      tutorial: '使用教程：',
-      feedback: '問題反饋：',
-      currentVersion: '當前版本：'
+      content: 'Proxyee Down 是一款開源的免費軟體，基於本軟體的高速下載核心和擴充套件，可以方便並快速的下載所需資源。',
+      githubAddress: '項目首頁：',
+      tutorial: '使用教學：',
+      feedback: '問題回報：',
+      currentVersion: '目前版本：'
     },
     team: {
       title: '團隊'
     }
   },
   update: {
-    checkNew: '檢測到新版本',
+    checkNew: '偵測到新版本',
     version: '版本號',
     changeLog: '更新內容',
     update: '更新',
     done: '更新完畢',
     restart: '是否重新啟動？',
-    error: '更新失敗，請重試'
+    error: '更新失敗，請檢查網絡或手動下載更新包'
   },
   alert: {
     refused: '程式異常，拒絕存取',
@@ -122,8 +131,8 @@ export default {
     '/tasks': {
       post: {
         4000: '參數解析錯誤',
-        4001: '請求對象不能為空',
-        4002: '請求位址不能為空',
+        4001: '要求對象不能為空',
+        4002: '要求位址不能為空',
         4003: '檔案儲存路徑不能為空',
         4004: '建立資料夾失敗',
         4005: '無寫入權限',
@@ -134,8 +143,9 @@ export default {
     '/util/resolve': {
       put: {
         4000: '參數解析錯誤',
-        4001: '請求位址不能為空',
-        4002: '回應狀態碼異常'
+        4001: '要求位址不能為空',
+        4002: '回應狀態碼異常',
+        4003: '請求超時'
       }
     },
     '/config': {

@@ -52,12 +52,7 @@
     <dependency>
       <groupId>com.github.monkeywie</groupId>
       <artifactId>proxyee</artifactId>
-      <version>1.0.3</version>
-    </dependency>
-    <dependency>
-      <groupId>de.roskenet</groupId>
-      <artifactId>springboot-javafx-support</artifactId>
-      <version>2.1.5</version>
+      <version>1.0.4</version>
     </dependency>
     <dependency>
       <groupId>net.java.dev.jna</groupId>

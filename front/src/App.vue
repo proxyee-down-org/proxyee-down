@@ -55,11 +55,23 @@
     <div style="padding: 1.25rem 1.25rem">
       <router-view/>
     </div>
+
+    <Spin v-if="showUpdateProgress"
+      size="large"
+      class="update-progress"
+      fix>
+      <Circle :percent="updateInfo.progress"
+        :size="150">
+        <h1>{{ updateInfo.progress.toFixed(2) }}%</h1>
+        <p>{{ $numeral(updateInfo.speed).format('0.00b') }}/S</p>
+      </Circle>
+    </Spin>
+
   </div>
 </template>
 
 <script>
-import { doUpdate, doRestart } from './common/native.js'
+import { doUpdate, getUpdateProgress, doRestart } from './common/native.js'
 export default {
   methods: {
     forward(route) {
@@ -67,15 +79,38 @@ export default {
     },
 
     doUpdate() {
+      this.showUpdateProgress = true
+      this.hasUpdate = false
+      //开始下载更新包
       doUpdate(this.versionInfo.path)
         .then(() => {
-          this.hasUpdate = false
-          this.restatModel = true
+          //获取更新进度
+          const updateProgressInterval = setInterval(() => {
+            getUpdateProgress().then(result => {
+              this.updateInfo.progress = result.downSize / result.totalSize * 100
+              this.updateInfo.speed = result.speed
+              if (result.status == 3) {
+                //下载失败
+                this.$Message.error({
+                  content: this.$t('update.error'),
+                  duration: 0
+                })
+              } else if (result.status == 4) {
+                //下载完成
+                this.restatModel = true
+              }
+              if (result.status == 3 || result.status == 4) {
+                this.showUpdateProgress = false
+                clearInterval(updateProgressInterval)
+              }
+            })
+          }, 1000)
         })
         .catch(() => {
-          this.hasUpdate = false
-          this.restatModel = true
-          this.$Message.error(this.$t('update.error'))
+          this.$Message.error({
+            content: this.$t('update.error'),
+            duration: 0
+          })
         })
     },
 
@@ -87,27 +122,45 @@ export default {
   data() {
     return {
       hasUpdate: false,
+      showUpdateProgress: false,
       versionInfo: {},
-      restatModel: false
+      restatModel: false,
+      updateInfo: {
+        progress: 0,
+        speed: 0
+      }
     }
   },
- 
+
   created() {
     // Check Update
     if (this.$config.needCheckUpdate) {
-      this.$noSpinHttp
-        .get(this.$config.adminServer + 'version/checkUpdate')
-        .then(result => {
-          const versionInfo = result.data
-          if (versionInfo && versionInfo.version > this.$config.version) {
-            this.hasUpdate = true
-            this.versionInfo = versionInfo
-          }
-        })
+      this.$noSpinHttp.get(this.$config.adminServer + 'version/checkUpdate').then(result => {
+        const versionInfo = result.data
+        if (versionInfo && versionInfo.version > this.$config.version) {
+          this.hasUpdate = true
+          this.versionInfo = versionInfo
+        }
+      })
     }
   }
 }
 </script>
+<style scoped>
+.update-progress {
+  z-index: 1001;
+}
+.update-progress h1 {
+  color: #3f414d;
+  font-size: 28px;
+  font-weight: normal;
+}
+.update-progress p {
+  color: #657180;
+  font-size: 14px;
+  padding-top: 10px;
+}
+</style>
 
 <style>
 i.action-icon {

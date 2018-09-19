@@ -1,5 +1,6 @@
 package org.pdown.gui.http.controller;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -20,6 +21,8 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import javafx.application.Platform;
+import org.pdown.core.boot.HttpDownBootstrap;
+import org.pdown.core.dispatch.HttpDownCallback;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.com.Components;
@@ -109,7 +112,6 @@ public class NativeController {
     data.put("extFileServers", configInfo.getExtFileServers());
     //软件版本
     data.put("version", ConfigUtil.getString("version"));
-    //
     return HttpHandlerUtil.buildJson(data);
   }
 
@@ -121,12 +123,24 @@ public class NativeController {
   @RequestMapping("setConfig")
   public FullHttpResponse setConfig(Channel channel, FullHttpRequest request) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     PDownConfigInfo configInfo = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), PDownConfigInfo.class);
     PDownConfigInfo beforeConfigInfo = PDownConfigContent.getInstance().get();
+    boolean proxyChange = (beforeConfigInfo.getProxyConfig() != null && configInfo.getProxyConfig() == null) ||
+        (configInfo.getProxyConfig() != null && beforeConfigInfo.getProxyConfig() == null) ||
+        (beforeConfigInfo.getProxyConfig() != null && !beforeConfigInfo.getProxyConfig().equals(configInfo.getProxyConfig())) ||
+        (configInfo.getProxyConfig() != null && !configInfo.getProxyConfig().equals(beforeConfigInfo.getProxyConfig()));
     boolean localeChange = !configInfo.getLocale().equals(beforeConfigInfo.getLocale());
     BeanUtils.copyProperties(configInfo, beforeConfigInfo);
     if (localeChange) {
       DownApplication.INSTANCE.loadPopupMenu();
+    }
+    //检查到前置代理有变动重启MITM代理服务器
+    if (proxyChange && PDownProxyServer.isStart) {
+      new Thread(() -> {
+        PDownProxyServer.close();
+        PDownProxyServer.start(DownApplication.INSTANCE.PROXY_PORT);
+      }).start();
     }
     PDownConfigContent.getInstance().save();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
@@ -157,26 +171,57 @@ public class NativeController {
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
+  private static volatile HttpDownBootstrap updateBootstrap;
+
   @RequestMapping("doUpdate")
   public FullHttpResponse doUpdate(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> map = getJSONParams(request);
     String url = (String) map.get("path");
-    String path = PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.bak";
+    String path = PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.tmp";
     try {
-      AppUtil.download(url, PathUtil.ROOT_PATH + File.separator + "proxyee-down-main.jar.bak");
-    } catch (Exception e) {
-      File file = new File(path);
-      if (file.exists()) {
-        file.delete();
+      File updateTmpJar = new File(path);
+      if (updateTmpJar.exists()) {
+        updateTmpJar.delete();
       }
+      updateBootstrap = AppUtil.fastDownload(url, updateTmpJar, new HttpDownCallback() {
+        @Override
+        public void onDone(HttpDownBootstrap httpDownBootstrap) {
+          File updateBakJar = new File(updateTmpJar.getParent() + File.separator + "proxyee-down-main.jar.bak");
+          updateTmpJar.renameTo(updateBakJar);
+        }
+
+        @Override
+        public void onError(HttpDownBootstrap httpDownBootstrap) {
+          File file = new File(path);
+          if (file.exists()) {
+            file.delete();
+          }
+          httpDownBootstrap.close();
+        }
+      });
+    } catch (Exception e) {
       throw e;
     }
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
+  @RequestMapping("getUpdateProgress")
+  public FullHttpResponse getUpdateProgress(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> data = new HashMap<>();
+    if (updateBootstrap != null) {
+      data.put("status", updateBootstrap.getTaskInfo().getStatus());
+      data.put("totalSize", updateBootstrap.getResponse().getTotalSize());
+      data.put("downSize", updateBootstrap.getTaskInfo().getDownSize());
+      data.put("speed", updateBootstrap.getTaskInfo().getSpeed());
+    } else {
+      data.put("status", 0);
+    }
+    return HttpHandlerUtil.buildJson(data);
+  }
+
   @RequestMapping("doRestart")
   public FullHttpResponse doRestart(Channel channel, FullHttpRequest request) throws Exception {
-    System.out.println("proxyee-down-exit");
+    System.out.println("proxyee-down-restart");
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
 
@@ -331,4 +376,5 @@ public class NativeController {
     Map<String, Object> map = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), Map.class);
     return map;
   }
+
 }

@@ -91,6 +91,7 @@ export default {
                   const index = this.getIndexByTaskId(task.id)
                   if (index >= 0) {
                     this.taskList[index].info = task.info
+                    this.taskList[index].response = task.response
                   } else {
                     // Load newly created tasks
                     this.$noSpinHttp

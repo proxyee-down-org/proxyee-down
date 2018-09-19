@@ -4,8 +4,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.Proxy.Type;
 import java.net.URL;
+import org.pdown.core.boot.HttpDownBootstrap;
+import org.pdown.core.boot.URLHttpDownBootstrapBuilder;
+import org.pdown.core.dispatch.HttpDownCallback;
+import org.pdown.core.entity.HttpDownConfigInfo;
+import org.pdown.core.entity.HttpResponseInfo;
+import org.pdown.core.proxy.ProxyConfig;
+import org.pdown.core.proxy.ProxyType;
 import org.pdown.core.util.FileUtil;
 import org.pdown.core.util.OsUtil;
 import org.pdown.gui.DownApplication;
@@ -14,6 +26,7 @@ import org.pdown.gui.extension.mitm.server.PDownProxyServer;
 import org.pdown.gui.extension.mitm.util.ExtensionCertUtil;
 import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
 import org.pdown.rest.util.PathUtil;
+import org.springframework.util.StringUtils;
 
 public class AppUtil {
 
@@ -53,9 +66,31 @@ public class AppUtil {
    */
   public static void download(String url, String path) throws IOException {
     URL u = new URL(url);
-    HttpURLConnection connection = (HttpURLConnection) u.openConnection();
+    HttpURLConnection connection;
+    ProxyConfig proxyConfig = PDownConfigContent.getInstance().get().getProxyConfig();
+    if (proxyConfig != null) {
+      Type type;
+      if (proxyConfig.getProxyType() == ProxyType.HTTP) {
+        type = Type.HTTP;
+      } else {
+        type = Type.SOCKS;
+      }
+      if (!StringUtils.isEmpty(proxyConfig.getUser())) {
+        Authenticator authenticator = new Authenticator() {
+          public PasswordAuthentication getPasswordAuthentication() {
+            return new PasswordAuthentication(proxyConfig.getUser(),
+                proxyConfig.getPwd() == null ? null : proxyConfig.getPwd().toCharArray());
+          }
+        };
+        Authenticator.setDefault(authenticator);
+      }
+      Proxy proxy = new Proxy(type, new InetSocketAddress(proxyConfig.getHost(), proxyConfig.getPort()));
+      connection = (HttpURLConnection) u.openConnection(proxy);
+    } else {
+      connection = (HttpURLConnection) u.openConnection();
+    }
     connection.setConnectTimeout(30000);
-    connection.setReadTimeout(60000);
+    connection.setReadTimeout(0);
     File file = new File(path);
     if (!file.exists() || file.isDirectory()) {
       FileUtil.createFileSmart(file.getPath());
@@ -70,5 +105,19 @@ public class AppUtil {
         output.write(bts, 0, len);
       }
     }
+  }
+
+  /**
+   * 使用pdown-core多连接下载http资源
+   */
+  public static HttpDownBootstrap fastDownload(String url, File file, HttpDownCallback callback) throws IOException {
+    HttpDownBootstrap httpDownBootstrap = new URLHttpDownBootstrapBuilder(url, null, null)
+        .callback(callback)
+        .downConfig(new HttpDownConfigInfo().setFilePath(file.getParent()).setConnections(64))
+        .response(new HttpResponseInfo().setFileName(file.getName()))
+        .proxyConfig(PDownConfigContent.getInstance().get().getProxyConfig())
+        .build();
+    httpDownBootstrap.start();
+    return httpDownBootstrap;
   }
 }

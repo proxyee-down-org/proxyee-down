@@ -30,7 +30,7 @@
           <Input :disabled="disabledForm"
             v-model="form.response.fileName" />
         </FormItem>
-        <FormItem :label="$t('tasks.fileSize')">{{ $numeral(form.response.totalSize).format('0.00b') }}</FormItem>
+        <FormItem :label="$t('tasks.fileSize')">{{ form.response.totalSize?$numeral(form.response.totalSize).format('0.00b'):$t('tasks.unknowLeft') }}</FormItem>
         <FormItem :label="$t('tasks.connections')"
           prop="config.connections">
           <Slider v-if="response.supportRange"
@@ -151,6 +151,7 @@ export default {
       //reset params
       this.sameTasks = []
       this.form.taskId = undefined
+      this.disabledForm = false
       if (visible) {
         //check same task
         const { data: downTasks } = await this.$http.get('http://127.0.0.1:26339/tasks?status=1,2,3')

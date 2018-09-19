@@ -84,6 +84,49 @@
                 :value="option.value">{{ option.text }}</Option>
             </Select>
           </FormItem>
+          <FormItem :label="$t('setting.secondProxy.secondProxy')">
+            <Switch v-model="secondProxyEnable"
+              @on-change="switchSecondProxy"></Switch>
+            <Tooltip class="item"
+              placement="right">
+              <Icon type="help-circled"
+                class="action-icon tip-icon" />
+              <div slot="content">
+                <p>{{$t('setting.secondProxy.tip')}}</p>
+              </div>
+            </Tooltip>
+          </FormItem>
+          <div v-if="secondProxyEnable">
+            <FormItem :label="$t('setting.secondProxy.type')"
+              prop="appConfig.proxyConfig.proxyType">
+              <Select v-model="form.appConfig.proxyConfig.proxyType"
+                style="width:6rem;">
+                <Option value="HTTP">HTTP</Option>
+                <Option value="SOCKS4">SOCKS4</Option>
+                <Option value="SOCKS5">SOCKS5</Option>
+              </Select>
+            </FormItem>
+            <FormItem :label="$t('setting.secondProxy.host')"
+              prop="appConfig.proxyConfig.host">
+              <Input v-model="form.appConfig.proxyConfig.host"
+                class="string-input" />
+            </FormItem>
+            <FormItem :label="$t('setting.secondProxy.port')"
+              prop="appConfig.proxyConfig.port">
+              <InputNumber v-model="form.appConfig.proxyConfig.port"
+                :min="1"
+                :max="65535" />
+            </FormItem>
+            <FormItem :label="$t('setting.secondProxy.user')">
+              <Input v-model="form.appConfig.proxyConfig.user"
+                class="string-input" />
+            </FormItem>
+            <FormItem :label="$t('setting.secondProxy.pwd')">
+              <Input type="password"
+                v-model="form.appConfig.proxyConfig.pwd"
+                class="string-input" />
+            </FormItem>
+          </div>
         </div>
       </Panel>
     </Collapse>
@@ -108,6 +151,7 @@ export default {
         downConfig: {},
         appConfig: {}
       },
+      secondProxyEnable: false,
       rules: {
         'downConfig.speedLimit': [
           { required: true, message: this.$t('tip.notNull') },
@@ -136,6 +180,27 @@ export default {
     }
   },
   methods: {
+    switchSecondProxy(val) {
+      if (val) {
+        //设置默认值
+        if (!this.form.appConfig.proxyConfig) {
+          this.$set(this.form.appConfig, 'proxyConfig', {
+            proxyType: 'HTTP',
+            host: null,
+            port: null,
+            user: null,
+            pwd: null
+          })
+        }
+        this.rules['appConfig.proxyConfig.proxyType'] = [{ required: true, message: this.$t('tip.notNull') }]
+        this.rules['appConfig.proxyConfig.host'] = [{ required: true, message: this.$t('tip.notNull') }]
+        this.rules['appConfig.proxyConfig.port'] = [{ required: true, message: this.$t('tip.notNull') }]
+      } else if (this.form.appConfig.proxyConfig) {
+        this.rules['appConfig.proxyConfig.proxyType'] = null
+        this.rules['appConfig.proxyConfig.host'] = null
+        this.rules['appConfig.proxyConfig.port'] = null
+      }
+    },
     async getConfig() {
       let downConfig = await this.$noSpinHttp.get('http://127.0.0.1:26339/config')
       let appConfig = await getConfig()
@@ -143,6 +208,7 @@ export default {
         downConfig: { ...downConfig.data },
         appConfig: { ...appConfig }
       }
+      this.secondProxyEnable = !!this.form.appConfig.proxyConfig
       if (this.form.downConfig.speedLimit > 0) {
         this.form.downConfig.speedLimit /= 1024
       }
@@ -159,6 +225,12 @@ export default {
           }
           if (downConfig.totalSpeedLimit > 0) {
             downConfig.totalSpeedLimit *= 1024
+          }
+          if (!this.secondProxyEnable) {
+            this.$delete(this.form.appConfig, 'proxyConfig')
+            delete downConfig.proxyConfig
+          } else {
+            downConfig.proxyConfig = { ...this.form.appConfig.proxyConfig }
           }
           await this.$http.put('http://127.0.0.1:26339/config', downConfig)
           await setConfig(this.form.appConfig)
@@ -189,6 +261,9 @@ export default {
   width: 5rem;
 }
 .setting-form .ivu-select {
+  width: 10rem;
+}
+.setting-form .string-input {
   width: 10rem;
 }
 </style>

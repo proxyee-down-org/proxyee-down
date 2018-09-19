@@ -1,6 +1,5 @@
 package org.pdown.gui;
 
-import de.felixroske.jfxsupport.AbstractJavaFxApplicationSupport;
 import java.awt.AWTException;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -24,6 +23,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -44,19 +44,17 @@ import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
 import org.pdown.gui.util.I18nUtil;
+import org.pdown.rest.DownRestServer;
 import org.pdown.rest.content.ConfigContent;
 import org.pdown.rest.content.RestWebServerFactoryCustomizer;
 import org.pdown.rest.entity.ServerConfigInfo;
 import org.pdown.rest.util.PathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.util.StringUtils;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.pdown.rest")
-public class DownApplication extends AbstractJavaFxApplicationSupport {
+public class DownApplication extends Application {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DownApplication.class);
 
@@ -85,6 +83,8 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     Platform.setImplicitExit(false);
     //load config
     initConfig();
+    //load pdown-rest
+    initRest();
     initMacMITMTool();
     initEmbedHttpServer();
     initExtension();
@@ -103,14 +103,27 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
     API_PORT = ConfigUtil.getInt("api.port");
     if ("prd".equals(ConfigUtil.getString("spring.profiles.active"))) {
       try {
-        //打包的情况随机使用一个端口
-        FRONT_PORT = OsUtil.getFreePort(FRONT_PORT);
-        API_PORT = FRONT_PORT;
+        //端口被时占用随机分配一个端口
+        API_PORT = OsUtil.getFreePort(API_PORT);
+        if (FRONT_PORT == -1) {
+          FRONT_PORT = API_PORT;
+        }
       } catch (IOException e) {
         LOGGER.error("initConfig error", e);
         alertAndExit(I18nUtil.getMessage("gui.alert.startError", e.getMessage()));
       }
     }
+  }
+
+  private void initRest() {
+    //init rest server config
+    RestWebServerFactoryCustomizer.init(null);
+    ServerConfigInfo serverConfigInfo = ConfigContent.getInstance().get();
+    serverConfigInfo.setPort(REST_PORT);
+    if (StringUtils.isEmpty(serverConfigInfo.getFilePath())) {
+      serverConfigInfo.setFilePath(System.getProperty("user.home") + File.separator + "Downloads");
+    }
+    new SpringApplicationBuilder(DownRestServer.class).headless(false).build().run();
   }
 
   //读取扩展信息和启动代理服务器
@@ -210,7 +223,7 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
       systemTray.add(trayIcon);
       loadPopupMenu();
       //双击事件监听
-      trayIcon.addActionListener(event -> Platform.runLater(() -> show(true)));
+      trayIcon.addActionListener(event -> Platform.runLater(() -> loadUri(null, true)));
     }
   }
 
@@ -358,16 +371,10 @@ public class DownApplication extends AbstractJavaFxApplicationSupport {
   }
 
   //-Dio.netty.leakDetection.level=PARANOID
+  //https://stackoverflow.com/questions/39192528/how-can-you-send-information-to-the-windows-task-bar-from-java-o-javafx
   public static void main(String[] args) {
-    //init rest server config
-    RestWebServerFactoryCustomizer.init(null);
-    ServerConfigInfo serverConfigInfo = ConfigContent.getInstance().get();
-    serverConfigInfo.setPort(REST_PORT);
-    if (StringUtils.isEmpty(serverConfigInfo.getFilePath())) {
-      serverConfigInfo.setFilePath(System.getProperty("user.home") + File.separator + "Downloads");
-    }
     //get free port
     doCheck();
-    launch(DownApplication.class, null, args);
+    launch(args);
   }
 }

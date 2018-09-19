@@ -71,17 +71,11 @@ Date.prototype.format = function(fmt) {
     S: this.getMilliseconds() // Millisecond
   }
   if (/(y+)/.test(fmt)) {
-    fmt = fmt.replace(
-      RegExp.$1,
-      (this.getFullYear() + '').substr(4 - RegExp.$1.length)
-    )
+    fmt = fmt.replace(RegExp.$1, (this.getFullYear() + '').substr(4 - RegExp.$1.length))
   }
   for (var k in o) {
     if (new RegExp('(' + k + ')').test(fmt)) {
-      fmt = fmt.replace(
-        RegExp.$1,
-        RegExp.$1.length === 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length)
-      )
+      fmt = fmt.replace(RegExp.$1, RegExp.$1.length === 1 ? o[k] : ('00' + o[k]).substr(('' + o[k]).length))
     }
   }
   return fmt
@@ -107,14 +101,17 @@ router.beforeEach((to, from, next) => {
 })
 
 // Get client configuration information
-getInitConfig().then(result => {
-  Vue.prototype.$config = result
-  // Set default language
-  i18n.locale = result.locale
-  new Vue({
-    router,
-    store,
-    i18n,
-    render: h => h(App)
-  }).$mount('#app')
-})
+getInitConfig()
+  .then(result => {
+    Vue.prototype.$config = result
+    // Set default language
+    i18n.locale = result.locale
+  })
+  .finally(() => {
+    new Vue({
+      router,
+      store,
+      i18n,
+      render: h => h(App)
+    }).$mount('#app')
+  })

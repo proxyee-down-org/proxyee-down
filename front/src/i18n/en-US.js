@@ -23,6 +23,7 @@ export default {
     pauseDownloads: 'Pause Downloads',
     deleteTask: 'Delete Task',
     deleteTaskTip: 'Do you want to delete task and file?',
+    method: 'Method',
     url: 'URL',
     fileName: 'Name',
     fileSize: 'Size',
@@ -90,7 +91,16 @@ export default {
     checkUpdate: 'Check for update',
     checkUpdateWeek: 'Every week',
     checkUpdateStartup: 'Every time startup',
-    checkUpdateNever: 'Never'
+    checkUpdateNever: 'Never',
+    secondProxy: {
+      secondProxy: 'Second proxy',
+      tip: 'Configure the second (pre-proxy) proxy server for the downloader',
+      type: 'Type',
+      host: 'Host',
+      port: 'Port',
+      user: 'Username',
+      pwd: 'password'
+    }
   },
   about: {
     project: {
@@ -113,7 +123,7 @@ export default {
     update: 'Update',
     done: 'Update completed',
     restart: 'Is it restarted?',
-    error: 'Update failed, please try again'
+    error: 'Update failed, please check the network or manually download the update package'
   },
   alert: {
     refused: 'Program exception,Connect Refused',
@@ -137,7 +147,8 @@ export default {
     put: {
       4000: 'Params parse error',
       4001: 'Request URL is empty',
-      4002: 'Response status code exception'
+      4002: 'Response status code exception',
+      4003: 'Request timeout'
     }
   },
   '/config': {
