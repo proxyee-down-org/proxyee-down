@@ -1,4 +1,4 @@
-version: 3.02
+version: 3.03
 spring:
   profiles:
     active: @environment@
