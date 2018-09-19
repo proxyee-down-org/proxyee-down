@@ -9,12 +9,12 @@
               <Checkbox v-model="all"
                 @on-change="setAll"></Checkbox>
             </div>
-            <div class="th">{{  $t("tasks.fileName")  }}</div>
-            <div class="th">{{  $t("tasks.fileSize")  }}</div>
-            <div class="th">{{  $t("tasks.taskProgress")  }}</div>
-            <div class="th">{{  $t("tasks.downloadSpeed")  }}</div>
-            <div class="th">{{  $t("tasks.status")  }}</div>
-            <div class="th">{{  $t("tasks.operate")  }}</div>
+            <div class="th">{{ $t("tasks.fileName") }}</div>
+            <div class="th">{{ $t("tasks.fileSize") }}</div>
+            <div class="th">{{ $t("tasks.taskProgress") }}</div>
+            <div class="th">{{ $t("tasks.downloadSpeed") }}</div>
+            <div class="th">{{ $t("tasks.status") }}</div>
+            <div class="th">{{ $t("tasks.operate") }}</div>
           </div>
         </div>
       </div>
@@ -31,7 +31,7 @@
                 @on-change="toggleAll"></Checkbox>
             </div>
             <div class="td">{{ task.response.fileName }}</div>
-            <div class="td">{{ $numeral(task.response.totalSize).format('0.00b') }}</div>
+            <div class="td">{{ task.response.totalSize?$numeral(task.response.totalSize).format('0.00b'):$t('tasks.unknowLeft') }}</div>
             <div class="td">{{ calcProgress(task) }}</div>
             <div class="td">{{ $numeral(task.info.speed).format('0.00b') }}/S</div>
             <div class="td">{{ calcStatus(task) }}</div>
@@ -40,17 +40,16 @@
                 class="action-icon"
                 type="ios-pause"
                 @click="$emit('on-pause', task)"></Icon>
-              <Icon v-else-if="task.info.status === 4"
-                class="action-icon"
-                type="ios-folder"
-                @click="$emit('on-open', task)"></Icon>
-              <Icon v-else
+              <Icon v-else-if="task.info.status !== 4"
                 class="action-icon"
                 type="ios-play"
                 @click="$emit('on-resume', task)"></Icon>
               <Icon type="ios-trash"
                 class="action-icon"
                 @click="$emit('on-delete', task)"></Icon>
+              <Icon class="action-icon"
+                type="ios-folder"
+                @click="$emit('on-open', task)"></Icon>
               <Poptip placement="right-end"
                 :title="$t('tasks.detail')"
                 width="400"
@@ -89,7 +88,7 @@
                     <span>{{ calcStatus(task) }}</span>
                   </p>
                   <p>
-                    <b>{{  $t("tasks.createTime")  }}：</b>
+                    <b>{{ $t("tasks.createTime") }}：</b>
                     <span>{{ new Date(task.info.startTime).format('yyyy-MM-dd hh:mm:ss') }}</span>
                   </p>
                 </div>
@@ -155,11 +154,8 @@ export default {
     },
 
     calcProgress(task) {
-      return (
-        this.$numeral(task.info.downSize / task.response.totalSize).format(
-          '0.00%'
-        ) || '0%'
-      )
+      let progress = task.info.downSize / task.response.totalSize
+      return progress ? this.$numeral(task.info.downSize / task.response.totalSize).format('0.00%') : '0%'
     },
 
     calcStatus(task) {
@@ -167,10 +163,8 @@ export default {
         case 0:
           return this.$t('tasks.wait')
         case 1:
-          if (task.info.speed > 0) {
-            return this.$numeral(
-              (task.response.totalSize - task.info.downSize) / task.info.speed
-            ).format('00:00:00')
+          if (task.info.speed > 0 && task.response.totalSize > 0) {
+            return this.$numeral((task.response.totalSize - task.info.downSize) / task.info.speed).format('00:00:00')
           } else {
             return this.$t('tasks.unknowLeft')
           }
@@ -186,7 +180,7 @@ export default {
     getCheckedTasks() {
       return this.taskList.filter(task => {
         for (let key in this.checkedMap) {
-          if (this.checkedMap.hasOwnProperty(key) && this.checkedMap[key]  && key === task.id) {
+          if (this.checkedMap.hasOwnProperty(key) && this.checkedMap[key] && key === task.id) {
             return true
           }
         }
