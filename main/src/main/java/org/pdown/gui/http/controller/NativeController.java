@@ -1,5 +1,6 @@
 package org.pdown.gui.http.controller;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
@@ -122,12 +123,24 @@ public class NativeController {
   @RequestMapping("setConfig")
   public FullHttpResponse setConfig(Channel channel, FullHttpRequest request) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.enable(DeserializationFeature.READ_ENUMS_USING_TO_STRING);
     PDownConfigInfo configInfo = objectMapper.readValue(request.content().toString(Charset.forName("UTF-8")), PDownConfigInfo.class);
     PDownConfigInfo beforeConfigInfo = PDownConfigContent.getInstance().get();
+    boolean proxyChange = (beforeConfigInfo.getProxyConfig() != null && configInfo.getProxyConfig() == null) ||
+        (configInfo.getProxyConfig() != null && beforeConfigInfo.getProxyConfig() == null) ||
+        (beforeConfigInfo.getProxyConfig() != null && !beforeConfigInfo.getProxyConfig().equals(configInfo.getProxyConfig())) ||
+        (configInfo.getProxyConfig() != null && !configInfo.getProxyConfig().equals(beforeConfigInfo.getProxyConfig()));
     boolean localeChange = !configInfo.getLocale().equals(beforeConfigInfo.getLocale());
     BeanUtils.copyProperties(configInfo, beforeConfigInfo);
     if (localeChange) {
       DownApplication.INSTANCE.loadPopupMenu();
+    }
+    //检查到前置代理有变动重启MITM代理服务器
+    if (proxyChange && PDownProxyServer.isStart) {
+      new Thread(() -> {
+        PDownProxyServer.close();
+        PDownProxyServer.start(DownApplication.INSTANCE.PROXY_PORT);
+      }).start();
     }
     PDownConfigContent.getInstance().save();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);

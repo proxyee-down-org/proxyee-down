@@ -23,6 +23,7 @@ export default {
     pauseDownloads: '暂停下载',
     deleteTask: '删除任务',
     deleteTaskTip: '是否删除任务和文件？',
+    method: '方法',
     url: '链接',
     fileName: '文件名',
     fileSize: '大小',
@@ -49,8 +50,7 @@ export default {
   },
   extension: {
     conditions: '使用须知',
-    conditionsContent:
-      '首次使用扩展模块时，必须安装由Proxyee Down随机生成的一个CA证书，点击下面的安装按钮并按系统的引导进行确认安装。(注意：程序会在安装前检测操作系统中是否有安装过证书，当检测到有安装的情况会提示删除对应的旧CA证书)',
+    conditionsContent: '首次使用扩展模块时，必须安装由Proxyee Down随机生成的一个CA证书，点击下面的安装按钮并按系统的引导进行确认安装。(注意：程序会在安装前检测操作系统中是否有安装过证书，当检测到有安装的情况会提示删除对应的旧CA证书)',
     install: '安装',
     globalProxy: '全局代理',
     proxyTip: '点击查看说明',
@@ -90,7 +90,16 @@ export default {
     checkUpdate: '检查更新',
     checkUpdateWeek: '每周',
     checkUpdateStartup: '每次启动',
-    checkUpdateNever: '从不'
+    checkUpdateNever: '从不',
+    secondProxy: {
+      secondProxy: '二级代理',
+      tip: '配置下载器的二级(前置)代理服务器',
+      type: '类型',
+      host: '服务器',
+      port: '端口',
+      user: '用户名',
+      pwd: '密码'
+    }
   },
   about: {
     project: {
@@ -135,7 +144,8 @@ export default {
       put: {
         4000: '参数解析错误',
         4001: '请求地址不能为空',
-        4002: '响应状态码异常'
+        4002: '响应状态码异常',
+        4003: '请求超时'
       }
     },
     '/config': {

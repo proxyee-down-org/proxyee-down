@@ -9,6 +9,14 @@
       :rules="rules"
       :model="form"
       :label-width="60">
+      <FormItem :label="$t('tasks.method')"
+        prop="method">
+        <Select v-model="form.method"
+          style="width:70px;">
+          <Option value="GET">GET</Option>
+          <Option value="POST">POST</Option>
+        </Select>
+      </FormItem>
       <FormItem :label="$t('tasks.url')"
         prop="url">
         <Input v-model="form.url" />
@@ -69,6 +77,7 @@ export default {
       hasHead: false,
       hasBody: false,
       form: {
+        method: 'GET',
         url: '',
         heads: [],
         body: '',
@@ -100,6 +109,7 @@ export default {
       this.$refs['form'].validate(valid => {
         if (valid) {
           const requestData = {
+            method: this.form.method,
             url: this.form.url,
             heads: {},
             body: ''

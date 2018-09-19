@@ -7,7 +7,7 @@ export default {
     support: '支持我們'
   },
   tip: {
-    tip:'提示',
+    tip: '提示',
     ok: '確定',
     cancel: '取消',
     notNull: '不能為空',
@@ -23,6 +23,7 @@ export default {
     pauseDownloads: '暫停下載',
     deleteTask: '刪除任務',
     deleteTaskTip: '是否刪除任務和檔案？',
+    method: '方法',
     url: '連結',
     fileName: '名稱',
     fileSize: '大小',
@@ -49,8 +50,7 @@ export default {
   },
   extension: {
     conditions: '使用須知',
-    conditionsContent:
-      '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點選下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前偵測作業系統中是否有安裝過憑證，當偵測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
+    conditionsContent: '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點選下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前偵測作業系統中是否有安裝過憑證，當偵測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
     install: '安裝',
     globalProxy: '全域代理',
     proxyTip: '點選檢視說明',
@@ -81,7 +81,7 @@ export default {
     taskLimit: '同時下載任務數',
     taskSpeedLimit: '單任務限速',
     globalSpeedLimit: '全域限速',
-    speedLimitTip: '0 為不限速',
+    speedLimitTip: '0為不限速',
     appSetting: '系統設定',
     language: '語言',
     uiMode: 'UI 模式',
@@ -90,7 +90,16 @@ export default {
     checkUpdate: '檢查更新',
     checkUpdateWeek: '每週',
     checkUpdateStartup: '每次啟動',
-    checkUpdateNever: '從不'
+    checkUpdateNever: '從不',
+    secondProxy: {
+      secondProxy: '二級代理',
+      tip: '配置下載器的二級（前置）代理服務器',
+      type: '類型',
+      host: '服務器',
+      port: '端口',
+      user: '用戶名',
+      pwd: '密碼'
+    }
   },
   about: {
     project: {
@@ -135,7 +144,8 @@ export default {
       put: {
         4000: '參數解析錯誤',
         4001: '要求位址不能為空',
-        4002: '回應狀態碼異常'
+        4002: '回應狀態碼異常',
+        4003: '請求超時'
       }
     },
     '/config': {

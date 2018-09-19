@@ -30,7 +30,7 @@
           <Input :disabled="disabledForm"
             v-model="form.response.fileName" />
         </FormItem>
-        <FormItem :label="$t('tasks.fileSize')">{{ $numeral(form.response.totalSize).format('0.00b') }}</FormItem>
+        <FormItem :label="$t('tasks.fileSize')">{{ form.response.totalSize?$numeral(form.response.totalSize).format('0.00b'):$t('tasks.unknowLeft') }}</FormItem>
         <FormItem :label="$t('tasks.connections')"
           prop="config.connections">
           <Slider v-if="response.supportRange"

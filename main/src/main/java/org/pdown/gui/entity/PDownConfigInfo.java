@@ -2,6 +2,7 @@ package org.pdown.gui.entity;
 
 import java.io.Serializable;
 import java.util.List;
+import org.pdown.core.proxy.ProxyConfig;
 
 public class PDownConfigInfo implements Serializable {
 
@@ -18,6 +19,8 @@ public class PDownConfigInfo implements Serializable {
   private int updateCheckRate = 2;
   //最后一次检查更新时间
   private long lastUpdateCheck;
+  //前置代理
+  private ProxyConfig proxyConfig;
 
   public String getLocale() {
     return locale;
@@ -71,5 +74,26 @@ public class PDownConfigInfo implements Serializable {
   public PDownConfigInfo setLastUpdateCheck(long lastUpdateCheck) {
     this.lastUpdateCheck = lastUpdateCheck;
     return this;
+  }
+
+  public ProxyConfig getProxyConfig() {
+    return proxyConfig;
+  }
+
+  public PDownConfigInfo setProxyConfig(ProxyConfig proxyConfig) {
+    this.proxyConfig = proxyConfig;
+    return this;
+  }
+
+  public static com.github.monkeywie.proxyee.proxy.ProxyConfig convert(ProxyConfig proxyConfig) {
+    if (proxyConfig == null) {
+      return null;
+    }
+    return new com.github.monkeywie.proxyee.proxy.ProxyConfig(
+        com.github.monkeywie.proxyee.proxy.ProxyType.valueOf(proxyConfig.getProxyType().name()),
+        proxyConfig.getHost(),
+        proxyConfig.getPort(),
+        proxyConfig.getUser(),
+        proxyConfig.getPwd());
   }
 }
