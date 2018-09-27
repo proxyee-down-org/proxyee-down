@@ -22,7 +22,7 @@ export default {
     continueDownloading: 'Resume',
     pauseDownloads: 'Pause',
     deleteTask: 'Delete Task',
-    deleteTaskTip: 'Do you want to delete task and file?',
+    deleteTaskTip: 'Delete both task and file',
     method: 'Method',
     url: 'URL',
     fileName: 'Name',
