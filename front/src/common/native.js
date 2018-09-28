@@ -47,9 +47,7 @@ export const getInitConfig = () => {
 export const showFile = path => {
   return new Promise((resolve, reject) => {
     client
-      .post('/native/showFile', {
-        path: path
-      })
+      .post('/native/showFile', { path: path })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -98,9 +96,7 @@ export const getProxyMode = () => {
 export const changeProxyMode = mode => {
   return new Promise((resolve, reject) => {
     client
-      .post('/native/changeProxyMode', {
-        mode: mode
-      })
+      .post('/native/changeProxyMode', { mode: mode })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -151,9 +147,7 @@ export const updateExtension = data => {
 export const installLocalExtension = path => {
   return new Promise((resolve, reject) => {
     clientNoSpin
-      .post('/native/installLocalExtension', {
-        path: path
-      })
+      .post('/native/installLocalExtension', { path: path })
       .then(response => resolve(response.data.data))
       .catch(error => reject(error))
   })
@@ -167,10 +161,7 @@ export const installLocalExtension = path => {
 export const uninstallExtension = (path, local) => {
   return new Promise((resolve, reject) => {
     client
-      .post('/native/uninstallExtension', {
-        path,
-        local
-      })
+      .post('/native/uninstallExtension', { path, local })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -178,7 +169,7 @@ export const uninstallExtension = (path, local) => {
 
 /**
  * 启用或禁用扩展
- * @param {object} data 
+ * @param {object} data
  */
 export const toggleExtension = data => {
   return new Promise((resolve, reject) => {
@@ -191,13 +182,11 @@ export const toggleExtension = data => {
 
 /**
  * 打开浏览器并访问指定url
- * @param {object} data 
+ * @param {object} data
  */
 export const openUrl = url => {
   if (window.navigator.userAgent.indexOf('JavaFX') !== -1) {
-    clientNoSpin.post('/native/openUrl', {
-      url: encodeURIComponent(url)
-    })
+    clientNoSpin.post('/native/openUrl', { url: encodeURIComponent(url) })
   } else {
     window.open(url)
   }
@@ -210,9 +199,7 @@ export const openUrl = url => {
 export const doUpdate = path => {
   return new Promise((resolve, reject) => {
     clientNoSpin
-      .post('/native/doUpdate', {
-        path: path
-      })
+      .post('/native/doUpdate', { path: path })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -256,7 +243,7 @@ export const getConfig = () => {
 
 /**
  * 保存软件设置
- * @param {object} config 
+ * @param {object} config
  */
 export const setConfig = config => {
   return new Promise((resolve, reject) => {
@@ -269,7 +256,7 @@ export const setConfig = config => {
 
 /**
  * 复制数据到系统剪贴板
- * @param {object} data 
+ * @param {object} data
  */
 export const copy = data => {
   return new Promise((resolve, reject) => {
