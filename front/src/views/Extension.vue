@@ -15,25 +15,42 @@
         @on-change="changeProxyMode"></Switch>
       <Tooltip placement="bottom">
         <Icon type="help-circled"
-          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/tree/v3.0#%E5%85%A8%E5%B1%80%E4%BB%A3%E7%90%86')"
+          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/tree/v3.0#%E6%89%A9%E5%B1%95%E6%A8%A1%E5%9D%97')"
           class="action-icon tip-icon" />
         <div slot="content">
           <p>{{ $t('extension.proxyTip') }}</p>
         </div>
       </Tooltip>
-      <Button type="primary"
+      <Button type="info"
         @click="copyPac">{{ $t('extension.copyPac') }}</Button>
+      <Button type="info"
+        @click="installLocalExt">{{ $t('extension.installLocalExt') }}</Button>
     </div>
-    <Table :columns="columns"
-      :data="page.data"></Table>
-    <div style="margin: 10px;overflow: hidden">
-      <div style="float: right;">
-        <Page :total="page.totalCount"
-          :current="page.pageNum"
-          :page-size="page.pageSize"
-          @on-change="searchExtensions(arguments[0])"></Page>
-      </div>
-    </div>
+    <Tabs type="card"
+      :animated="false"
+      v-model="activeTab">
+      <TabPane :label="$t('extension.extCenter')+'('+onlinePage.totalCount+')'"
+        name="online"
+        icon="android-playstore">
+        <Table :columns="onlineColumns"
+          :data="onlinePage.data"
+          :loading="onlineLoading"></Table>
+        <div style="margin: 10px;overflow: hidden">
+          <div style="float: right;">
+            <Page :total="onlinePage.totalCount"
+              :current="onlinePage.pageNum"
+              :page-size="onlinePage.pageSize"
+              @on-change="searchExtensions(arguments[0])"></Page>
+          </div>
+        </div>
+      </TabPane>
+      <TabPane :label="$t('extension.installStatusTrue')+'('+localAllList.length+')'"
+        name="local"
+        icon="social-buffer">
+        <Table :columns="localColumns"
+          :data="localAllList"></Table>
+      </TabPane>
+    </Tabs>
     <Spin fix
       v-if="spinShow">
       <Icon type="load-c"
@@ -52,21 +69,55 @@ import {
   getExtensions,
   installExtension,
   updateExtension,
+  installLocalExtension,
+  uninstallExtension,
   toggleExtension,
   openUrl,
-  copy
+  copy,
+  showDirChooser
 } from '../common/native.js'
 
 export default {
   name: 'extension',
   data() {
-    const _this = this
     return {
       certStatus: false,
       proxySwitch: false,
+      activeTab: 'online',
+      onlineLoading: false,
+      onlinePage: {
+        pageNum: 1,
+        pageSize: 10,
+        totalPage: 0,
+        totalCount: 0,
+        data: []
+      },
+      localAllList: [],
       spinShow: false,
       spinTip: '',
-      columns: [
+      onlineColumns: this.buildCommonColumns(),
+      localColumns: this.buildCommonColumns(true)
+    }
+  },
+  methods: {
+    installCert() {
+      installCert().then(status => {
+        this.certStatus = status
+        if (status) {
+          // Install Success
+          changeProxyMode(1).then(() => (this.proxySwitch = true))
+          this.loadExtensions()
+        }
+      })
+    },
+
+    changeProxyMode(val) {
+      changeProxyMode(val ? 1 : 0)
+    },
+
+    buildCommonColumns(local) {
+      const _this = this
+      return [
         {
           title: this.$t('extension.title'),
           key: 'title'
@@ -80,11 +131,15 @@ export default {
           key: 'currVersion',
           width: 100
         },
-        {
-          title: this.$t('extension.newVersion'),
-          key: 'newVersion',
-          width: 100
-        },
+        ...(local
+          ? []
+          : [
+              {
+                title: this.$t('extension.newVersion'),
+                key: 'version',
+                width: 100
+              }
+            ]),
         {
           title: this.$t('extension.installStatus'),
           key: 'meta.disabled',
@@ -108,41 +163,47 @@ export default {
           align: 'center',
           width: 150,
           render(h, params) {
-            return (
-              <div>
-                {params.row.installed ? (
-                  params.row.currVersion < params.row.newVersion ? (
+            return [
+              ...(params.row.installed
+                ? [
+                    ...(params.row.currVersion < params.row.version
+                      ? [
+                          <Icon
+                            type="ios-cloud-upload-outline"
+                            class="action-icon"
+                            title={_this.$t('extension.actionUpdate')}
+                            nativeOnClick={() => _this.downExtension(true, params.row, 0)}
+                          />
+                        ]
+                      : []),
                     <Icon
-                      type="ios-cloud-upload-outline"
+                      type="trash-a"
                       class="action-icon"
-                      title={_this.$t('extension.actionUpdate')}
-                      nativeOnClick={() => _this.downExtension(true, params.row, 0)}
+                      title={_this.$t('extension.uninstall')}
+                      nativeOnClick={() => _this.uninstallExtension(params.row)}
                     />
-                  ) : (
-                    ''
+                  ]
+                : [
+                    <Icon
+                      type="ios-cloud-download-outline"
+                      class="action-icon"
+                      title={_this.$t('extension.actionInstall')}
+                      nativeOnClick={() => _this.downExtension(false, params.row, 0)}
+                    />
+                  ]),
+              <Icon
+                type="ios-eye-outline"
+                class="action-icon"
+                title={_this.$t('extension.actionDetail')}
+                nativeOnClick={() => {
+                  _this.openUrl(
+                    'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' +
+                      params.row.meta.path +
+                      '/README.md'
                   )
-                ) : (
-                  <Icon
-                    type="ios-cloud-download-outline"
-                    class="action-icon"
-                    title={_this.$t('extension.actionInstall')}
-                    nativeOnClick={() => _this.downExtension(false, params.row, 0)}
-                  />
-                )}
-                <Icon
-                  type="ios-eye-outline"
-                  class="action-icon"
-                  title={_this.$t('extension.actionDetail')}
-                  nativeOnClick={() => {
-                    _this.openUrl(
-                      'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' +
-                        params.row.path +
-                        '/README.md'
-                    )
-                  }}
-                />
-              </div>
-            )
+                }}
+              />
+            ]
           }
         },
         {
@@ -160,35 +221,15 @@ export default {
             )
           }
         }
-      ],
-      localExts: null,
-      page: {
-        pageNum: 1,
-        pageSize: 10,
-        totalPage: 0,
-        totalCount: 0,
-        data: []
-      }
-    }
-  },
-  methods: {
-    installCert() {
-      installCert().then(status => {
-        this.certStatus = status
-        if (status) {
-          // Install Success
-          changeProxyMode(1).then(() => (this.proxySwitch = true))
-          this.loadExtensions()
-        }
-      })
-    },
-
-    changeProxyMode(val) {
-      changeProxyMode(val ? 1 : 0)
+      ]
     },
 
     changeEnabled(enabled, row) {
-      toggleExtension({ path: row.meta.path, enabled: enabled })
+      toggleExtension({ path: row.meta.path, enabled: enabled }).then(() => {
+        const localExt = this.localAllList.find(localExt => localExt.meta.path == row.meta.path)
+        localExt.meta.enabled = enabled
+        this.refreshExtensions()
+      })
     },
 
     downExtension(isUpdate, row, index) {
@@ -202,16 +243,25 @@ export default {
           this.$t('extension.downloadingTip') + (index + 1) + '/' + extFileServers.length + ')：' + url.host + ']'
         const params = {
           server: extFileServer,
-          path: row.path,
+          path: row.meta.path,
           files: row.files
         }
         let downPromise = isUpdate ? updateExtension(params) : installExtension(params)
         downPromise
           .then(() => {
-            this.$set(row, 'installed', true)
-            this.$set(row, 'currVersion', row.newVersion)
-            this.$set(row.meta, 'path', row.path)
-            this.$set(row.meta, 'enabled', true)
+            const localExt = this.localAllList.find(localExt => localExt.meta.path == row.meta.path)
+            if (localExt) {
+              localExt.version = row.version
+              localExt.currVersion = row.version
+              localExt.title = row.title
+              localExt.description = row.description
+            } else {
+              row.installed = true
+              row.currVersion = row.version
+              row.meta = { path: row.meta.path, enabled: true }
+              this.localAllList.push(row)
+            }
+            this.refreshExtensions()
             this.spinShow = false
             this.$Message.success({
               content: this.$t('extension.downloadOk'),
@@ -219,7 +269,7 @@ export default {
             })
             // Update info to server
             this.$noSpinHttp.get(
-              this.$config.adminServer + 'extension/down?ext_id=' + row.id + '&version=' + row.newVersion
+              this.$config.adminServer + 'extension/down?ext_id=' + row.id + '&version=' + row.version
             )
           })
           .catch(error => {
@@ -243,49 +293,76 @@ export default {
           })
       }
     },
+    installLocalExt() {
+      showDirChooser().then(result => {
+        if (!result) {
+          return
+        }
+        installLocalExtension(result.path)
+          .then(localExt => {
+            localExt.installed = true
+            localExt.currVersion = localExt.version
+            this.localAllList.push(localExt)
+            this.refreshExtensions()
+            this.$Message.success(this.$t('extension.installOk'))
+            this.activeTab = 'local'
+          })
+          .catch(error => {
+            if (error.response.status == 400) {
+              this.$Message.error(this.$t('extension.installErr'))
+            } else {
+              this.$Message.error(this.$t('alert.error'))
+            }
+          })
+      })
+    },
+    uninstallExtension(row) {
+      uninstallExtension(row.meta.path, row.meta.local)
+        .then(() => {
+          const index = this.localAllList.findIndex(localExt => localExt.meta.path == row.meta.path)
+          if (index != -1) {
+            this.localAllList.splice(index, 1)
+            this.refreshExtensions()
+          }
+        })
+        .catch(() => this.$Message.error(this.$t('alert.error')))
+    },
     loadExtensions() {
-      // Loading agent mode
+      // Loading proxy mode
       getProxyMode().then(mode => (this.proxySwitch = mode === 1))
-      // Get local installed plug-ins
-      getExtensions().then(localExts => {
-        this.localExts = localExts
+      // Get local installed extension
+      getExtensions().then(localAllList => {
+        this.localAllList = localAllList
+        this.localAllList.forEach(localExt => {
+          localExt.installed = true
+          localExt.currVersion = localExt.version
+        })
         this.searchExtensions()
       })
     },
     searchExtensions(pageSize) {
       pageSize = pageSize ? pageSize : 1
+      this.onlineLoading = true
       this.$noSpinHttp
         .get(this.$config.adminServer + 'extension/search?pageSize=' + pageSize)
         .then(result => {
-          this.page = result.data
-          let serverExts = this.page.data
-          serverExts.forEach(serverExt => {
-            serverExt.newVersion = serverExt.version
-            let index = this.localExts.findIndex(localExt => localExt.meta.path == serverExt.path)
-            // The plug-in has already been installed locally.
-            if (index !== -1) {
-              let localExt = this.localExts[index]
-              serverExt.currVersion = localExt.version
-              serverExt.installed = true
-              serverExt.meta = localExt.meta
-            } else {
-              this.$set(serverExt, 'meta', { enabled: true })
-            }
-          })
+          this.onlinePage = result.data
+          this.refreshExtensions()
         })
-        .catch(() => {
-          this.localExts.forEach(localExt => {
-            localExt.installed = true
-            localExt.currVersion = localExt.version
-          })
-          this.page = {
-            pageNum: 1,
-            pageSize: 10,
-            totalPage: 1,
-            totalCount: this.localExts.length,
-            data: [...this.localExts]
-          }
-        })
+        .finally(() => (this.onlineLoading = false))
+    },
+    refreshExtensions() {
+      this.onlinePage.data.forEach(onlineExt => {
+        const localExt = this.localAllList.find(localExt => localExt.meta.path == onlineExt.path)
+        if (localExt) {
+          this.$set(onlineExt, 'installed', true)
+          this.$set(onlineExt, 'currVersion', localExt.version)
+          this.$set(onlineExt, 'meta', localExt.meta)
+        } else {
+          onlineExt.installed = false
+          onlineExt.meta = { path: onlineExt.path, enabled: false }
+        }
+      })
     },
     openUrl(url) {
       openUrl(url)

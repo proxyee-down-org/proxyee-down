@@ -7,7 +7,7 @@ const clientNoSpin = axios.create()
 /**
  * 弹出原生文件选择框
  */
-const showFileChooser = () => {
+export const showFileChooser = () => {
   return new Promise((resolve, reject) => {
     client
       .get('/native/fileChooser')
@@ -19,7 +19,7 @@ const showFileChooser = () => {
 /**
  * 弹出原生文件夹选择框
  */
-const showDirChooser = () => {
+export const showDirChooser = () => {
   return new Promise((resolve, reject) => {
     client
       .get('/native/dirChooser')
@@ -31,7 +31,7 @@ const showDirChooser = () => {
 /**
  * 取应用初始化配置信息
  */
-const getInitConfig = () => {
+export const getInitConfig = () => {
   return new Promise((resolve, reject) => {
     client
       .get('/native/getInitConfig')
@@ -44,10 +44,12 @@ const getInitConfig = () => {
  * 弹出系统资源管理器并选中指定文件
  * @param {string} path 文件路径
  */
-const showFile = path => {
+export const showFile = path => {
   return new Promise((resolve, reject) => {
     client
-      .post('/native/showFile', { path: path })
+      .post('/native/showFile', {
+        path: path
+      })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -56,7 +58,7 @@ const showFile = path => {
 /**
  * 检查证书是否安装
  */
-const checkCert = () => {
+export const checkCert = () => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .get('/native/checkCert')
@@ -68,7 +70,7 @@ const checkCert = () => {
 /**
  * 安装证书
  */
-const installCert = () => {
+export const installCert = () => {
   return new Promise((resolve, reject) => {
     client
       .get('/native/installCert')
@@ -80,7 +82,7 @@ const installCert = () => {
 /**
  * 取设置的代理模式
  */
-const getProxyMode = () => {
+export const getProxyMode = () => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .get('/native/getProxyMode')
@@ -93,10 +95,12 @@ const getProxyMode = () => {
  * 修改代理模式
  * @param {number} mode 0.不接管系统代理 1.接管系统代理
  */
-const changeProxyMode = mode => {
+export const changeProxyMode = mode => {
   return new Promise((resolve, reject) => {
     client
-      .post('/native/changeProxyMode', { mode: mode })
+      .post('/native/changeProxyMode', {
+        mode: mode
+      })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -105,7 +109,7 @@ const changeProxyMode = mode => {
 /**
  * 取本地已安装的扩展列表
  */
-const getExtensions = () => {
+export const getExtensions = () => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .get('/native/getExtensions')
@@ -118,7 +122,7 @@ const getExtensions = () => {
  * 安装指定扩展
  * @param {object} data 扩展相关信息
  */
-const installExtension = data => {
+export const installExtension = data => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .post('/native/installExtension', data)
@@ -131,7 +135,7 @@ const installExtension = data => {
  * 更新指定扩展
  * @param {object} data 扩展相关信息
  */
-const updateExtension = data => {
+export const updateExtension = data => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .post('/native/updateExtension', data)
@@ -141,10 +145,42 @@ const updateExtension = data => {
 }
 
 /**
+ * 安装本地扩展
+ * @param {string} path 扩展所在目录
+ */
+export const installLocalExtension = path => {
+  return new Promise((resolve, reject) => {
+    clientNoSpin
+      .post('/native/installLocalExtension', {
+        path: path
+      })
+      .then(response => resolve(response.data.data))
+      .catch(error => reject(error))
+  })
+}
+
+/**
+ * 卸载扩展
+ * @param {string} path 扩展所在目录
+ * @param {boolean} isLocal 是否本地加载的扩展
+ */
+export const uninstallExtension = (path, local) => {
+  return new Promise((resolve, reject) => {
+    client
+      .post('/native/uninstallExtension', {
+        path,
+        local
+      })
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
+/**
  * 启用或禁用扩展
  * @param {object} data 
  */
-const toggleExtension = data => {
+export const toggleExtension = data => {
   return new Promise((resolve, reject) => {
     client
       .post('/native/toggleExtension', data)
@@ -157,9 +193,11 @@ const toggleExtension = data => {
  * 打开浏览器并访问指定url
  * @param {object} data 
  */
-const openUrl = url => {
+export const openUrl = url => {
   if (window.navigator.userAgent.indexOf('JavaFX') !== -1) {
-    clientNoSpin.post('/native/openUrl', { url: encodeURIComponent(url) })
+    clientNoSpin.post('/native/openUrl', {
+      url: encodeURIComponent(url)
+    })
   } else {
     window.open(url)
   }
@@ -169,10 +207,12 @@ const openUrl = url => {
  * 更新软件
  * @param {string} path 更新包下载地址
  */
-const doUpdate = path => {
+export const doUpdate = path => {
   return new Promise((resolve, reject) => {
     clientNoSpin
-      .post('/native/doUpdate', { path: path })
+      .post('/native/doUpdate', {
+        path: path
+      })
       .then(response => resolve(response.data))
       .catch(error => reject(error))
   })
@@ -181,7 +221,7 @@ const doUpdate = path => {
 /**
  * 更新软件进度获取
  */
-const getUpdateProgress = () => {
+export const getUpdateProgress = () => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .get('/native/getUpdateProgress')
@@ -193,7 +233,7 @@ const getUpdateProgress = () => {
 /**
  * 重启软件
  */
-const doRestart = () => {
+export const doRestart = () => {
   return new Promise((resolve, reject) => {
     client
       .get('/native/doRestart')
@@ -205,7 +245,7 @@ const doRestart = () => {
 /**
  * 取软件设置信息
  */
-const getConfig = () => {
+export const getConfig = () => {
   return new Promise((resolve, reject) => {
     clientNoSpin
       .get('/native/getConfig')
@@ -218,10 +258,10 @@ const getConfig = () => {
  * 保存软件设置
  * @param {object} config 
  */
-const setConfig = config => {
+export const setConfig = config => {
   return new Promise((resolve, reject) => {
     client
-      .put('/native/setConfig',config)
+      .put('/native/setConfig', config)
       .then(response => resolve(response))
       .catch(error => reject(error))
   })
@@ -231,31 +271,11 @@ const setConfig = config => {
  * 复制数据到系统剪贴板
  * @param {object} data 
  */
-const copy = data => {
+export const copy = data => {
   return new Promise((resolve, reject) => {
     clientNoSpin
-      .put('/native/copy',data)
+      .put('/native/copy', data)
       .then(response => resolve(response))
       .catch(error => reject(error))
   })
 }
-
-export { showFileChooser }
-export { showDirChooser }
-export { openUrl }
-export { doUpdate }
-export { getUpdateProgress }
-export { doRestart }
-export { getInitConfig }
-export { showFile }
-export { checkCert }
-export { installCert }
-export { getProxyMode }
-export { changeProxyMode }
-export { getExtensions }
-export { installExtension }
-export { updateExtension }
-export { toggleExtension }
-export { getConfig }
-export { setConfig }
-export { copy }

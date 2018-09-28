@@ -46,7 +46,10 @@ export default {
     detail: '下載細節',
     checkSameTask: '偵測到可能相同的下載任務，是否選擇任務進行更新？',
     sameTaskList: '任務清單',
-    sameTaskPlaceholder: '請選擇要更新的任務'
+    sameTaskPlaceholder: '請選擇要更新的任務',
+    running: '進行中',
+    waiting: '等待中',
+    done: '已完成'
   },
   extension: {
     conditions: '使用須知',
@@ -66,11 +69,16 @@ export default {
     actionUpdate: '更新',
     actionInstall: '安裝',
     actionDetail: '細節',
+    uninstall: '卸載',
     switch: '開關',
     downloadingTip: '下載中...[伺服器(',
     downloadOk: '下載成功',
     downloadErr: '下載失敗',
-    downloadErrTip: '自動切換伺服器'
+    downloadErrTip: '自動切換伺服器',
+    extCenter: '擴充中心',
+    installLocalExt: '加載本地擴充',
+    installOk: '加載成功',
+    installErr: '加載失敗，請檢查manifest.json文件'
   },
   setting: {
     downSetting: '下載設定',

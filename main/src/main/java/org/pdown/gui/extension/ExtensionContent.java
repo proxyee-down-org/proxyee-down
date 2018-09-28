@@ -8,11 +8,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.pdown.core.util.FileUtil;
+import org.pdown.rest.util.ContentUtil;
 import org.pdown.rest.util.PathUtil;
 
 public class ExtensionContent {
 
   public static final String EXT_DIR = PathUtil.ROOT_PATH + File.separator + "extensions";
+  public static final String EXT_DIR_CONFIG = EXT_DIR + File.separator + "ext.cfg";
   private static final String EXT_MANIFEST = "manifest.json";
 
   private static List<ExtensionInfo> EXTENSION_INFO_LIST;
@@ -20,6 +23,8 @@ public class ExtensionContent {
   private static Set<String> PROXY_WILDCARDS;
   //需要嗅探下载的url正则表达式列表
   private static Set<String> SNIFF_REGEXS;
+  //配置
+  private static ExtensionConfig CONFIG;
 
   public static void load() throws IOException {
     File file = new File(EXT_DIR);
@@ -39,23 +44,88 @@ public class ExtensionContent {
           }
         }
       }
-      refresh();
     }
+    //加载本地安装的扩展
+    try {
+      CONFIG = ContentUtil.get(EXT_DIR_CONFIG, ExtensionConfig.class);
+    } catch (Exception e) {
+    }
+    if (CONFIG == null) {
+      CONFIG = new ExtensionConfig();
+    } else if (CONFIG.getLocalExtensions() != null) {
+      for (String localExtendDir : CONFIG.getLocalExtensions()) {
+        File extendDir = new File(localExtendDir);
+        if (extendDir.isDirectory()) {
+          //读取manifest.json
+          ExtensionInfo extensionInfo = parseExtensionDir(extendDir, true);
+          if (extensionInfo != null) {
+            EXTENSION_INFO_LIST.add(extensionInfo);
+          }
+        }
+      }
+    }
+    refresh();
   }
 
-  public synchronized static void refresh(String path) throws IOException {
-    if (EXTENSION_INFO_LIST != null && path != null) {
+  public static ExtensionConfig getConfig() {
+    return CONFIG;
+  }
+
+  public synchronized static void saveConfig() throws IOException {
+    ContentUtil.save(CONFIG, EXT_DIR_CONFIG);
+  }
+
+  public synchronized static ExtensionInfo refresh(String path, boolean isLocal) throws IOException {
+    ExtensionInfo loadExt = parseExtensionDir(new File(path), isLocal);
+    if (loadExt != null && EXTENSION_INFO_LIST != null && path != null) {
       boolean match = false;
       for (int i = 0; i < EXTENSION_INFO_LIST.size(); i++) {
         ExtensionInfo extensionInfo = EXTENSION_INFO_LIST.get(i);
-        if (path.equals(extensionInfo.getMeta().getPath())) {
+        if (path.equals(extensionInfo.getMeta().getPath())
+            && loadExt.getMeta().isLocal() == extensionInfo.getMeta().isLocal()) {
           match = true;
-          EXTENSION_INFO_LIST.set(i, parseExtensionDir(new File(EXT_DIR + path)));
+          EXTENSION_INFO_LIST.set(i, loadExt);
           break;
         }
       }
       if (!match) {
-        EXTENSION_INFO_LIST.add(parseExtensionDir(new File(EXT_DIR + path)));
+        EXTENSION_INFO_LIST.add(loadExt);
+        if (isLocal) {
+          //保存文件
+          if (CONFIG.getLocalExtensions() == null) {
+            CONFIG.setLocalExtensions(new ArrayList<>());
+          }
+          CONFIG.getLocalExtensions().add(path);
+          ExtensionContent.saveConfig();
+        }
+      }
+      refresh();
+    }
+    return loadExt;
+  }
+
+  public synchronized static ExtensionInfo refresh(String path) throws IOException {
+    return refresh(path, false);
+  }
+
+  public synchronized static void remove(String path, boolean isLocal) throws IOException {
+    if (EXTENSION_INFO_LIST != null && path != null) {
+      for (int i = 0; i < EXTENSION_INFO_LIST.size(); i++) {
+        ExtensionInfo extensionInfo = EXTENSION_INFO_LIST.get(i);
+        if (path.equals(extensionInfo.getMeta().getPath())
+            && extensionInfo.getMeta().isLocal() == isLocal) {
+          EXTENSION_INFO_LIST.remove(i);
+          if (!extensionInfo.getMeta().isLocal()) {
+            FileUtil.deleteIfExists(extensionInfo.getMeta().getFullPath());
+          } else {
+            //保存文件
+            if (CONFIG.getLocalExtensions() != null) {
+              CONFIG.getLocalExtensions().remove(extensionInfo.getMeta().getFullPath());
+              ExtensionContent.saveConfig();
+            }
+          }
+          break;
+        }
       }
       refresh();
     }
@@ -92,7 +162,7 @@ public class ExtensionContent {
     }
   }
 
-  private static ExtensionInfo parseExtensionDir(File extendDir) {
+  private static ExtensionInfo parseExtensionDir(File extendDir, boolean isLocal) {
     ExtensionInfo extensionInfo = null;
     ObjectMapper objectMapper = new ObjectMapper();
     try {
@@ -101,9 +171,14 @@ public class ExtensionContent {
     }
     if (extensionInfo != null) {
       Meta meta = Meta.load(extendDir.getPath());
+      meta.setLocal(isLocal);
       extensionInfo.setMeta(meta);
     }
     return extensionInfo;
+  }
+
+  private static ExtensionInfo parseExtensionDir(File extendDir) {
+    return parseExtensionDir(extendDir, false);
   }
 
   public static List<ExtensionInfo> get() {

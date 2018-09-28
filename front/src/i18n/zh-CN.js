@@ -46,7 +46,10 @@ export default {
     detail: '下载详情',
     checkSameTask: '检测到可能相同的下载任务，是否选择任务进行刷新？',
     sameTaskList: '任务列表',
-    sameTaskPlaceholder: '请选择要刷新的任务'
+    sameTaskPlaceholder: '请选择要刷新的任务',
+    running: '进行中',
+    waiting: '等待中',
+    done: '已完成'
   },
   extension: {
     conditions: '使用须知',
@@ -65,12 +68,17 @@ export default {
     action: '操作',
     actionUpdate: '更新',
     actionInstall: '安装',
+    uninstall: '卸载',
     actionDetail: '详情',
     switch: '开关',
     downloadingTip: '下载中...[服务器(',
     downloadOk: '下载成功',
     downloadErr: '下载失败',
-    downloadErrTip: '自动切换服务器'
+    downloadErrTip: '自动切换服务器',
+    extCenter: '扩展中心',
+    installLocalExt: '加载本地扩展',
+    installOk: '加载成功',
+    installErr: '加载失败，请检查manifest.json文件'
   },
   setting: {
     downSetting: '下载设置',

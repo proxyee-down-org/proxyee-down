@@ -55,7 +55,7 @@
                 width="400"
                 trigger="click">
                 <Icon type="ios-eye-outline"
-                  style="padding-left: 0.625rem;"
+                  style="padding-left: 0.625rem;padding-top: 0.1rem;"
                   class="action-icon"></Icon>
                 <div class="file-detail"
                   slot="content">

@@ -12,6 +12,7 @@ public class Meta {
   private transient String path;
   private transient String fullPath;
   private boolean enabled = true;
+  private boolean local;
   private Map<String, Object> data;
 
   public String getPath() {
@@ -48,6 +49,14 @@ public class Meta {
   public Meta setData(Map<String, Object> data) {
     this.data = data;
     return this;
+  }
+
+  public boolean isLocal() {
+    return local;
+  }
+
+  public void setLocal(boolean local) {
+    this.local = local;
   }
 
   public void save() {

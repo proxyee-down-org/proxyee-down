@@ -29,6 +29,7 @@ import org.pdown.gui.com.Components;
 import org.pdown.gui.content.PDownConfigContent;
 import org.pdown.gui.entity.PDownConfigInfo;
 import org.pdown.gui.extension.ExtensionContent;
+import org.pdown.gui.extension.ExtensionInfo;
 import org.pdown.gui.extension.mitm.server.PDownProxyServer;
 import org.pdown.gui.extension.mitm.util.ExtensionCertUtil;
 import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
@@ -251,6 +252,41 @@ public class NativeController {
     return extensionCommon(request, true);
   }
 
+  /**
+   * 加载本地扩展
+   */
+  @RequestMapping("installLocalExtension")
+  public FullHttpResponse installLocalExtension(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> data = new HashMap<>();
+    Map<String, Object> map = getJSONParams(request);
+    String path = (String) map.get("path");
+    //刷新扩展content
+    ExtensionInfo loadExt = ExtensionContent.refresh(path, true);
+    if (loadExt == null) {
+      return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
+    }
+    data.put("data", loadExt);
+    //刷新系统pac代理
+    AppUtil.refreshPAC();
+    return HttpHandlerUtil.buildJson(data);
+  }
+
+  /**
+   * 卸载扩展
+   */
+  @RequestMapping("uninstallExtension")
+  public FullHttpResponse uninstallExtension(Channel channel, FullHttpRequest request) throws Exception {
+    Map<String, Object> data = new HashMap<>();
+    Map<String, Object> map = getJSONParams(request);
+    String path = (String) map.get("path");
+    boolean local = (boolean) map.get("local");
+    //卸载扩展
+    ExtensionContent.remove(path, local);
+    //刷新系统pac代理
+    AppUtil.refreshPAC();
+    return HttpHandlerUtil.buildJson(data);
+  }
+
   private FullHttpResponse extensionCommon(FullHttpRequest request, boolean isUpdate) throws Exception {
     Map<String, Object> map = getJSONParams(request);
     String server = (String) map.get("server");
@@ -262,7 +298,7 @@ public class NativeController {
       ExtensionUtil.install(server, path, files);
     }
     //刷新扩展content
-    ExtensionContent.refresh(path);
+    ExtensionContent.refresh(ExtensionContent.EXT_DIR + path);
     //刷新系统pac代理
     AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
