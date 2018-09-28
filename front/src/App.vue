@@ -53,7 +53,9 @@
     </Modal>
 
     <div style="padding: 1.25rem 1.25rem">
-      <router-view/>
+      <keep-alive>
+        <router-view/>
+      </keep-alive>
     </div>
 
     <Spin v-if="showUpdateProgress"
