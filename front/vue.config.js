@@ -13,6 +13,10 @@ module.exports = {
       '/pac': {
         target: 'http://127.0.0.1:7478',
         changeOrigin: true
+      },
+      '/ws': {
+        target: 'http://127.0.0.1:7478',
+        ws: true,
       }
     }
   },

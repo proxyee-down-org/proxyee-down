@@ -1,30 +1,58 @@
 <template>
   <div class="tasks">
     <div class="tasks-entry">
-      <i-button type="dashed"
+      <Button type="info"
         icon="plus"
         class="tasks-button"
-        @click="resolveVisible=true">{{ $t("tasks.createTask") }}</i-button>
-      <i-button type="dashed"
+        @click="resolveVisible=true">{{ $t("tasks.createTask") }}</Button>
+      <Button type="warning"
         icon="ios-pause"
         class="tasks-button"
-        @click="onPauseBatch">{{ $t("tasks.pauseDownloads") }}</i-button>
-      <i-button type="dashed"
+        @click="onPauseBatch">{{ $t("tasks.pauseDownloads") }}</Button>
+      <Button type="warning"
         icon="ios-play"
         class="tasks-button"
-        @click="onResumeBatch">{{ $t("tasks.continueDownloading") }}</i-button>
-      <i-button type="dashed"
+        @click="onResumeBatch">{{ $t("tasks.continueDownloading") }}</Button>
+      <Button type="error"
         icon="ios-trash"
         class="tasks-button"
-        @click="onDeleteBatch">{{ $t("tasks.deleteTask") }}</i-button>
+        @click="onDeleteBatch">{{ $t("tasks.deleteTask") }}</Button>
     </div>
-
-    <Table :taskList="taskList"
-      ref="taskTable"
-      @on-delete="onDelete"
-      @on-pause="onPause"
-      @on-resume="onResume"
-      @on-open="onOpen" />
+    <Tabs type="card"
+      :animated="false"
+      v-model="activeTab"
+      style="overflow:visible;">
+      <TabPane :label="$t('tasks.running')+'('+runList.length+')'"
+        name="run"
+        icon="play">
+        <Table :taskList="runList"
+          ref="runTable"
+          @on-delete="onDelete"
+          @on-pause="onPause"
+          @on-resume="onResume"
+          @on-open="onOpen" />
+      </TabPane>
+      <TabPane :label="$t('tasks.waiting')+'('+waitList.length+')'"
+        name="wait"
+        icon="pause">
+        <Table :taskList="waitList"
+          ref="waitTable"
+          @on-delete="onDelete"
+          @on-pause="onPause"
+          @on-resume="onResume"
+          @on-open="onOpen" />
+      </TabPane>
+      <TabPane :label="$t('tasks.done')+'('+doneList.length+')'"
+        name="done"
+        icon="checkmark">
+        <Table :taskList="doneList"
+          ref="doneTable"
+          @on-delete="onDelete"
+          @on-pause="onPause"
+          @on-resume="onResume"
+          @on-open="onOpen" />
+      </TabPane>
+    </Tabs>
 
     <Modal v-model="deleteModal"
       :title="$t('tasks.deleteTask')">
@@ -50,6 +78,8 @@ import Resolve from '../components/Task/Resolve'
 import Create from '../components/Task/Create'
 import { showFile } from '../common/native'
 
+let ws
+
 export default {
   name: 'tasks',
   components: {
@@ -59,64 +89,102 @@ export default {
   },
 
   mounted() {
-    // Download progress per second
-    this.intervalId = setInterval(() => {
-      if (!this.taskList) {
-        return
-      }
-
-      // Filter out the list of task IDs being downloaded
-      const downloadingIds = this.taskList
-        .filter(task => task.info.status === 1)
-        .map(task => task.id)
-
-      this.$noSpinHttp
-        .get('http://127.0.0.1:26339/tasks?status=1')
-        .then(result => {
-          // Get the list of task IDs that the server is downloading
-          const serverDownloadingIds = result.data.map(task => task.id)
-
-          serverDownloadingIds.forEach(serverTaskId => {
-            if (downloadingIds.findIndex(localTaskId => localTaskId == serverTaskId) === -1) {
-              downloadingIds.push(serverTaskId)
+    ws = new WebSocket('ws://' + window.location.hostname + ':26339/ws')
+    ws.onmessage = evt => {
+      const msg = eval('(' + evt.data + ')')
+      const data = msg.data
+      const updateTask = (taskIds, fromList, toList, handle) => {
+        if (taskIds && taskIds.length) {
+          taskIds.forEach(taskId => {
+            const index = fromList.findIndex(task => task.id == taskId)
+            if (index >= 0) {
+              const task = fromList[index]
+              let moveFlag = false
+              if (handle) {
+                moveFlag = handle(task)
+              }
+              //Move to the other task list
+              if (moveFlag) {
+                fromList.splice(index, 1)
+                toList.splice(0, 0, task)
+              }
             }
           })
-
-          if (downloadingIds && downloadingIds.length) {
-            this.$noSpinHttp
-              .get('http://127.0.0.1:26339/tasks/progress?ids=' + downloadingIds)
-              .then(result => {
-                // Match and update the task information being downloaded
-                result.data.forEach(task => {
-                  const index = this.getIndexByTaskId(task.id)
-                  if (index >= 0) {
-                    this.taskList[index].info = task.info
-                    this.taskList[index].response = task.response
-                  } else {
-                    // Load newly created tasks
-                    this.$noSpinHttp
-                      .get('http://127.0.0.1:26339/tasks/' + task.id)
-                      .then(result => this.taskList.push(result.data))
-                  }
-                })
-              })
+        }
+      }
+      switch (msg.type) {
+        case 'CREATE':
+          if (data.info.status == 1) {
+            this.runList.push(data)
+          } else {
+            this.waitList.push(data)
           }
-        })
-        .catch(error => {
-          if (!error.response || error.response.status === 504) {
-            clearInterval(this.intervalId)
+          break
+        case 'PROGRESS':
+          updateTask([data.id], this.runList, this.doneList, task => {
+            //Update the task progress info
+            task.info = data.info
+            return data.info.status == 4
+          })
+          break
+        case 'PAUSE':
+          updateTask(data, this.runList, this.waitList, task => {
+            //Update the task status to pause
+            task.info.status = 2
+            return true
+          })
+          break
+        case 'RESUME':
+          updateTask(data.pauseIds, this.runList, this.waitList, task => {
+            //Update the task status to pause
+            task.info.status = 2
+            return true
+          })
+          updateTask(data.resumeIds, this.waitList, this.runList, task => {
+            //Update the task status to downloading
+            task.info.status = 1
+            return true
+          })
+          break
+        case 'DELETE': {
+          let list = this[this.activeTab + 'List']
+          if (list && data) {
+            data.forEach(taskId => {
+              const index = list.findIndex(task => task.id == taskId)
+              if (index != -1) {
+                list.splice(index, 1)
+              }
+            })
           }
-        })
-    }, 1000)
+          break
+        }
+      }
+    }
+    this.$noSpinHttp.get('http://127.0.0.1:26339/tasks').then(result => {
+      result.data.forEach(task => {
+        if (task.info.status == 1) {
+          //Downloading tasks
+          this.runList.push(task)
+        } else if (task.info.status == 4) {
+          //Completed task
+          this.doneList.push(task)
+        } else {
+          this.waitList.push(task)
+        }
+      })
+    })
   },
 
   destroyed() {
-    clearInterval(this.intervalId)
+    ws.close()
   },
 
   data() {
     return {
-      taskList: [],
+      activeTab: 'run',
+      runList: [],
+      waitList: [],
+      doneList: [],
       deleteModal: false,
       delTaskId: '',
       delFile: false,
@@ -124,8 +192,7 @@ export default {
       createForm: {
         request: null,
         response: null
-      },
-      intervalId: ''
+      }
     }
   },
 
@@ -140,19 +207,12 @@ export default {
       this.resolveVisible = true
     },
 
-    getAllTask() {
-      this.$noSpinHttp
-        .get('http://127.0.0.1:26339/tasks')
-        .then(result => (this.taskList = result.data))
-    },
-
     onRouteChange(query) {
       const flag = !!(query.request && query.response)
       this.createForm = {
         request: flag ? JSON.parse(query.request) : null,
         response: flag ? JSON.parse(query.response) : null
       }
-      flag || this.getAllTask()
     },
 
     onPause(task) {
@@ -201,37 +261,17 @@ export default {
     },
 
     doResume(ids) {
-      this.$http.put(`http://127.0.0.1:26339/tasks/${ids}/resume`).then(result => {
-        const { pauseIds, resumeIds } = result.data
-        const modifyTaskStatus = (behavior, status) => {
-          result.data[behavior].forEach(id => {
-            const index = this.getIndexByTaskId(id)
-            if (index >= 0) {
-              this.taskList[index].info.status = status
-            }
-          })
-        }
-        pauseIds && modifyTaskStatus('pauseIds', 2)
-        resumeIds && modifyTaskStatus('resumeIds', 1)
-      })
+      this.$http.put(`http://127.0.0.1:26339/tasks/${ids}/resume`)
     },
 
     doDelete(ids) {
       this.$http
         .delete(`http://127.0.0.1:26339/tasks/${ids}?delFile=${this.delFile}`)
-        .then(() => {
-          ids.split(',').forEach(id => {
-            const index = this.getIndexByTaskId(id)
-            if (index >= 0) {
-              this.taskList.splice(index, 1)
-            }
-          })
-        })
-        .finally((this.deleteModal = false))
+        .finally(() => (this.deleteModal = false))
     },
 
     getCheckedIds() {
-      return this.$refs.taskTable
+      return this.$refs[this.activeTab + 'Table']
         .getCheckedTasks()
         .map(task => task.id)
         .join(',')
