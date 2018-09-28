@@ -27,6 +27,7 @@
         icon="play">
         <Table :taskList="runList"
           ref="runTable"
+          :maxHeight="taskListMaxHeight"
           @on-delete="onDelete"
           @on-pause="onPause"
           @on-resume="onResume"
@@ -37,6 +38,7 @@
         icon="pause">
         <Table :taskList="waitList"
           ref="waitTable"
+          :maxHeight="taskListMaxHeight"
           @on-delete="onDelete"
           @on-pause="onPause"
           @on-resume="onResume"
@@ -47,6 +49,7 @@
         icon="checkmark">
         <Table :taskList="doneList"
           ref="doneTable"
+          :maxHeight="taskListMaxHeight"
           @on-delete="onDelete"
           @on-pause="onPause"
           @on-resume="onResume"
@@ -108,6 +111,7 @@ export default {
                 fromList.splice(index, 1)
                 toList.splice(0, 0, task)
               }
+              this.refreshMaxHeight()
             }
           })
         }
@@ -116,9 +120,33 @@ export default {
         case 'CREATE':
           if (data.info.status == 1) {
             this.runList.push(data)
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
+            this.waitList.push({ ...data })
           } else {
             this.waitList.push(data)
           }
+          this.refreshMaxHeight()
           break
         case 'PROGRESS':
           updateTask([data.id], this.runList, this.doneList, task => {
@@ -182,6 +210,7 @@ export default {
   data() {
     return {
       activeTab: 'run',
+      taskListMaxHeight: undefined,
       runList: [],
       waitList: [],
       doneList: [],
@@ -279,10 +308,27 @@ export default {
 
     getIndexByTaskId(taskId) {
       return this.taskList.findIndex(t => t.id === taskId)
+    },
+
+    getTop(e) {
+      let offset = e.offsetTop
+      if (e.offsetParent) {
+        offset += this.getTop(e.offsetParent)
+      }
+      return offset
+    },
+
+    refreshMaxHeight() {
+      const taskListTop = this.getTop(this.$refs[this.activeTab + 'Table'].$el.querySelector('div.tb-body'))
+      const windowHeight = document.documentElement.clientHeight || document.body.clientHeight
+      this.taskListMaxHeight = windowHeight - taskListTop - 25
     }
   },
 
   created() {
+    window.onresize = () => {
+      this.refreshMaxHeight()
+    }
     this.onRouteChange(this.$route.query)
   }
 }

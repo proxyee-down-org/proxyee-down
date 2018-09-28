@@ -19,7 +19,8 @@
         </div>
       </div>
 
-      <div class="tb-body">
+      <div class="tb-body"
+        :style="{'max-height':maxHeight+'px'}">
         <div class="tb-tr"
           v-for="task in taskList"
           :key="task.id">
@@ -116,6 +117,9 @@ export default {
     taskList: {
       type: Array,
       required: true
+    },
+    maxHeight: {
+      type: Number
     }
   },
 
@@ -193,6 +197,9 @@ export default {
 
 <style lang="less" scoped>
 .prye-tb {
+  .tb-body {
+    overflow-y: auto;
+  }
   .tb-wrapper {
     position: relative;
     width: 100%;
