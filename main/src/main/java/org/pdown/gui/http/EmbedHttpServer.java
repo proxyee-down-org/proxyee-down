@@ -103,20 +103,19 @@ public class EmbedHttpServer {
                       FullHttpResponse httpResponse = invoke(uri.getPath(), ctx.channel(), request);
                       if (httpResponse != null) {
                         httpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-                        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH,httpResponse.content().readableBytes());
+                        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpResponse.content().readableBytes());
                         ch.writeAndFlush(httpResponse);
                       }
                     }
 
                     @Override
-                    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+                    public void channelUnregistered(ChannelHandlerContext ctx) {
                       ctx.channel().close();
                     }
 
                     @Override
-                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
-                        throws Exception {
-                      LOGGER.error("native request error", cause.getCause());
+                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+                      LOGGER.error("native request error", cause.getCause() == null ? cause : cause.getCause());
                       Map<String, Object> data = new HashMap<>();
                       data.put("error", cause.getCause().toString());
                       FullHttpResponse httpResponse = HttpHandlerUtil.buildJson(data);

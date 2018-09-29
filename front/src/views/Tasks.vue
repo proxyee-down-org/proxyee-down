@@ -120,29 +120,6 @@ export default {
         case 'CREATE':
           if (data.info.status == 1) {
             this.runList.push(data)
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
-            this.waitList.push({ ...data })
           } else {
             this.waitList.push(data)
           }
@@ -200,6 +177,7 @@ export default {
           this.waitList.push(task)
         }
       })
+      this.refreshMaxHeight()
     })
   },
 

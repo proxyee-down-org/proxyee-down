@@ -299,7 +299,7 @@ public class NativeController {
       ExtensionUtil.install(server, path, files);
     }
     //刷新扩展content
-    ExtensionContent.refresh(ExtensionContent.EXT_DIR + path);
+    ExtensionContent.refresh(path);
     //刷新系统pac代理
     AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);

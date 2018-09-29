@@ -76,7 +76,7 @@ public class ExtensionContent {
   }
 
   public synchronized static ExtensionInfo refresh(String path, boolean isLocal) throws IOException {
-    ExtensionInfo loadExt = parseExtensionDir(new File(path), isLocal);
+    ExtensionInfo loadExt = parseExtensionDir(new File((isLocal ? "" : EXT_DIR) + path), isLocal);
     if (loadExt != null && EXTENSION_INFO_LIST != null && path != null) {
       boolean match = false;
       for (int i = 0; i < EXTENSION_INFO_LIST.size(); i++) {
@@ -131,7 +131,7 @@ public class ExtensionContent {
     }
   }
 
-  public synchronized static void refresh() throws IOException {
+  public synchronized static void refresh() {
     if (PROXY_WILDCARDS == null) {
       PROXY_WILDCARDS = new HashSet<>();
     } else {
