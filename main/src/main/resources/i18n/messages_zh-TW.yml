@@ -6,7 +6,7 @@ gui:
     noFreePort: 系統無法分配 TCP 端口
   menu:
     copy: 複製
-    paste: 粘貼
+    paste: 貼上
   tray:
     show: 顯示
     set: 設定
