@@ -80,6 +80,7 @@ import Table from '../components/Table'
 import Resolve from '../components/Task/Resolve'
 import Create from '../components/Task/Create'
 import { showFile } from '../common/native'
+import ReconnectingWebSocket from 'reconnecting-websocket'
 
 let ws
 
@@ -92,7 +93,7 @@ export default {
   },
 
   mounted() {
-    ws = new WebSocket('ws://' + window.location.hostname + ':26339/ws')
+    ws = new ReconnectingWebSocket('ws://' + window.location.hostname + ':26339/ws')
     ws.onmessage = evt => {
       const msg = eval('(' + evt.data + ')')
       const data = msg.data
@@ -165,20 +166,7 @@ export default {
         }
       }
     }
-    this.$noSpinHttp.get('http://127.0.0.1:26339/tasks').then(result => {
-      result.data.forEach(task => {
-        if (task.info.status == 1) {
-          //Downloading tasks
-          this.runList.push(task)
-        } else if (task.info.status == 4) {
-          //Completed task
-          this.doneList.push(task)
-        } else {
-          this.waitList.push(task)
-        }
-      })
-      this.refreshMaxHeight()
-    })
+    this.retryLoadTaskList()
   },
 
   destroyed() {
@@ -294,6 +282,30 @@ export default {
         offset += this.getTop(e.offsetParent)
       }
       return offset
+    },
+
+    retryLoadTaskList() {
+      this.$noSpinHttp
+        .get('http://127.0.0.1:26339/tasks')
+        .then(result => {
+          result.data.forEach(task => {
+            if (task.info.status == 1) {
+              //Downloading tasks
+              this.runList.push(task)
+            } else if (task.info.status == 4) {
+              //Completed task
+              this.doneList.push(task)
+            } else {
+              this.waitList.push(task)
+            }
+          })
+          this.refreshMaxHeight()
+        })
+        .catch(error => {
+          if (!error.response) {
+            setTimeout(this.retryLoadTaskList, 3000)
+          }
+        })
     },
 
     refreshMaxHeight() {
