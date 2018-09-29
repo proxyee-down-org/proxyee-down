@@ -2,7 +2,7 @@
   var API_PORT = '${apiPort}'
   var FRONT_PORT = '${frontPort}'
   var REST_PORT = '26339'
-  ;(function(pdown){
+  ;(function (pdown) {
     ${content}
   })({
     resolve: function (request) {
@@ -20,8 +20,8 @@
         window.open('http://127.0.0.1:' + FRONT_PORT + '/#/tasks?request=' + requestStr + '&response=' + responseStr)
       }
     },
-    pushTask: function (taskForm, onSuccess, onError) {
-      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks', taskForm, onSuccess, onError)
+    pushTask: function (taskForm, onSuccess, onError, refresh) {
+      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks?refresh=' + refresh, taskForm, onSuccess, onError)
     },
     getDownConfig: function () {
       var config = ajax.get('http://127.0.0.1:' + REST_PORT + '/config')
@@ -52,7 +52,7 @@
   })
 })((function () {
   return {
-    version:'${version}',
+    version: '${version}',
     buildXHR: function () {
       var xhr = null
       if (window.XMLHttpRequest) {
