@@ -53,6 +53,7 @@
                 @click="$emit('on-open', task)"></Icon>
               <Poptip placement="right-end"
                 :title="$t('tasks.detail')"
+                transfer
                 width="400"
                 trigger="click">
                 <Icon type="ios-eye-outline"
