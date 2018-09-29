@@ -11,10 +11,22 @@
       </a>
       <br>
 
+      <span>{{ $t("about.project.official") }}</span>
+      <a href="javascript:void(0)" @click="openUrl('https://pdown.org')">
+        pdown.org
+      </a>
+      <br>
+
+      <span>{{ $t("about.project.community") }}</span>
+      <a href="javascript:void(0)" @click="openUrl('https://community.pdown.org')">
+        community.pdown.org
+      </a>
+      <br>
+
       <span>{{ $t("about.project.tutorial") }}</span>
       <a href="javascript:void(0)"
-        @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/blob/master/README.md')">
-        GitHub@proxyee-down/README.md
+        @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/wiki/%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B')">
+        GitHub@proxyee-down/wiki
       </a>
       <br>
 

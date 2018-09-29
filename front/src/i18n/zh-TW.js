@@ -114,6 +114,8 @@ export default {
       title: '項目',
       content: 'Proxyee Down 是一款開源的免費軟體，基於本軟體的高速下載核心和擴充套件，可以方便並快速的下載所需資源。',
       githubAddress: '項目首頁：',
+      official: '官方網站：',
+      community: '官方社區：',
       tutorial: '使用教學：',
       feedback: '問題回報：',
       currentVersion: '目前版本：'

@@ -114,6 +114,8 @@ export default {
       title: 'Project',
       content: 'Proxyee-Down is an open source, free software based on the software\'s high-speed download kernel and extensions to easily and quickly download the required resources.',
       githubAddress: 'Project Homepage: ',
+      official: 'Official website: ',
+      community: 'Official community: ',
       tutorial: 'Use Tutorial: ',
       feedback: 'Feedback: ',
       currentVersion: 'Current Version: '
