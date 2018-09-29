@@ -10,11 +10,14 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Region;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import org.pdown.gui.util.I18nUtil;
 
 public class Browser extends Region {
 
   final WebView webView = new WebView();
   final WebEngine webEngine = webView.getEngine();
+  private javafx.scene.control.MenuItem copy;
+  private javafx.scene.control.MenuItem paste;
 
   public Browser() {
     getChildren().add(webView);
@@ -22,7 +25,7 @@ public class Browser extends Region {
     //自定义webview右键菜单
     final Clipboard clipboard = Clipboard.getSystemClipboard();
     ContextMenu contextMenu = new ContextMenu();
-    javafx.scene.control.MenuItem copy = new javafx.scene.control.MenuItem("复制");
+    copy = new javafx.scene.control.MenuItem();
     copy.setOnAction(e -> {
       ClipboardContent content = new ClipboardContent();
       Object selection = webView.getEngine().executeScript("window.getSelection().toString()");
@@ -31,7 +34,7 @@ public class Browser extends Region {
         clipboard.setContent(content);
       }
     });
-    javafx.scene.control.MenuItem paste = new javafx.scene.control.MenuItem("粘帖");
+    paste = new javafx.scene.control.MenuItem();
     paste.setOnAction(e -> {
       Object content = clipboard.getContent(DataFormat.PLAIN_TEXT);
       if (content != null) {
@@ -48,6 +51,7 @@ public class Browser extends Region {
             + "}");
       }
     });
+    refreshText();
     contextMenu.getItems().addAll(copy, paste);
     webView.setOnMousePressed(e -> {
       if (e.getButton() == MouseButton.SECONDARY) {
@@ -71,5 +75,10 @@ public class Browser extends Region {
 
   public boolean isLoad() {
     return webEngine.getLocation() != null;
+  }
+
+  public void refreshText() {
+    copy.setText(I18nUtil.getMessage("gui.menu.copy"));
+    paste.setText(I18nUtil.getMessage("gui.menu.paste"));
   }
 }

@@ -253,6 +253,10 @@ public class DownApplication extends Application {
     trayIcon.setPopupMenu(popupMenu);
   }
 
+  public void refreshBrowserMenu() {
+    browser.refreshText();
+  }
+
   //加载webView
   private void initBrowser() throws AWTException {
     browser = new Browser();

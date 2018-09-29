@@ -4,6 +4,9 @@ gui:
     startError: Start error:{0}
     restPortBusy: Port 26339 is busy,Do not repeat startup software.
     noFreePort: The system cannot allocate the TCP port
+  menu:
+    copy: Copy
+    paste: Paste
   tray:
     show: Show
     set: Setting

@@ -4,6 +4,9 @@ gui:
     startError: 啟動失敗：{0}
     restPortBusy: 端口 26339 被占用，請勿重複啟動軟體
     noFreePort: 系統無法分配 TCP 端口
+  menu:
+    copy: 複製
+    paste: 粘貼
   tray:
     show: 顯示
     set: 設定

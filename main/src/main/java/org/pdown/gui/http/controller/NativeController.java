@@ -135,6 +135,7 @@ public class NativeController {
     BeanUtils.copyProperties(configInfo, beforeConfigInfo);
     if (localeChange) {
       DownApplication.INSTANCE.loadPopupMenu();
+      DownApplication.INSTANCE.refreshBrowserMenu();
     }
     //检查到前置代理有变动重启MITM代理服务器
     if (proxyChange && PDownProxyServer.isStart) {
