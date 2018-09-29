@@ -107,6 +107,9 @@ getInitConfig()
     // Set default language
     i18n.locale = result.locale
   })
+  .catch(() => {
+    Vue.prototype.$config = {}
+  })
   .finally(() => {
     new Vue({
       router,
