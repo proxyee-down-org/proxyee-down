@@ -6,6 +6,7 @@ public class ExtensionInfo {
 
   private String title; //扩展名称
   private double version; //扩展版本号
+  private String homepage; //扩展主页
   private String description; //扩展描述
   private List<String> proxyWildcards;  //扩展生效配置的域名通配符列表
   private List<String> sniffRegexs;  //扩展嗅探下载的url正则表达式列表
@@ -27,6 +28,15 @@ public class ExtensionInfo {
 
   public ExtensionInfo setVersion(double version) {
     this.version = version;
+    return this;
+  }
+
+  public String getHomepage() {
+    return homepage;
+  }
+
+  public ExtensionInfo setHomepage(String homepage) {
+    this.homepage = homepage;
     return this;
   }
 

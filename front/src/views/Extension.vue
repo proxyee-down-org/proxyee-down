@@ -196,11 +196,7 @@ export default {
                 class="action-icon"
                 title={_this.$t('extension.actionDetail')}
                 nativeOnClick={() => {
-                  _this.openUrl(
-                    'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' +
-                      params.row.meta.path +
-                      '/README.md'
-                  )
+                  _this.openHomepage(params.row)
                 }}
               />
             ]
@@ -364,7 +360,10 @@ export default {
         }
       })
     },
-    openUrl(url) {
+    openHomepage(row) {
+      const url =
+        row.homepage ||
+        'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' + row.meta.path + '/README.md'
       openUrl(url)
     },
     copyPac() {
