@@ -12,7 +12,7 @@
     "axios": "^0.18.0",
     "iview": "^2.14.3",
     "numeral": "^2.0.6",
-    "reconnecting-websocket": "^4.0.0-rc5",
+    "reconnecting-websocket": "^4.1.0",
     "vue": "^2.5.17",
     "vue-i18n": "^8.0.0",
     "vue-router": "^3.0.1",

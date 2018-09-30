@@ -59,7 +59,7 @@
 
     <Modal v-model="deleteModal"
       :title="$t('tasks.deleteTask')">
-      <Checkbox :value="delFile"></Checkbox>
+      <Checkbox v-model="delFile"></Checkbox>
       <span @click="delFile=!delFile">{{ $t('tasks.deleteTaskTip') }}</span>
       <div slot="footer">
         <Button type="primary"
