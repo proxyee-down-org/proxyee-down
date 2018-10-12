@@ -11,7 +11,19 @@
     resolveAsync: function (request, onSuccess, onError) {
       ajax.putAsync('http://127.0.0.1:' + REST_PORT + '/util/resolve', request, onSuccess, onError)
     },
-    createTask: function (request, response) {
+    createTask: function () {
+      var request
+      var response
+      if (arguments.length == 1) {
+        var taskForm = arguments[0]
+        request = taskForm.request
+        response = taskForm.response
+      } else if (arguments.length == 2) {
+        request = arguments[0]
+        response = arguments[1]
+      } else {
+        return
+      }
       var requestStr = encodeURIComponent(JSON.stringify(request))
       var responseStr = encodeURIComponent(JSON.stringify(response))
       if ('${uiMode}' == '1') {
@@ -20,8 +32,17 @@
         window.open('http://127.0.0.1:' + FRONT_PORT + '/#/tasks?request=' + requestStr + '&response=' + responseStr)
       }
     },
-    pushTask: function (taskForm, onSuccess, onError, refresh) {
-      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks?refresh=' + refresh, taskForm, onSuccess, onError)
+    createTaskAsync: function (taskForm, onSuccess, onError) {
+      var requestStr = encodeURIComponent(JSON.stringify(taskForm.request))
+      var responseStr = encodeURIComponent(JSON.stringify(taskForm.response))
+      if ('${uiMode}' == '1') {
+        ajax.getAsync('http://127.0.0.1:' + API_PORT + '/api/createTask?request=' + requestStr + '&response=' + responseStr, onSuccess, onError)
+      } else {
+        window.open('http://127.0.0.1:' + FRONT_PORT + '/#/tasks?request=' + requestStr + '&response=' + responseStr)
+      }
+    },
+    pushTask: function (taskForm, onSuccess, onError) {
+      ajax.postAsync('http://127.0.0.1:' + REST_PORT + '/tasks?refresh=true', taskForm, onSuccess, onError)
     },
     getDownConfig: function () {
       var config = ajax.get('http://127.0.0.1:' + REST_PORT + '/config')
@@ -31,6 +52,18 @@
       delete config['taskLimit']
       delete config['totalSpeedLimit']
       return config
+    },
+    getDownConfigAsync: function (onSuccess, onError) {
+      ajax.getAsync('http://127.0.0.1:' + REST_PORT + '/config', function (config) {
+        delete config['port']
+        delete config['proxyConfig']
+        delete config['speedLimit']
+        delete config['taskLimit']
+        delete config['totalSpeedLimit']
+        if (onSuccess) {
+          onSuccess(config)
+        }
+      }, onError)
     },
     getCookie: function (url) {
       var cookie = ''
@@ -48,6 +81,25 @@
       }
       xhr.send()
       return cookie
+    },
+    getCookieAsync: function (url, onSuccess, onError) {
+      var xhr = ajax.buildXHR()
+      xhr.withCredentials = true
+      xhr.open('get', url, true)
+      xhr.setRequestHeader('Accept', 'application/x-sniff-cookie,*/*;q=0.8')
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            var cookie = xhr.getResponseHeader('X-Sniff-Cookie')
+            if (onSuccess) {
+              onSuccess(cookie)
+            }
+          } else if (onError) {
+            onError(xhr)
+          }
+        }
+      }
+      xhr.send()
     }
   })
 })((function () {
@@ -82,6 +134,9 @@
     },
     get: function (url) {
       return this.send('get', url)
+    },
+    getAsync: function (url, onSuccess, onError) {
+      return this.sendAsync('get', url, null, onSuccess, onError)
     },
     post: function (url, data) {
       return this.send('post', url, data)
