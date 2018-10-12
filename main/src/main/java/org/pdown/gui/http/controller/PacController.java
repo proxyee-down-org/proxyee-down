@@ -27,7 +27,7 @@ public class PacController {
       + "      break;"
       + "    }"
       + "  }"
-      + "  return match ? 'PROXY 127.0.0.1:{port}' : 'DIRECT';"
+      + "  return match ? 'PROXY 127.0.0.1:{port};DIRECT' : 'DIRECT';"
       + "}";
 
   @RequestMapping("pdown.pac")
