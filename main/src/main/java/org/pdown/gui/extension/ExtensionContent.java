@@ -1,5 +1,6 @@
 package org.pdown.gui.extension;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.FileInputStream;
@@ -81,7 +82,7 @@ public class ExtensionContent {
       boolean match = false;
       for (int i = 0; i < EXTENSION_INFO_LIST.size(); i++) {
         ExtensionInfo extensionInfo = EXTENSION_INFO_LIST.get(i);
-        if (path.equals(extensionInfo.getMeta().getPath())
+        if (loadExt.getMeta().getPath().equals(extensionInfo.getMeta().getPath())
             && loadExt.getMeta().isLocal() == extensionInfo.getMeta().isLocal()) {
           match = true;
           EXTENSION_INFO_LIST.set(i, loadExt);
@@ -165,6 +166,7 @@ public class ExtensionContent {
   private static ExtensionInfo parseExtensionDir(File extendDir, boolean isLocal) {
     ExtensionInfo extensionInfo = null;
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     try {
       extensionInfo = objectMapper.readValue(new FileInputStream(extendDir + File.separator + EXT_MANIFEST), ExtensionInfo.class);
     } catch (IOException e) {

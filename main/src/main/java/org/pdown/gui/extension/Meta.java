@@ -7,12 +7,12 @@ import org.pdown.rest.util.ContentUtil;
 
 public class Meta {
 
-  public transient static final String CONFIG_FILE = ".config.dat";
+  public transient static final String CONFIG_FILE = ".ext_data/.config.dat";
 
   private transient String path;
   private transient String fullPath;
   private boolean enabled = true;
-  private boolean local;
+  private boolean local = true;
   private Map<String, Object> data;
 
   public String getPath() {

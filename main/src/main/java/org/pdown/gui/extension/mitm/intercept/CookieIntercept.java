@@ -28,7 +28,8 @@ public class CookieIntercept extends HttpProxyIntercept {
       httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, 0);
       //https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Access-Control-Expose-Headers
       AsciiString customHeadKey = AsciiString.cached("X-Sniff-Cookie");
-      httpResponse.headers().set(customHeadKey, pipeline.getHttpRequest().headers().get(HttpHeaderNames.COOKIE));
+      String cookie = pipeline.getHttpRequest().headers().get(HttpHeaderNames.COOKIE);
+      httpResponse.headers().set(customHeadKey, cookie == null ? "" : cookie);
       httpResponse.headers().set(HttpHeaderNames.ACCESS_CONTROL_EXPOSE_HEADERS, customHeadKey);
       String origin = httpRequest.headers().get(HttpHeaderNames.ORIGIN);
       if (StringUtil.isNullOrEmpty(origin)) {

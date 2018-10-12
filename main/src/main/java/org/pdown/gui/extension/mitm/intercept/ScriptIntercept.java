@@ -89,20 +89,20 @@ public class ScriptIntercept extends FullResponseIntercept {
       httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("text/html; charset=utf-8"));
       String insertToken = "</head>";
       int index = ByteUtil.findText(httpResponse.content(), insertToken);
-      String pdownJs = "";
+      String apiJs = "";
       try (
-          BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("pdown.js")))
+          BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("extension/api.js")))
       ) {
-        pdownJs = reader.lines().collect(Collectors.joining("\r\n"));
-        pdownJs = pdownJs.replace("${version}", ConfigUtil.getString("version"));
-        pdownJs = pdownJs.replace("${apiPort}", DownApplication.INSTANCE.API_PORT + "");
-        pdownJs = pdownJs.replace("${frontPort}", DownApplication.INSTANCE.FRONT_PORT + "");
-        pdownJs = pdownJs.replace("${uiMode}", PDownConfigContent.getInstance().get().getUiMode() + "");
-        pdownJs = pdownJs.replace("${content}", scriptsBuilder.toString());
-        pdownJs = "<script type=\"text/javascript\">\r\n" + pdownJs + "\r\n</script>";
+        apiJs = reader.lines().collect(Collectors.joining("\r\n"));
+        apiJs = apiJs.replace("${version}", ConfigUtil.getString("version"));
+        apiJs = apiJs.replace("${apiPort}", DownApplication.INSTANCE.API_PORT + "");
+        apiJs = apiJs.replace("${frontPort}", DownApplication.INSTANCE.FRONT_PORT + "");
+        apiJs = apiJs.replace("${uiMode}", PDownConfigContent.getInstance().get().getUiMode() + "");
+        apiJs = apiJs.replace("${content}", scriptsBuilder.toString());
+        apiJs = "<script type=\"text/javascript\">\r\n" + apiJs + "\r\n</script>";
       } catch (IOException e) {
       }
-      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index - insertToken.length(), pdownJs, Charset.forName("UTF-8"));
+      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index - insertToken.length(), apiJs, Charset.forName("UTF-8"));
     }
   }
 }
