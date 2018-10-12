@@ -63,7 +63,7 @@
       <span @click="delFile=!delFile">{{ $t('tasks.deleteTaskTip') }}</span>
       <div slot="footer">
         <Button type="primary"
-          @click="doDelete(delTaskId)">{{ $t('tip.ok') }}</Button>
+          @click="doDelete(delTaskIds)">{{ $t('tip.ok') }}</Button>
         <Button @click="deleteModal=false">{{ $t('tip.cancel') }}</Button>
       </div>
     </Modal>
@@ -97,23 +97,25 @@ export default {
     ws.onmessage = evt => {
       const msg = eval('(' + evt.data + ')')
       const data = msg.data
-      const updateTask = (taskIds, fromList, toList, handle) => {
+      const updateTask = (taskIds, fromListArray, toList, handle) => {
         if (taskIds && taskIds.length) {
           taskIds.forEach(taskId => {
-            const index = fromList.findIndex(task => task.id == taskId)
-            if (index >= 0) {
-              const task = fromList[index]
-              let moveFlag = false
-              if (handle) {
-                moveFlag = handle(task)
+            fromListArray.forEach(fromList => {
+              const index = fromList.findIndex(task => task.id == taskId)
+              if (index >= 0) {
+                const task = fromList[index]
+                let moveFlag = false
+                if (handle) {
+                  moveFlag = handle(task)
+                }
+                //Move to the other task list
+                if (moveFlag && fromList != toList) {
+                  fromList.splice(index, 1)
+                  toList.splice(0, 0, task)
+                }
+                this.refreshMaxHeight()
               }
-              //Move to the other task list
-              if (moveFlag) {
-                fromList.splice(index, 1)
-                toList.splice(0, 0, task)
-              }
-              this.refreshMaxHeight()
-            }
+            })
           })
         }
       }
@@ -127,26 +129,31 @@ export default {
           this.refreshMaxHeight()
           break
         case 'PROGRESS':
-          updateTask([data.id], this.runList, this.doneList, task => {
+          updateTask([data.id], [this.runList], this.doneList, task => {
             //Update the task progress info
             task.info = data.info
             return data.info.status == 4
           })
           break
         case 'PAUSE':
-          updateTask(data, this.runList, this.waitList, task => {
+          updateTask(data, [this.runList, this.waitList], this.waitList, task => {
             //Update the task status to pause
             task.info.status = 2
             return true
           })
           break
         case 'RESUME':
-          updateTask(data.pauseIds, this.runList, this.waitList, task => {
+          updateTask(data.pauseIds, [this.runList, this.waitList], this.waitList, task => {
             //Update the task status to pause
             task.info.status = 2
             return true
           })
-          updateTask(data.resumeIds, this.waitList, this.runList, task => {
+          updateTask(data.waitIds, [this.runList, this.waitList], this.waitList, task => {
+            //Update the task status to wait
+            task.info.status = 0
+            return true
+          })
+          updateTask(data.resumeIds, [this.waitList], this.runList, task => {
             //Update the task status to downloading
             task.info.status = 1
             return true
@@ -181,7 +188,7 @@ export default {
       waitList: [],
       doneList: [],
       deleteModal: false,
-      delTaskId: '',
+      delTaskIds: [],
       delFile: false,
       resolveVisible: false,
       createForm: {
@@ -211,15 +218,15 @@ export default {
     },
 
     onPause(task) {
-      this.doPause(task.id)
+      this.doPause([task.id])
     },
 
     onResume(task) {
-      this.doResume(task.id)
+      this.doResume([task.id])
     },
 
     onDelete(task) {
-      this.delTaskId = task.id
+      this.delTaskIds = [task.id]
       this.delFile = false
       this.deleteModal = true
     },
@@ -230,46 +237,43 @@ export default {
 
     onPauseBatch() {
       const ids = this.getCheckedIds()
-      if (ids) {
+      if (ids.length) {
         this.doPause(ids)
       }
     },
 
     onResumeBatch() {
       const ids = this.getCheckedIds()
-      if (ids) {
+      if (ids.length) {
         this.doResume(ids)
       }
     },
 
     onDeleteBatch() {
       const ids = this.getCheckedIds()
-      if (ids) {
-        this.delTaskId = this.getCheckedIds()
+      if (ids.length) {
+        this.delTaskIds = ids
         this.delFile = false
         this.deleteModal = true
       }
     },
 
     doPause(ids) {
-      this.$http.put(`http://127.0.0.1:26339/tasks/${ids}/pause`)
+      this.$http.put('http://127.0.0.1:26339/tasks/pause', ids)
     },
 
     doResume(ids) {
-      this.$http.put(`http://127.0.0.1:26339/tasks/${ids}/resume`)
+      this.$http.put('http://127.0.0.1:26339/tasks/resume', ids)
     },
 
     doDelete(ids) {
       this.$http
-        .delete(`http://127.0.0.1:26339/tasks/${ids}?delFile=${this.delFile}`)
+        .post(`http://127.0.0.1:26339/tasks/delete?delFile=${this.delFile}`, ids)
         .finally(() => (this.deleteModal = false))
     },
 
     getCheckedIds() {
-      return this.$refs[this.activeTab + 'Table']
-        .getCheckedTasks()
-        .map(task => task.id)
-        .join(',')
+      return this.$refs[this.activeTab + 'Table'].getCheckedTasks().map(task => task.id)
     },
 
     getIndexByTaskId(taskId) {
