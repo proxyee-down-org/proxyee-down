@@ -70,6 +70,7 @@ export default {
     actionInstall: 'Install',
     actionDetail: 'Detail',
     uninstall: 'Uninstall',
+    uninstallTip: 'Do you want to uninstall this extension?',
     switch: 'Switch',
     downloadingTip: 'Downloading...[servers(',
     downloadOk: 'Download successful',
@@ -118,7 +119,9 @@ export default {
       community: 'Official community: ',
       tutorial: 'Use Tutorial: ',
       feedback: 'Feedback: ',
-      currentVersion: 'Current Version: '
+      currentVersion: 'Current Version: ',
+      checkUpdate: 'Check update：',
+      noNewVersion: 'Already the latest version'
     },
     team: {
       title: 'Team'

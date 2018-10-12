@@ -70,6 +70,7 @@ export default {
     actionInstall: '安裝',
     actionDetail: '細節',
     uninstall: '卸載',
+    uninstallTip: '確定卸載此擴展嗎？',
     switch: '開關',
     downloadingTip: '下載中...[伺服器(',
     downloadOk: '下載成功',
@@ -118,7 +119,9 @@ export default {
       community: '官方社區：',
       tutorial: '使用教學：',
       feedback: '問題回報：',
-      currentVersion: '目前版本：'
+      currentVersion: '目前版本：',
+      checkUpdate: '檢查更新：',
+      noNewVersion: '已經是最新版本'
     },
     team: {
       title: '團隊'
