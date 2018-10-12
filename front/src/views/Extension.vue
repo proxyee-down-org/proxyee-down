@@ -265,7 +265,13 @@ export default {
             })
             // Update info to server
             this.$noSpinHttp.get(
-              this.$config.adminServer + 'extension/down?ext_id=' + row.id + '&version=' + row.version
+              this.$config.adminServer +
+                'extension/down?ext_id=' +
+                row.id +
+                '&version=' +
+                row.version +
+                '&pd_version=' +
+                this.$config.version
             )
           })
           .catch(error => {
@@ -313,15 +319,24 @@ export default {
       })
     },
     uninstallExtension(row) {
-      uninstallExtension(row.meta.path, row.meta.local)
-        .then(() => {
-          const index = this.localAllList.findIndex(localExt => localExt.meta.path == row.meta.path)
-          if (index != -1) {
-            this.localAllList.splice(index, 1)
-            this.refreshExtensions()
-          }
-        })
-        .catch(() => this.$Message.error(this.$t('alert.error')))
+      const _this = this
+      _this.$Modal.confirm({
+        title: _this.$t('extension.uninstall'),
+        content: _this.$t('extension.uninstallTip'),
+        okText: _this.$t('tip.ok'),
+        cancelText: _this.$t('tip.cancel'),
+        onOk() {
+          uninstallExtension(row.meta.path, row.meta.local)
+            .then(() => {
+              const index = _this.localAllList.findIndex(localExt => localExt.meta.path == row.meta.path)
+              if (index != -1) {
+                _this.localAllList.splice(index, 1)
+                _this.refreshExtensions()
+              }
+            })
+            .catch(() => _this.$Message.error(_this.$t('alert.error')))
+        }
+      })
     },
     loadExtensions() {
       // Loading proxy mode
@@ -340,7 +355,7 @@ export default {
       pageSize = pageSize ? pageSize : 1
       this.onlineLoading = true
       this.$noSpinHttp
-        .get(this.$config.adminServer + 'extension/search?pageSize=' + pageSize)
+        .get(`${this.$config.adminServer}extension/search?pageSize=${pageSize}&version=${this.$config.version}`)
         .then(result => {
           this.onlinePage = result.data
           this.refreshExtensions()
