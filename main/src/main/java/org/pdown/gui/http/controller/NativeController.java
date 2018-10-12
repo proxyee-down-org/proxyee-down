@@ -280,7 +280,7 @@ public class NativeController {
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> map = getJSONParams(request);
     String path = (String) map.get("path");
-    boolean local = (boolean) map.get("local");
+    boolean local = map.get("local") != null ? (boolean) map.get("local") : false;
     //卸载扩展
     ExtensionContent.remove(path, local);
     //刷新系统pac代理
@@ -313,16 +313,14 @@ public class NativeController {
     Map<String, Object> map = getJSONParams(request);
     String path = (String) map.get("path");
     boolean enabled = (boolean) map.get("enabled");
-    ExtensionContent.get()
+    ExtensionInfo extensionInfo = ExtensionContent.get()
         .stream()
-        .filter(extensionInfo -> extensionInfo.getMeta().getPath().equals(path))
+        .filter(e -> e.getMeta().getPath().equals(path))
         .findFirst()
-        .get()
-        .getMeta()
-        .setEnabled(enabled)
-        .save();
+        .get();
+    extensionInfo.getMeta().setEnabled(enabled).save();
     //刷新pac
-    ExtensionContent.refresh();
+    ExtensionContent.refresh(extensionInfo.getMeta().getFullPath(), true);
     AppUtil.refreshPAC();
     return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
   }
