@@ -119,9 +119,13 @@ public class ExtensionProxyUtil {
       if (entry.getValue().contains(socket.getLocalAddress().getHostAddress())) {
         String remoteInterface = entry.getKey();
         if (OsUtil.isWindows()) {
-          String result = ExecUtil.exec("rasdial");
-          if (result != null && Arrays.stream(result.split("\r\n")).anyMatch(line -> line.equals(remoteInterface))) {
-            return remoteInterface;
+          try {
+            String result = ExecUtil.exec("rasdial");
+            if (result != null && Arrays.stream(result.split("\r\n")).anyMatch(line -> line.equals(remoteInterface))) {
+              return remoteInterface;
+            }
+          } catch (IOException e) {
+            return null;
           }
         } else if (OsUtil.isMac()) {
           String result = ExecUtil.exec("networksetup", "-listnetworkserviceorder");
