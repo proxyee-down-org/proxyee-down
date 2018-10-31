@@ -27,7 +27,7 @@
 ### 编译
 
 ```
-git clone https://github.com/monkeyWie/proxyee-down.git
+git clone https://github.com/proxyee-down-org/proxyee-down.git
 cd proxyee-down/front
 #build html
 npm install

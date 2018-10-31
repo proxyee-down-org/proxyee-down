@@ -12,7 +12,7 @@
     <module>runner</module>
   </modules>
   <name>proxyee-down</name>
-  <url>https://github.com/monkeyWie/proxyee-down</url>
+  <url>https://github.com/proxyee-down-org/proxyee-down</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
