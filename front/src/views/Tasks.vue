@@ -71,6 +71,8 @@
     <Resolve v-model="resolveVisible" />
     <Create :request="createForm.request"
       :response="createForm.response"
+      :config="createForm.config"
+      :data="createForm.data"
       @close="$router.push('/');" />
   </div>
 </template>
@@ -142,6 +144,13 @@ export default {
             return true
           })
           break
+        case 'ERROR':
+          updateTask([data.id], [this.runList], this.waitList, task => {
+            //Update the task status to error
+            task.info.status = 3
+            return true
+          })
+          break
         case 'RESUME':
           updateTask(data.pauseIds, [this.runList, this.waitList], this.waitList, task => {
             //Update the task status to pause
@@ -193,7 +202,9 @@ export default {
       resolveVisible: false,
       createForm: {
         request: null,
-        response: null
+        response: null,
+        config: null,
+        data: null
       }
     }
   },
@@ -213,7 +224,9 @@ export default {
       const flag = !!(query.request && query.response)
       this.createForm = {
         request: flag ? JSON.parse(query.request) : null,
-        response: flag ? JSON.parse(query.response) : null
+        response: flag ? JSON.parse(query.response) : null,
+        config: flag && query.config ? JSON.parse(query.config) : null,
+        data: flag && query.data ? JSON.parse(query.data) : null
       }
     },
 

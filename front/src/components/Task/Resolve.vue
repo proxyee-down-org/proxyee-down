@@ -21,34 +21,34 @@
         prop="url">
         <Input v-model="form.url" />
       </FormItem>
-        <FormItem :label="$t('tasks.option')">
-          <Checkbox v-model="hasHead">{{ $t('tasks.head') }}</Checkbox>
-          <Checkbox v-model="hasBody">{{ $t('tasks.body') }}</Checkbox>
-        </FormItem>
-        <FormItem v-show="hasHead"
-          :label="$t('tasks.head')"
-          prop="heads">
-          <div v-for="(head, index) in form.heads"
-            :key="index"
-            :class="index === 0 ? null : 'head-margin' ">
-            <Input class="head-input"
+      <FormItem :label="$t('tasks.option')">
+        <Checkbox v-model="hasHead">{{ $t('tasks.head') }}</Checkbox>
+        <Checkbox v-model="hasBody">{{ $t('tasks.body') }}</Checkbox>
+      </FormItem>
+      <FormItem v-show="hasHead"
+        :label="$t('tasks.head')"
+        prop="heads">
+        <div v-for="(head, index) in form.heads"
+          :key="index"
+          :class="index === 0 ? null : 'head-margin' ">
+          <Input class="head-input"
             v-model="head.key"
             placeholder="key" />
-            <Input class="head-input"
+          <Input class="head-input"
             v-model="head.value"
             placeholder="value" />
-            <Icon v-if="index !== 0"
-              type="minus-circled"
-              @click="delHead(index)"></Icon>
-            <Icon v-if="index === form.heads.length - 1"
-              type="plus-circled"
-              @click="addHead"></Icon>
-          </div>
-        </FormItem>
-        <FormItem v-show="hasBody"
-          :label="$t('tasks.body')"
-          prop="body">
-          <Input type="textarea"
+          <Icon v-if="index !== 0"
+            type="minus-circled"
+            @click="delHead(index)"></Icon>
+          <Icon v-if="index === form.heads.length - 1"
+            type="plus-circled"
+            @click="addHead"></Icon>
+        </div>
+      </FormItem>
+      <FormItem v-show="hasBody"
+        :label="$t('tasks.body')"
+        prop="body">
+        <Input type="textarea"
           :autosize="{ minRows: 2, maxRows: 4}"
           v-model="form.body" />
       </FormItem>
@@ -62,6 +62,8 @@
 </template>
 
 <script>
+import { onResolve } from '../../common/native.js'
+
 export default {
   props: {
     value: {
@@ -102,7 +104,7 @@ export default {
       this.form.heads.splice(index, 1)
     },
     onSubmit() {
-      this.$refs['form'].validate(valid => {
+      this.$refs['form'].validate(async valid => {
         if (valid) {
           const requestData = {
             method: this.form.method,
@@ -120,15 +122,25 @@ export default {
           if (this.hasBody) {
             requestData.body = this.form.body
           }
-          this.$http.put('http://127.0.0.1:26339/util/resolve', requestData).then(result => {
+          this.$Spin.show()
+          try {
+            let resolveData = await onResolve(requestData)
+            if (!resolveData) {
+              const result = await this.$http.put('http://127.0.0.1:26339/util/resolve', requestData)
+              resolveData = result.data
+            }
             this.$emit('input', false)
-            const request = JSON.stringify(result.data.request)
-            const response = JSON.stringify(result.data.response)
+            const request = JSON.stringify(resolveData.request)
+            const response = JSON.stringify(resolveData.response)
+            const config = JSON.stringify(resolveData.config)
+            const data = JSON.stringify(resolveData.data)
             this.$router.push({
               path: '/',
-              query: { request: request, response: response }
+              query: { request: request, response: response, config: config, data: data }
             })
-          })
+          } finally {
+            this.$Spin.hide()
+          }
         }
       })
     },
