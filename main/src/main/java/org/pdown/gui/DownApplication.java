@@ -40,6 +40,7 @@ import org.pdown.gui.http.EmbedHttpServer;
 import org.pdown.gui.http.controller.ApiController;
 import org.pdown.gui.http.controller.NativeController;
 import org.pdown.gui.http.controller.PacController;
+import org.pdown.gui.rest.HttpDownAppCallback;
 import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
 import org.pdown.gui.util.ExecUtil;
@@ -47,6 +48,7 @@ import org.pdown.gui.util.I18nUtil;
 import org.pdown.rest.DownRestServer;
 import org.pdown.rest.content.ConfigContent;
 import org.pdown.rest.content.RestWebServerFactoryCustomizer;
+import org.pdown.rest.controller.HttpDownRestCallback;
 import org.pdown.rest.entity.ServerConfigInfo;
 import org.pdown.rest.util.PathUtil;
 import org.slf4j.Logger;
@@ -117,6 +119,7 @@ public class DownApplication extends Application {
 
   private void initRest() {
     //init rest server config
+    HttpDownRestCallback.setCallback(new HttpDownAppCallback());
     RestWebServerFactoryCustomizer.init(null);
     ServerConfigInfo serverConfigInfo = ConfigContent.getInstance().get();
     serverConfigInfo.setPort(REST_PORT);

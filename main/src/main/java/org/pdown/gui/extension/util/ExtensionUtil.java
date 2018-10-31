@@ -1,18 +1,32 @@
 package org.pdown.gui.extension.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.stream.Collectors;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 import org.pdown.core.util.FileUtil;
+import org.pdown.gui.DownApplication;
+import org.pdown.gui.content.PDownConfigContent;
 import org.pdown.gui.extension.ExtensionContent;
+import org.pdown.gui.extension.ExtensionInfo;
 import org.pdown.gui.extension.Meta;
+import org.pdown.gui.extension.jsruntime.JavascriptEngine;
 import org.pdown.gui.util.AppUtil;
+import org.pdown.gui.util.ConfigUtil;
 
 public class ExtensionUtil {
 
@@ -105,5 +119,43 @@ public class ExtensionUtil {
         out.write(buf, 0, length);
       }
     }
+  }
+
+  public static String readRuntimeTemplate(ExtensionInfo extensionInfo) {
+    String template = "";
+    try (
+        BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("extension/runtime.js")))
+    ) {
+      template = reader.lines().collect(Collectors.joining("\n"));
+      template = template.replace("${version}", ConfigUtil.getString("version"));
+      template = template.replace("${apiPort}", DownApplication.INSTANCE.API_PORT + "");
+      template = template.replace("${frontPort}", DownApplication.INSTANCE.FRONT_PORT + "");
+      template = template.replace("${uiMode}", PDownConfigContent.getInstance().get().getUiMode() + "");
+      String settingJson = "{}";
+      if (extensionInfo.getMeta().getSettings() != null) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+          settingJson = objectMapper.writeValueAsString(extensionInfo.getMeta().getSettings());
+        } catch (JsonProcessingException e) {
+        }
+      }
+      template = template.replace("${settings}", settingJson);
+    } catch (IOException e) {
+    }
+    return template;
+  }
+
+  /**
+   * 创建扩展环境的js引擎，可以在引擎中访问pdown对象
+   */
+  public static ScriptEngine buildExtensionRuntimeEngine(ExtensionInfo extensionInfo) throws ScriptException, NoSuchMethodException, FileNotFoundException {
+    //初始化js引擎
+    ScriptEngine engine = JavascriptEngine.buildEngine();
+    //加载运行时脚本
+    Object runtime = engine.eval(ExtensionUtil.readRuntimeTemplate(extensionInfo));
+    engine.put("pdown", runtime);
+    //加载扩展脚本
+    engine.eval(new FileReader(Paths.get(extensionInfo.getMeta().getFullPath(), extensionInfo.getHookScript().getScript()).toFile()));
+    return engine;
   }
 }

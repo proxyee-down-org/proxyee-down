@@ -1,5 +1,7 @@
 package org.pdown.gui.extension;
 
+import java.util.Arrays;
+
 public class ContentScript {
 
   private String[] matches;
@@ -21,5 +23,13 @@ public class ContentScript {
   public ContentScript setScripts(String[] scripts) {
     this.scripts = scripts;
     return this;
+  }
+
+  public boolean isMatch(String url) {
+    if (matches != null
+        && Arrays.stream(matches).anyMatch(m -> url.matches(m))) {
+      return true;
+    }
+    return false;
   }
 }

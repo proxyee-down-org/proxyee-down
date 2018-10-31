@@ -3,78 +3,57 @@ package org.pdown.gui.extension.mitm.intercept;
 import com.github.monkeywie.proxyee.intercept.HttpProxyInterceptPipeline;
 import com.github.monkeywie.proxyee.intercept.common.FullResponseIntercept;
 import com.github.monkeywie.proxyee.util.ByteUtil;
-import com.github.monkeywie.proxyee.util.HttpUtil;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
-import io.netty.util.AsciiString;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import org.pdown.gui.DownApplication;
-import org.pdown.gui.content.PDownConfigContent;
+import org.pdown.core.util.HttpDownUtil;
 import org.pdown.gui.extension.ContentScript;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.ExtensionInfo;
-import org.pdown.gui.util.ConfigUtil;
+import org.pdown.gui.extension.util.ExtensionUtil;
 
 public class ScriptIntercept extends FullResponseIntercept {
 
-  private Map<String, List<ContentScript>> matchScriptMap = new HashMap<>();
-
   @Override
   public boolean match(HttpRequest httpRequest, HttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {
-    if (isHtml(httpRequest, httpResponse)) {
-      doMatchScripts(httpRequest);
-      return matchScriptMap.size() > 0;
-    }
-    return false;
+    return isHtml(httpRequest, httpResponse);
   }
 
-  //匹配url对应的js脚本
-  private void doMatchScripts(HttpRequest httpRequest) {
-    List<ExtensionInfo> extensionInfoList = ExtensionContent.get();
-    if (extensionInfoList != null && extensionInfoList.size() > 0) {
-      for (ExtensionInfo extensionInfo : extensionInfoList) {
-        if (extensionInfo.getContentScripts() != null && extensionInfo.getContentScripts().size() > 0) {
-          for (ContentScript contentScript : extensionInfo.getContentScripts()) {
-            if (contentScript.getMatches() != null && contentScript.getMatches().length > 0) {
-              for (String match : contentScript.getMatches()) {
-                if (HttpUtil.checkUrl(httpRequest, match)) {
-                  String key = extensionInfo.getMeta().getFullPath();
-                  List<ContentScript> contentScriptList = matchScriptMap.get(key);
-                  if (contentScriptList == null) {
-                    contentScriptList = new ArrayList<>();
-                    matchScriptMap.put(key, contentScriptList);
-                  }
-                  contentScriptList.add(contentScript);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  private static final String INSERT_TOKEN = "</head>";
+  private static final String INIT_TEMPLATE = ";(function (pdown) {\n"
+      + "  ${content}\n"
+      + "})(${runtime})";
+
+  private String readInsertTemplate(ExtensionInfo extensionInfo) {
+    String js = ExtensionUtil.readRuntimeTemplate(extensionInfo);
+    js = INIT_TEMPLATE.replace("${runtime}", js);
+    js = "<script type=\"text/javascript\">\n" + js + "\n</script>";
+    return js;
   }
 
   @Override
   public void handelResponse(HttpRequest httpRequest, FullHttpResponse httpResponse, HttpProxyInterceptPipeline pipeline) {
-    StringBuilder scriptsBuilder = new StringBuilder();
-    for (Entry<String, List<ContentScript>> entry : matchScriptMap.entrySet()) {
-      for (ContentScript contentScript : entry.getValue()) {
-        if (contentScript.getScripts() != null && contentScript.getScripts().length > 0) {
+    List<ExtensionInfo> extensionInfoList = ExtensionContent.get();
+    if (isEmpty(extensionInfoList)) {
+      return;
+    }
+    for (ExtensionInfo extensionInfo : extensionInfoList) {
+      if (isEmpty(extensionInfo.getContentScripts())) {
+        continue;
+      }
+      for (ContentScript contentScript : extensionInfo.getContentScripts()) {
+        //扩展注入正则表达式与当前访问的url匹配则注入脚本
+        String url = HttpDownUtil.getUrl(httpRequest);
+        if (contentScript.isMatch(url)) {
+          String apiTemplate = readInsertTemplate(extensionInfo);
+          StringBuilder scriptsBuilder = new StringBuilder();
           for (String script : contentScript.getScripts()) {
-            File scriptFile = new File(entry.getKey() + File.separator + script);
+            File scriptFile = new File(extensionInfo.getMeta().getFullPath() + File.separator + script);
             if (scriptFile.exists() && scriptFile.isFile()) {
               try {
                 scriptsBuilder.append(new String(Files.readAllBytes(scriptFile.toPath()), "UTF-8"));
@@ -82,27 +61,15 @@ public class ScriptIntercept extends FullResponseIntercept {
               }
             }
           }
+          apiTemplate = apiTemplate.replace("${content}", scriptsBuilder.toString());
+          int index = ByteUtil.findText(httpResponse.content(), INSERT_TOKEN);
+          ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index - INSERT_TOKEN.length(), apiTemplate, Charset.forName("UTF-8"));
         }
       }
     }
-    if (scriptsBuilder.length() > 0) {
-      httpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("text/html; charset=utf-8"));
-      String insertToken = "</head>";
-      int index = ByteUtil.findText(httpResponse.content(), insertToken);
-      String apiJs = "";
-      try (
-          BufferedReader reader = new BufferedReader(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("extension/api.js")))
-      ) {
-        apiJs = reader.lines().collect(Collectors.joining("\r\n"));
-        apiJs = apiJs.replace("${version}", ConfigUtil.getString("version"));
-        apiJs = apiJs.replace("${apiPort}", DownApplication.INSTANCE.API_PORT + "");
-        apiJs = apiJs.replace("${frontPort}", DownApplication.INSTANCE.FRONT_PORT + "");
-        apiJs = apiJs.replace("${uiMode}", PDownConfigContent.getInstance().get().getUiMode() + "");
-        apiJs = apiJs.replace("${content}", scriptsBuilder.toString());
-        apiJs = "<script type=\"text/javascript\">\r\n" + apiJs + "\r\n</script>";
-      } catch (IOException e) {
-      }
-      ByteUtil.insertText(httpResponse.content(), index == -1 ? 0 : index - insertToken.length(), apiJs, Charset.forName("UTF-8"));
-    }
+  }
+
+  private boolean isEmpty(List list) {
+    return list == null || list.size() == 0;
   }
 }

@@ -13,6 +13,7 @@ public class Meta {
   private transient String fullPath;
   private boolean enabled = true;
   private boolean local = true;
+  private Map<String, Object> settings;
   private Map<String, Object> data;
 
   public String getPath() {
@@ -39,6 +40,15 @@ public class Meta {
 
   public Meta setEnabled(boolean enabled) {
     this.enabled = enabled;
+    return this;
+  }
+
+  public Map<String, Object> getSettings() {
+    return settings;
+  }
+
+  public Meta setSettings(Map<String, Object> settings) {
+    this.settings = settings;
     return this;
   }
 
