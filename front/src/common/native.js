@@ -181,6 +181,20 @@ export const toggleExtension = data => {
 }
 
 /**
+ * 保存指定扩展的设置
+ * @param {String} path 扩展路径
+ * @param {object} setting 扩展设置信息
+ */
+export const updateExtensionSetting = (path, setting) => {
+  return new Promise((resolve, reject) => {
+    client
+      .post('/native/updateExtensionSetting', { path, setting })
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
+}
+
+/**
  * 打开浏览器并访问指定url
  * @param {object} data
  */
@@ -190,6 +204,19 @@ export const openUrl = url => {
   } else {
     window.open(url)
   }
+}
+
+/**
+ * 在解析任务时触发
+ * @param {object} request
+ */
+export const onResolve = request => {
+  return new Promise((resolve, reject) => {
+    clientNoSpin
+      .post('/native/onResolve', request)
+      .then(response => resolve(response.data))
+      .catch(error => reject(error))
+  })
 }
 
 /**

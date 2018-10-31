@@ -1,5 +1,6 @@
 package org.pdown.gui.http.util;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.Channel;
@@ -18,11 +19,18 @@ public class HttpHandlerUtil {
   }
 
   public static FullHttpResponse buildJson(Object obj) {
+    return buildJson(obj, null);
+  }
+
+  public static FullHttpResponse buildJson(Object obj, Include include) {
     FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, AsciiString.cached("application/json; charset=utf-8"));
     if (obj != null) {
       try {
         ObjectMapper objectMapper = new ObjectMapper();
+        if (include != null) {
+          objectMapper.setSerializationInclusion(include);
+        }
         String content = objectMapper.writeValueAsString(obj);
         response.content().writeBytes(content.getBytes(Charset.forName("utf-8")));
       } catch (JsonProcessingException e) {

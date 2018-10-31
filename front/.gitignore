@@ -20,7 +20,4 @@ yarn-error.log*
 *.sln
 *.sw*
 
-.vscode/*
-!.vscode/settings.json
-
 package-lock.json

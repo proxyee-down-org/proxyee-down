@@ -15,7 +15,7 @@
         @on-change="changeProxyMode"></Switch>
       <Tooltip placement="bottom">
         <Icon type="help-circled"
-          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/tree/v3.0#%E6%89%A9%E5%B1%95%E6%A8%A1%E5%9D%97')"
+          @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/wiki/%E5%AE%89%E8%A3%85%E6%89%A9%E5%B1%95')"
           class="action-icon tip-icon" />
         <div slot="content">
           <p>{{ $t('extension.proxyTip') }}</p>
@@ -49,8 +49,22 @@
         icon="social-buffer">
         <Table :columns="localColumns"
           :data="localAllList"></Table>
+        <Modal v-model="settingModal"
+          title="设置">
+          <ExtensionSetting :settings="settings" />
+          <span slot="footer">
+            <Button @click="settingModal = false">{{ $t('tip.cancel') }}</Button>
+            <Button type="primary"
+              @click="saveSetting()">{{ $t('tip.ok') }}</Button>
+          </span>
+        </Modal>
       </TabPane>
     </Tabs>
+    <Icon type="loop"
+      class="action-icon"
+      title="刷新"
+      style="position: absolute;top: 138px;left: 290px;"
+      @click="loadExtensions"></Icon>
     <Spin fix
       v-if="spinShow">
       <Icon type="load-c"
@@ -61,6 +75,7 @@
 </template>
 <script>
 import { Icon, Tag } from 'iview'
+import ExtensionSetting from '../components/ExtensionSetting.vue'
 import {
   checkCert,
   installCert,
@@ -74,11 +89,15 @@ import {
   toggleExtension,
   openUrl,
   copy,
-  showDirChooser
+  showDirChooser,
+  updateExtensionSetting
 } from '../common/native.js'
 
 export default {
   name: 'extension',
+  components: {
+    ExtensionSetting
+  },
   data() {
     return {
       certStatus: false,
@@ -96,7 +115,10 @@ export default {
       spinShow: false,
       spinTip: '',
       onlineColumns: this.buildCommonColumns(),
-      localColumns: this.buildCommonColumns(true)
+      localColumns: this.buildCommonColumns(true),
+      settingModal: false,
+      settingExt: null,
+      settings: []
     }
   },
   methods: {
@@ -181,7 +203,25 @@ export default {
                       class="action-icon"
                       title={_this.$t('extension.uninstall')}
                       nativeOnClick={() => _this.uninstallExtension(params.row)}
-                    />
+                    />,
+                    ...(params.row.settings && params.row.settings.length
+                      ? [
+                          <Icon
+                            type="android-settings"
+                            class="action-icon"
+                            title="设置"
+                            nativeOnClick={() => {
+                              _this.settingModal = true
+                              _this.settingExt = params.row
+                              _this.settings = params.row.settings
+                              const settingValues = params.row.meta.settings
+                              if (settingValues) {
+                                _this.settings.forEach(s => (s.value = settingValues[s.name] || s.value))
+                              }
+                            }}
+                          />
+                        ]
+                      : [])
                   ]
                 : [
                     <Icon
@@ -221,7 +261,7 @@ export default {
     },
 
     changeEnabled(enabled, row) {
-      toggleExtension({ path: row.meta.path, enabled: enabled }).then(() => {
+      toggleExtension({ path: row.meta.path, enabled: enabled, local: row.meta.local }).then(() => {
         const localExt = this.localAllList.find(localExt => localExt.meta.path == row.meta.path)
         localExt.meta.enabled = enabled
         this.refreshExtensions()
@@ -381,6 +421,9 @@ export default {
         'https://github.com/proxyee-down-org/proxyee-down-extension/blob/master' + row.meta.path + '/README.md'
       openUrl(url)
     },
+    openUrl(url) {
+      openUrl(url)
+    },
     copyPac() {
       const { protocol, host } = window.location
       copy({
@@ -389,6 +432,15 @@ export default {
       })
         .then(() => this.$Message.success(this.$t('tip.copySucc')))
         .catch(() => this.$Message.error(this.$t('tip.copyFail')))
+    },
+    saveSetting() {
+      const setting = {}
+      this.settingExt.settings.forEach(s => {
+        setting[s.name] = s.value
+      })
+      updateExtensionSetting(this.settingExt.meta.path, setting)
+        .then(() => this.$Message.success('保存成功'))
+        .catch(() => this.$Message.error('保存失败'))
     }
   },
   created() {
