@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -174,6 +175,18 @@ public class ExtensionContent {
     if (extensionInfo != null) {
       Meta meta = Meta.load(extendDir.getPath());
       meta.setLocal(isLocal);
+      //如果没有设置则生成默认设置信息
+      if (extensionInfo.getSettings() != null
+          && extensionInfo.getSettings().size() > 0) {
+        if (meta.getSettings() == null) {
+          meta.setSettings(new HashMap<>());
+        }
+        if (meta.getSettings().size() == 0) {
+          for (Setting setting : extensionInfo.getSettings()) {
+            meta.getSettings().put(setting.getName(), setting.getValue());
+          }
+        }
+      }
       extensionInfo.setMeta(meta);
     }
     return extensionInfo;

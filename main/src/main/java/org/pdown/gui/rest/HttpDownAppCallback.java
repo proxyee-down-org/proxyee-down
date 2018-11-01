@@ -1,6 +1,5 @@
 package org.pdown.gui.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,14 +10,11 @@ import org.pdown.core.util.HttpDownUtil;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.ExtensionInfo;
 import org.pdown.gui.extension.HookScript;
+import org.pdown.gui.extension.HookScript.Event;
 import org.pdown.gui.extension.util.ExtensionUtil;
-import org.pdown.gui.http.controller.NativeController;
-import org.pdown.gui.http.util.HttpHandlerUtil;
 import org.pdown.rest.controller.HttpDownRestCallback;
 import org.pdown.rest.entity.DownInfo;
-import org.pdown.rest.form.CreateTaskForm;
 import org.pdown.rest.form.HttpRequestForm;
-import org.pdown.rest.form.ResolveForm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -52,17 +48,20 @@ public class HttpDownAppCallback extends HttpDownRestCallback {
       for (ExtensionInfo extensionInfo : extensionInfos) {
         if (extensionInfo.getMeta().isEnabled()) {
           if (extensionInfo.getHookScript() != null
-              && !StringUtils.isEmpty(extensionInfo.getHookScript().getScript())
-              && extensionInfo.getHookScript().hasEvent(HookScript.EVENT_ERROR, HttpDownUtil.getUrl(httpDownBootstrap.getRequest()))) {
-            try {
-              //初始化js引擎
-              ScriptEngine engine = ExtensionUtil.buildExtensionRuntimeEngine(extensionInfo);
-              Invocable invocable = (Invocable) engine;
-              //执行error方法
-              invocable.invokeFunction(HookScript.EVENT_ERROR, taskForm);
-            } catch (Exception e) {
-              LOGGER.error("An exception occurred while error()", e);
+              && !StringUtils.isEmpty(extensionInfo.getHookScript().getScript())) {
+            Event event = extensionInfo.getHookScript().hasEvent(HookScript.EVENT_ERROR, HttpDownUtil.getUrl(httpDownBootstrap.getRequest()));
+            if (event != null) {
+              try {
+                //初始化js引擎
+                ScriptEngine engine = ExtensionUtil.buildExtensionRuntimeEngine(extensionInfo);
+                Invocable invocable = (Invocable) engine;
+                //执行error方法
+                invocable.invokeFunction(StringUtils.isEmpty(event.getMethod()) ? HookScript.EVENT_ERROR : event.getMethod(), taskForm);
+              } catch (Exception e) {
+                LOGGER.error("An exception occurred while error()", e);
+              }
             }
+
           }
         }
       }

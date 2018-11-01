@@ -30,24 +30,23 @@ public class HookScript {
 
   /**
    * 判断扩展是否有注册钩子函数
-   * @param event
-   * @param url
-   * @return
    */
-  public boolean hasEvent(String event, String url) {
+  public Event hasEvent(String event, String url) {
     String matchUrl = url != null ? url.replaceAll("^(?i)(https?://)", "") : "";
-    if (events != null
-        && Arrays.stream(events).anyMatch(e -> event.equalsIgnoreCase(e.getOn())
-        && (e.getMatches() == null || (Arrays.stream(e.getMatches()).anyMatch(m -> matchUrl.matches(m)))))) {
-      return true;
+    if (events != null) {
+      return Arrays.stream(events)
+          .filter(e -> event.equalsIgnoreCase(e.getOn()) && (e.getMatches() == null || (Arrays.stream(e.getMatches()).anyMatch(m -> matchUrl.matches(m)))))
+          .findFirst()
+          .orElse(null);
     }
-    return false;
+    return null;
   }
 
-  static class Event {
+  public static class Event {
 
     private String on;
     private String[] matches;
+    private String method;
 
     public String getOn() {
       return on;
@@ -64,6 +63,15 @@ public class HookScript {
 
     public Event setMatches(String[] matches) {
       this.matches = matches;
+      return this;
+    }
+
+    public String getMethod() {
+      return method;
+    }
+
+    public Event setMethod(String method) {
+      this.method = method;
       return this;
     }
   }

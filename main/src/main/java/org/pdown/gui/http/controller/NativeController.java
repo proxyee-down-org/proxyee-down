@@ -39,6 +39,7 @@ import org.pdown.gui.entity.PDownConfigInfo;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.ExtensionInfo;
 import org.pdown.gui.extension.HookScript;
+import org.pdown.gui.extension.HookScript.Event;
 import org.pdown.gui.extension.mitm.server.PDownProxyServer;
 import org.pdown.gui.extension.mitm.util.ExtensionCertUtil;
 import org.pdown.gui.extension.mitm.util.ExtensionProxyUtil;
@@ -440,48 +441,50 @@ public class NativeController {
     for (ExtensionInfo extensionInfo : extensionInfos) {
       if (extensionInfo.getMeta().isEnabled()) {
         if (extensionInfo.getHookScript() != null
-            && !StringUtils.isEmpty(extensionInfo.getHookScript().getScript())
-            && extensionInfo.getHookScript().hasEvent(HookScript.EVENT_RESOLVE, taskRequest.getUrl())) {
-          try {
-            //初始化js引擎
-            ScriptEngine engine = ExtensionUtil.buildExtensionRuntimeEngine(extensionInfo);
-            Invocable invocable = (Invocable) engine;
-            //执行resolve方法
-            Object result = invocable.invokeFunction(HookScript.EVENT_RESOLVE, taskRequest);
-            if (result != null) {
-              final TaskForm[] taskForm = {null};
-              //判断是不是返回Promise对象
-              ScriptContext ctx = new SimpleScriptContext();
-              ctx.setAttribute("result", result, ScriptContext.ENGINE_SCOPE);
-              boolean isPromise = (boolean) engine.eval("!!result&&typeof result=='object'&&typeof result.then=='function'", ctx);
-              ObjectMapper objectMapper = new ObjectMapper();
-              if (isPromise) {
-                //如果是返回的Promise则等待执行完成
-                CountDownLatch countDownLatch = new CountDownLatch(1);
-                invocable.invokeMethod(result, "then", (Function) o -> {
-                  try {
-                    String temp = objectMapper.writeValueAsString(o);
-                    taskForm[0] = objectMapper.readValue(temp, TaskForm.class);
-                  } catch (Exception e) {
-                    LOGGER.error("An exception occurred while resolve()", e);
-                  } finally {
-                    countDownLatch.countDown();
-                  }
-                  return null;
-                });
-                //等待解析完成
-                countDownLatch.await();
-              } else {
-                String temp = objectMapper.writeValueAsString(result);
-                taskForm[0] = objectMapper.readValue(temp, TaskForm.class);
+            && !StringUtils.isEmpty(extensionInfo.getHookScript().getScript())) {
+          Event event = extensionInfo.getHookScript().hasEvent(HookScript.EVENT_RESOLVE, taskRequest.getUrl());
+          if (event != null) {
+            try {
+              //初始化js引擎
+              ScriptEngine engine = ExtensionUtil.buildExtensionRuntimeEngine(extensionInfo);
+              Invocable invocable = (Invocable) engine;
+              //执行resolve方法
+              Object result = invocable.invokeFunction(StringUtils.isEmpty(event.getMethod()) ? HookScript.EVENT_RESOLVE : event.getMethod(), taskRequest);
+              if (result != null) {
+                final TaskForm[] taskForm = {null};
+                //判断是不是返回Promise对象
+                ScriptContext ctx = new SimpleScriptContext();
+                ctx.setAttribute("result", result, ScriptContext.ENGINE_SCOPE);
+                boolean isPromise = (boolean) engine.eval("!!result&&typeof result=='object'&&typeof result.then=='function'", ctx);
+                ObjectMapper objectMapper = new ObjectMapper();
+                if (isPromise) {
+                  //如果是返回的Promise则等待执行完成
+                  CountDownLatch countDownLatch = new CountDownLatch(1);
+                  invocable.invokeMethod(result, "then", (Function) o -> {
+                    try {
+                      String temp = objectMapper.writeValueAsString(o);
+                      taskForm[0] = objectMapper.readValue(temp, TaskForm.class);
+                    } catch (Exception e) {
+                      LOGGER.error("An exception occurred while resolve()", e);
+                    } finally {
+                      countDownLatch.countDown();
+                    }
+                    return null;
+                  });
+                  //等待解析完成
+                  countDownLatch.await();
+                } else {
+                  String temp = objectMapper.writeValueAsString(result);
+                  taskForm[0] = objectMapper.readValue(temp, TaskForm.class);
+                }
+                //有一个扩展解析成功的话直接返回
+                if (taskForm[0] != null) {
+                  return HttpHandlerUtil.buildJson(taskForm[0], Include.NON_DEFAULT);
+                }
               }
-              //有一个扩展解析成功的话直接返回
-              if (taskForm[0] != null) {
-                return HttpHandlerUtil.buildJson(taskForm[0], Include.NON_DEFAULT);
-              }
+            } catch (Exception e) {
+              LOGGER.error("An exception occurred while resolve()", e);
             }
-          } catch (Exception e) {
-            LOGGER.error("An exception occurred while resolve()", e);
           }
         }
       }
