@@ -22,9 +22,20 @@
         </div>
       </Tooltip>
       <Button type="info"
-        @click="copyPac">{{ $t('extension.copyPac') }}</Button>
+        shape="circle"
+        icon="loop"
+        @click="loadExtensions"
+        :title="$t('tip.refresh')"></Button>
       <Button type="info"
-        @click="installLocalExt">{{ $t('extension.installLocalExt') }}</Button>
+        shape="circle"
+        icon="ios-copy"
+        @click="copyPac"
+        :title="$t('extension.copyPac')"></Button>
+      <Button type="info"
+        shape="circle"
+        icon="android-folder-open"
+        @click="installLocalExt"
+        :title="$t('extension.installLocalExt')"></Button>
     </div>
     <Tabs type="card"
       :animated="false"
@@ -60,11 +71,6 @@
         </Modal>
       </TabPane>
     </Tabs>
-    <Icon type="loop"
-      class="action-icon"
-      title="刷新"
-      style="position: absolute;top: 138px;left: 290px;"
-      @click="loadExtensions"></Icon>
     <Spin fix
       v-if="spinShow">
       <Icon type="load-c"
@@ -209,7 +215,7 @@ export default {
                           <Icon
                             type="android-settings"
                             class="action-icon"
-                            title="设置"
+                            title={_this.$t('extension.setting')}
                             nativeOnClick={() => {
                               _this.settingModal = true
                               _this.settingExt = params.row
@@ -303,6 +309,8 @@ export default {
               content: this.$t('extension.downloadOk'),
               closable: true
             })
+            const afterBadges = this.$root.badges.extension - 1
+            this.$root.badges.extension = afterBadges < 0 ? 0 : afterBadges
             // Update info to server
             this.$noSpinHttp.get(
               this.$config.adminServer +
@@ -439,8 +447,8 @@ export default {
         setting[s.name] = s.value
       })
       updateExtensionSetting(this.settingExt.meta.path, setting)
-        .then(() => this.$Message.success('保存成功'))
-        .catch(() => this.$Message.error('保存失败'))
+        .then(() => this.$Message.success(this.$t('tip.saveSucc')))
+        .catch(() => this.$Message.error(this.$t('tip.saveFail')))
     }
   },
   created() {
