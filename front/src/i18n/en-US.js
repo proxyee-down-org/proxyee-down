@@ -14,8 +14,11 @@ export default {
     fmtErr: 'Incorrect format',
     choose: 'Choose',
     save: 'Save',
+    refresh: 'Refresh',
     copySucc: 'Copied successfully',
-    copyFail: 'Copy failed'
+    copyFail: 'Copy failed',
+    saveSucc: 'Save successfully',
+    saveFail: 'Save failed'
   },
   tasks: {
     createTask: 'New Task',
@@ -97,6 +100,7 @@ export default {
     uiMode: 'UI mode',
     uiModeWindows: 'Windows',
     uiModeBrowser: 'Browser',
+    autoOpen: 'Popup at startup',
     checkUpdate: 'Check for update',
     checkUpdateWeek: 'Every week',
     checkUpdateStartup: 'Every startup',

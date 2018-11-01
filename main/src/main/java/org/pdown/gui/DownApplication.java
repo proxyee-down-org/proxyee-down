@@ -93,7 +93,7 @@ public class DownApplication extends Application {
     initTray();
     initWindow();
     initBrowser();
-    loadUri(null, true);
+    loadUri(null, true, true);
   }
 
 
@@ -316,22 +316,32 @@ public class DownApplication extends Application {
     }
   }
 
-  public void loadUri(String uri, boolean isTray) {
+  public void loadUri(String uri, boolean isTray, boolean isStartup) {
     String url = "http://127.0.0.1:" + FRONT_PORT + (uri == null ? "" : uri);
+    boolean autoOpen = PDownConfigContent.getInstance().get().isAutoOpen();
     if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
-      try {
-        Desktop.getDesktop().browse(URI.create(url));
-      } catch (IOException e) {
-        LOGGER.error("Open browse error", e);
+      if (!isStartup || autoOpen) {
+        try {
+          Desktop.getDesktop().browse(URI.create(url));
+        } catch (IOException e) {
+          LOGGER.error("Open browse error", e);
+        }
       }
+
     } else {
       Platform.runLater(() -> {
         if (uri != null || !browser.isLoad()) {
           browser.load(url);
         }
-        show(isTray);
+        if (!isStartup || autoOpen) {
+          show(isTray);
+        }
       });
     }
+  }
+
+  public void loadUri(String uri, boolean isTray) {
+    loadUri(uri, isTray, false);
   }
 
   //提示并退出程序

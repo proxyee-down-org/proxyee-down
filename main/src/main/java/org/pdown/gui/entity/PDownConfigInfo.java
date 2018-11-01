@@ -17,6 +17,8 @@ public class PDownConfigInfo implements Serializable {
   private List<String> extFileServers;
   //检测更新频率 0.从不 1.一周检查一次 2.每次打开检查
   private int updateCheckRate = 2;
+  //启动时是否自动打开窗口
+  private boolean autoOpen = true;
   //最后一次检查更新时间
   private long lastUpdateCheck;
   //前置代理
@@ -82,6 +84,15 @@ public class PDownConfigInfo implements Serializable {
 
   public PDownConfigInfo setProxyConfig(ProxyConfig proxyConfig) {
     this.proxyConfig = proxyConfig;
+    return this;
+  }
+
+  public boolean isAutoOpen() {
+    return autoOpen;
+  }
+
+  public PDownConfigInfo setAutoOpen(boolean autoOpen) {
+    this.autoOpen = autoOpen;
     return this;
   }
 

@@ -14,8 +14,11 @@ export default {
     fmtErr: '格式不正確',
     choose: '選擇',
     save: '儲存',
+    refresh: '刷新',
     copySucc: '複製成功',
-    copyFail: '複製失敗'
+    copyFail: '複製失敗',
+    saveSucc: '保存成功',
+    saveFail: '保存失敗'
   },
   tasks: {
     createTask: '建立任務',
@@ -53,7 +56,8 @@ export default {
   },
   extension: {
     conditions: '使用須知',
-    conditionsContent: '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點選下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前偵測作業系統中是否有安裝過憑證，當偵測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
+    conditionsContent:
+      '首次使用擴充模組時，必須安裝由 Proxyee Down 隨機產生的一個 CA 憑證，點選下方的安裝按鈕並依系統的引導進行確認安裝。(注意：程式會在安裝前偵測作業系統中是否有安裝過憑證，當偵測到有安裝的情況會提示刪除對應的舊 CA 憑證)',
     install: '安裝',
     globalProxy: '全域代理',
     proxyTip: '點選檢視說明',
@@ -96,6 +100,7 @@ export default {
     uiMode: 'UI 模式',
     uiModeWindows: '視窗',
     uiModeBrowser: '瀏覽器',
+    autoOpen: '啟動彈窗',
     checkUpdate: '檢查更新',
     checkUpdateWeek: '每週',
     checkUpdateStartup: '每次啟動',

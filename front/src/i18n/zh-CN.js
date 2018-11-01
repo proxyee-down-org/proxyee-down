@@ -14,8 +14,11 @@ export default {
     fmtErr: '格式不正确',
     choose: '选择',
     save: '保存',
+    refresh: '刷新',
     copySucc: '复制成功',
-    copyFail: '复制失败'
+    copyFail: '复制失败',
+    saveSucc: '保存成功',
+    saveFail: '保存失败'
   },
   tasks: {
     createTask: '创建任务',
@@ -80,7 +83,8 @@ export default {
     extCenter: '扩展中心',
     installLocalExt: '加载本地扩展',
     installOk: '加载成功',
-    installErr: '加载失败，请检查manifest.json文件'
+    installErr: '加载失败，请检查manifest.json文件',
+    setting: '设置'
   },
   setting: {
     downSetting: '下载设置',
@@ -97,6 +101,7 @@ export default {
     uiMode: 'UI模式',
     uiModeWindows: '窗口',
     uiModeBrowser: '浏览器',
+    autoOpen: '启动弹窗',
     checkUpdate: '检查更新',
     checkUpdateWeek: '每周',
     checkUpdateStartup: '每次启动',
