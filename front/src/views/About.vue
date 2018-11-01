@@ -111,7 +111,7 @@
         <Circle :percent="updateInfo.progress"
           :size="150">
           <h1>{{ updateInfo.progress.toFixed(2) }}%</h1>
-          <p>{{ $numeral(updateInfo.speed).format('0.000 ib') }}/S</p>
+          <p>{{ $numeral(updateInfo.speed).format('0.00 ib') }}/S</p>
         </Circle>
       </Spin>
 

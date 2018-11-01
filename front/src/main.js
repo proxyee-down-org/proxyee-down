@@ -59,7 +59,17 @@ Vue.prototype.$http.interceptors.response.use(
   }
 )
 
+//去除字节大小格式化后的i字符
+const format = numeral.prototype.constructor.fn.format
+numeral.prototype.constructor.fn.format = function(fmt) {
+  let result = format.call(this, fmt)
+  if (/^.*ib$/.test(fmt)) {
+    result = result.replace('i', '')
+  }
+  return result
+}
 Vue.prototype.$numeral = numeral
+
 Date.prototype.format = function(fmt) {
   var o = {
     'M+': this.getMonth() + 1, // Month
