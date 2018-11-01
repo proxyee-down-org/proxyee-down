@@ -125,8 +125,10 @@ export default {
         case 'CREATE':
           if (data.info.status == 1) {
             this.runList.push(data)
+            this.activeTab = 'run'
           } else {
             this.waitList.push(data)
+            this.activeTab = 'wait'
           }
           this.refreshMaxHeight()
           break
@@ -143,6 +145,7 @@ export default {
             task.info.status = 2
             return true
           })
+          this.activeTab = 'wait'
           break
         case 'ERROR':
           updateTask([data.id], [this.runList], this.waitList, task => {
@@ -150,6 +153,7 @@ export default {
             task.info.status = 3
             return true
           })
+          this.activeTab = 'wait'
           break
         case 'RESUME':
           updateTask(data.pauseIds, [this.runList, this.waitList], this.waitList, task => {
@@ -167,6 +171,7 @@ export default {
             task.info.status = 1
             return true
           })
+          this.activeTab = 'run'
           break
         case 'DELETE': {
           let list = this[this.activeTab + 'List']
