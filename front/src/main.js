@@ -115,6 +115,11 @@ getInitConfig()
       router,
       store,
       i18n,
+      data() {
+        return {
+          badges: { tasks: 0, extension: 0, setting: 0, about: 0, support: 0 }
+        }
+      },
       render: h => h(App)
     }).$mount('#app')
   })
