@@ -274,7 +274,7 @@ export const getConfig = () => {
  */
 export const setConfig = config => {
   return new Promise((resolve, reject) => {
-    client
+    clientNoSpin
       .put('/native/setConfig', config)
       .then(response => resolve(response))
       .catch(error => reject(error))

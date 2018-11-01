@@ -20,7 +20,8 @@
         placement="right">
         <Icon type="help-circled"
           class="action-icon tip-icon" />
-        <div slot="content">
+        <div slot="content"
+          style="white-space: normal;width:200px;">
           <p>{{ setting.description }}</p>
         </div>
       </Tooltip>
