@@ -268,7 +268,7 @@ export default {
         position: absolute;
         z-index: -1;
         height: 100%;
-        background: rgba(40, 130, 214, 0.1);
+        background: rgba(87, 197, 247, 0.2);
         transition: all 0.6s;
       }
     }
