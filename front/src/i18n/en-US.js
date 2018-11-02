@@ -83,7 +83,8 @@ export default {
     extCenter: 'Extension center',
     installLocalExt: 'Install local extension',
     installOk: 'Installed successfully',
-    installErr: 'Installation failed, please check the manifest.json file'
+    installErr: 'Installation failed, please check the manifest.json file',
+    setting: 'Setting'
   },
   setting: {
     downSetting: 'Download settings',

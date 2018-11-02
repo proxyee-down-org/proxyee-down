@@ -61,7 +61,7 @@
         <Table :columns="localColumns"
           :data="localAllList"></Table>
         <Modal v-model="settingModal"
-          title="设置">
+          :title="$t('extension.setting')">
           <ExtensionSetting :settings="settings" />
           <span slot="footer">
             <Button @click="settingModal = false">{{ $t('tip.cancel') }}</Button>
@@ -303,7 +303,9 @@ export default {
               row.meta = { path: row.meta.path, enabled: true }
               this.localAllList.push(row)
             }
-            this.refreshExtensions()
+            this.getLocalExtensions(() => {
+              this.refreshExtensions()
+            })
             this.spinShow = false
             this.$Message.success({
               content: this.$t('extension.downloadOk'),
@@ -386,16 +388,23 @@ export default {
         }
       })
     },
-    loadExtensions() {
-      // Loading proxy mode
-      getProxyMode().then(mode => (this.proxySwitch = mode === 1))
-      // Get local installed extension
+    getLocalExtensions(callback) {
       getExtensions().then(localAllList => {
         this.localAllList = localAllList
         this.localAllList.forEach(localExt => {
           localExt.installed = true
           localExt.currVersion = localExt.version
         })
+        if (callback) {
+          callback()
+        }
+      })
+    },
+    loadExtensions() {
+      // Loading proxy mode
+      getProxyMode().then(mode => (this.proxySwitch = mode === 1))
+      // Get local installed extension
+      this.getLocalExtensions(() => {
         this.searchExtensions()
       })
     },
@@ -417,6 +426,7 @@ export default {
           this.$set(onlineExt, 'installed', true)
           this.$set(onlineExt, 'currVersion', localExt.version)
           this.$set(onlineExt, 'meta', localExt.meta)
+          this.$set(onlineExt, 'settings', localExt.settings)
         } else {
           onlineExt.installed = false
           onlineExt.meta = { path: onlineExt.path, enabled: false }

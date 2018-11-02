@@ -83,7 +83,8 @@ export default {
     extCenter: '擴充中心',
     installLocalExt: '加載本地擴充',
     installOk: '加載成功',
-    installErr: '加載失敗，請檢查manifest.json文件'
+    installErr: '加載失敗，請檢查manifest.json文件',
+    setting: '預設'
   },
   setting: {
     downSetting: '下載設定',
