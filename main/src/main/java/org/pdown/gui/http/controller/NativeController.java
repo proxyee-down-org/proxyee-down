@@ -371,7 +371,7 @@ public class NativeController {
   public FullHttpResponse installCert(Channel channel, FullHttpRequest request) throws Exception {
     Map<String, Object> data = new HashMap<>();
     boolean status;
-    if (OsUtil.isUnix()) {
+    if (OsUtil.isUnix() || OsUtil.isWindowsXP()) {
       if (!AppUtil.checkIsInstalledCert()) {
         ExtensionCertUtil.buildCert(AppUtil.SSL_PATH, AppUtil.SUBJECT);
       }

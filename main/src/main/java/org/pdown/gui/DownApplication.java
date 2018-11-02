@@ -62,7 +62,7 @@ public class DownApplication extends Application {
 
   private static final String OS = OsUtil.isWindows() ? "windows"
       : (OsUtil.isMac() ? "mac" : "linux");
-  private static final String ICON_NAME = OS + "/logo.png";
+  private static final String ICON_PATH = OS + (OsUtil.isWindowsXP() ? "/logo_xp.png" : "/logo.png");
 
   public static DownApplication INSTANCE;
 
@@ -91,8 +91,11 @@ public class DownApplication extends Application {
     initEmbedHttpServer();
     initExtension();
     initTray();
-    initWindow();
-    initBrowser();
+    //xp不支持webview
+    if (!OsUtil.isWindowsXP()) {
+      initWindow();
+      initBrowser();
+    }
     loadUri(null, true, true);
   }
 
@@ -217,7 +220,7 @@ public class DownApplication extends Application {
       // 获得系统托盘对象
       SystemTray systemTray = SystemTray.getSystemTray();
       // 获取图片所在的URL
-      URL url = Thread.currentThread().getContextClassLoader().getResource(ICON_NAME);
+      URL url = Thread.currentThread().getContextClassLoader().getResource(ICON_PATH);
       // 为系统托盘加托盘图标
       Image trayImage = Toolkit.getDefaultToolkit().getImage(url);
       Dimension trayIconSize = systemTray.getTrayIconSize();
@@ -280,7 +283,7 @@ public class DownApplication extends Application {
     stage.setY((bounds.getHeight() - height) / 2);
     stage.setMinWidth(width);
     stage.setMinHeight(height);
-    stage.getIcons().add(new javafx.scene.image.Image(Thread.currentThread().getContextClassLoader().getResourceAsStream(ICON_NAME)));
+    stage.getIcons().add(new javafx.scene.image.Image(Thread.currentThread().getContextClassLoader().getResourceAsStream(ICON_PATH)));
     stage.setResizable(true);
     //关闭窗口监听
     stage.setOnCloseRequest(event -> {
@@ -319,7 +322,7 @@ public class DownApplication extends Application {
   public void loadUri(String uri, boolean isTray, boolean isStartup) {
     String url = "http://127.0.0.1:" + FRONT_PORT + (uri == null ? "" : uri);
     boolean autoOpen = PDownConfigContent.getInstance().get().isAutoOpen();
-    if (PDownConfigContent.getInstance().get().getUiMode() == 0) {
+    if (OsUtil.isWindowsXP() || PDownConfigContent.getInstance().get().getUiMode() == 0) {
       if (!isStartup || autoOpen) {
         try {
           Desktop.getDesktop().browse(URI.create(url));
