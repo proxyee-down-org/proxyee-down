@@ -62,7 +62,7 @@ export default {
 
   async created() {
     // Check update
-    if (!this.$config.needCheckUpdate) {
+    if (this.$config.needCheckUpdate) {
       try {
         const { data: versionInfo } = await this.$noSpinHttp.get(this.$config.adminServer + 'version/checkUpdate')
         if (versionInfo && versionInfo.version > this.$config.version) {
@@ -85,8 +85,6 @@ export default {
             })
           )
           if (serverExtensions && serverExtensions.length > 0) {
-            /* this.$set(this.$badges, 'extension', serverExtensions.length)
-            console.log(this.$badges) */
             this.$root.badges.extension = serverExtensions.length
           }
         }

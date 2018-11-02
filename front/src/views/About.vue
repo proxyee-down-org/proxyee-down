@@ -59,61 +59,64 @@
       <p slot="title">{{ $t("about.team.title") }}</p>
       <Card class="item">
         <div>
-          <img src="team_header/monkeyWie.png" @click="openUrl('https://github.com/monkeyWie')">
+          <img src="team_header/monkeyWie.png"
+            @click="openUrl('https://github.com/monkeyWie')">
           <b>monkeyWie</b>
         </div>
       </Card>
       <Card class="item">
         <div>
-          <img src="team_header/Black-Hole.png" @click="openUrl('https://github.com/BlackHole1')">
+          <img src="team_header/Black-Hole.png"
+            @click="openUrl('https://github.com/BlackHole1')">
           <b>Black-Hole</b>
         </div>
       </Card>
       <Card class="item">
         <div>
-          <img src="team_header/NISAL.png" @click="openUrl('https://github.com/hiNISAL')">
+          <img src="team_header/NISAL.png"
+            @click="openUrl('https://github.com/hiNISAL')">
           <b>NISAL</b>
         </div>
       </Card>
       <br>
     </Card>
 
-      <Modal v-model="hasUpdate"
-        :title="$t('update.checkNew')">
-        <b>{{ $t('update.version') }}：</b>
-        <span>{{ versionInfo.version }}</span>
-        <br>
-        <br>
-        <b>{{ $t('update.changeLog') }}：</b>
-        <div style="padding-top:10px;"
-          v-html="versionInfo.description"></div>
-        <span slot="footer">
-          <Button @click="hasUpdate = false">{{ $t('tip.cancel') }}</Button>
-          <Button type="primary"
-            @click="doUpdate()">{{ $t('update.update') }}</Button>
-        </span>
-      </Modal>
+    <Modal v-model="hasUpdate"
+      :title="$t('update.checkNew')">
+      <b>{{ $t('update.version') }}：</b>
+      <span>{{ versionInfo.version }}</span>
+      <br>
+      <br>
+      <b>{{ $t('update.changeLog') }}：</b>
+      <div style="padding-top:10px;"
+        v-html="versionInfo.description"></div>
+      <span slot="footer">
+        <Button @click="hasUpdate = false">{{ $t('tip.cancel') }}</Button>
+        <Button type="primary"
+          @click="doUpdate()">{{ $t('update.update') }}</Button>
+      </span>
+    </Modal>
 
-      <Modal v-model="restatModel"
-        :title="$t('update.done')">
-        <h3>{{ $t('update.restart') }}</h3>
-        <span slot="footer">
-          <Button @click="restatModel = false">{{ $t('tip.cancel') }}</Button>
-          <Button type="primary"
-            @click="doRestart()">{{ $t('tip.ok') }}</Button>
-        </span>
-      </Modal>
+    <Modal v-model="restatModel"
+      :title="$t('update.done')">
+      <h3>{{ $t('update.restart') }}</h3>
+      <span slot="footer">
+        <Button @click="restatModel = false">{{ $t('tip.cancel') }}</Button>
+        <Button type="primary"
+          @click="doRestart()">{{ $t('tip.ok') }}</Button>
+      </span>
+    </Modal>
 
-      <Spin v-if="showUpdateProgress"
-        size="large"
-        class="update-progress"
-        fix>
-        <Circle :percent="updateInfo.progress"
-          :size="150">
-          <h1>{{ updateInfo.progress.toFixed(2) }}%</h1>
-          <p>{{ $numeral(updateInfo.speed).format('0.00 ib') }}/S</p>
-        </Circle>
-      </Spin>
+    <Spin v-if="showUpdateProgress"
+      size="large"
+      class="update-progress"
+      fix>
+      <Circle :percent="updateInfo.progress"
+        :size="150">
+        <h1>{{ updateInfo.progress.toFixed(2) }}%</h1>
+        <p>{{ $numeral(updateInfo.speed).format('0.00 ib') }}/S</p>
+      </Circle>
+    </Spin>
 
   </div>
 </template>
@@ -196,6 +199,7 @@ export default {
           }, 1000)
         })
         .catch(() => {
+          this.showUpdateProgress = false
           this.$Message.error({
             content: this.$t('update.error'),
             duration: 0
