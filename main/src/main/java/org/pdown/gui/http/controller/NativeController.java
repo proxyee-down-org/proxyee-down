@@ -471,6 +471,10 @@ public class NativeController {
                     }
                     return null;
                   });
+                  invocable.invokeMethod(result, "catch", (Function) o -> {
+                    countDownLatch.countDown();
+                    return null;
+                  });
                   //等待解析完成
                   countDownLatch.await();
                 } else {
