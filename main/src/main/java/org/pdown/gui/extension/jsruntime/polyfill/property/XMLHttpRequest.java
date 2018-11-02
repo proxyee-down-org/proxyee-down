@@ -14,8 +14,11 @@ import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
+import org.springframework.util.StringUtils;
 
 public class XMLHttpRequest {
 
@@ -72,12 +75,21 @@ public class XMLHttpRequest {
         }
     );
     readystatechange(2, code);
+    String charset = "UTF-8";
+    String contentType = connection.getContentType();
+    if (!StringUtils.isEmpty(contentType)) {
+      Pattern pattern = Pattern.compile("charset=(.*)$", Pattern.CASE_INSENSITIVE);
+      Matcher matcher = pattern.matcher(contentType);
+      if (matcher.find()) {
+        charset = matcher.group(1);
+      }
+    }
     InputStream inputStream = code != 200 ? connection.getErrorStream() : connection.getInputStream();
     if (responseHeads.entrySet().stream().anyMatch(entry -> "Content-Encoding".equalsIgnoreCase(entry.getKey()) && entry.getValue().matches("^.*(?i)(gzip).*$"))) {
       inputStream = new GZIPInputStream(inputStream);
     }
     try (
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, charset))
     ) {
       readystatechange(3, code);
       responseText = reader.lines().collect(Collectors.joining("\n"));
