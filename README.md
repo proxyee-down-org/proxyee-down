@@ -24,6 +24,8 @@
 ### 环境
 ![](https://img.shields.io/badge/JAVA-1.8%2B-brightgreen.svg) ![](https://img.shields.io/badge/maven-3.0%2B-brightgreen.svg) ![](https://img.shields.io/badge/node.js-8.0%2B-brightgreen.svg)
 
+	oracle jdk 1.8+或 openjfx(openjdk默认不包含javafx包)
+
 ### 编译
 
 ```
