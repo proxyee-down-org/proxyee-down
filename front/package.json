@@ -1,0 +1,51 @@
+{
+  "name": "proxyee-down",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npm run serve",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "iview": "^2.14.3",
+    "numeral": "^2.0.6",
+    "reconnecting-websocket": "^4.1.0",
+    "vue": "^2.5.17",
+    "vue-i18n": "^8.0.0",
+    "vue-router": "^3.0.1",
+    "vuex": "^3.0.1"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.0.1",
+    "@vue/cli-plugin-eslint": "^3.0.1",
+    "@vue/cli-service": "^3.0.1",
+    "@vue/eslint-config-prettier": "^3.0.1",
+    "babel-plugin-jsx-v-model": "^2.0.3",
+    "iview-loader": "^1.2.1",
+    "less": "^3.8.1",
+    "less-loader": "^4.1.0",
+    "lint-staged": "^6.0.0",
+    "vue-template-compiler": "^2.5.17"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ],
+  "gitHooks": {
+    "pre-commit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "vue-cli-service lint",
+      "git add"
+    ],
+    "*.vue": [
+      "vue-cli-service lint",
+      "git add"
+    ]
+  }
+}

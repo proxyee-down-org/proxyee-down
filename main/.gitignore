@@ -1,0 +1,17 @@
+﻿target/
+!.mvn/wrapper/maven-wrapper.jar
+src/main/resources/http
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr

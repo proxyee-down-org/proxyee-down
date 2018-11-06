@@ -1,0 +1,7 @@
+logging:
+  config: classpath:logback-prd.xml
+front:
+  port: -1
+api:
+  port: 7478
+adminServer: http://api.pdown.org/

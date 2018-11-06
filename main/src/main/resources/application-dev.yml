@@ -1,0 +1,8 @@
+logging:
+  config: classpath:logback-dev.xml
+front:
+  port: 8080
+api:
+  port: 7478
+#adminServer: http://127.0.0.1:9494/
+adminServer: http://api.pdown.org/
