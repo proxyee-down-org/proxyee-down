@@ -238,7 +238,7 @@ export default {
                     />
                   ]),
               <Icon
-                type="ios-eye-outline"
+                type="ios-home"
                 class="action-icon"
                 title={_this.$t('extension.actionDetail')}
                 nativeOnClick={() => {
