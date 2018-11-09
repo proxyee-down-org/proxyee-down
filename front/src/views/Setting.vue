@@ -140,6 +140,8 @@
 import FileChoose from '../components/FileChoose'
 import { getConfig, setConfig } from '../common/native.js'
 
+let debounceTimer
+
 export default {
   name: 'setting',
   components: {
@@ -184,7 +186,13 @@ export default {
       handler(nowVal, oldVal) {
         //不是首次加载触发
         if (Object.keys(oldVal.downConfig).length !== 0) {
-          this.setConfig()
+          if (debounceTimer) {
+            clearTimeout(debounceTimer)
+          }
+          debounceTimer = setTimeout(() => {
+            debounceTimer = null
+            this.setConfig()
+          }, 300)
         }
       },
       deep: true
@@ -200,6 +208,7 @@ export default {
         this.rules['appConfig.proxyConfig.proxyType'] = null
         this.rules['appConfig.proxyConfig.host'] = null
         this.rules['appConfig.proxyConfig.port'] = null
+        this.setConfig()
       }
     },
     async getConfig() {
