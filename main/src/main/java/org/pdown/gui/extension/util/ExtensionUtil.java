@@ -13,22 +13,38 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.CountDownLatch;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 import org.pdown.core.util.FileUtil;
 import org.pdown.gui.DownApplication;
 import org.pdown.gui.content.PDownConfigContent;
 import org.pdown.gui.extension.ExtensionContent;
 import org.pdown.gui.extension.ExtensionInfo;
+import org.pdown.gui.extension.HookScript;
+import org.pdown.gui.extension.HookScript.Event;
 import org.pdown.gui.extension.Meta;
 import org.pdown.gui.extension.jsruntime.JavascriptEngine;
+import org.pdown.gui.http.controller.NativeController;
+import org.pdown.gui.http.util.HttpHandlerUtil;
 import org.pdown.gui.util.AppUtil;
 import org.pdown.gui.util.ConfigUtil;
+import org.pdown.rest.form.TaskForm;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 public class ExtensionUtil {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(ExtensionUtil.class);
 
   /**
    * 安装扩展
@@ -52,7 +68,9 @@ public class ExtensionUtil {
       //备份扩展配置
       String configPath = extDir + File.separator + Meta.CONFIG_FILE;
       if (FileUtil.exists(configPath)) {
-        Files.copy(Paths.get(configPath), Paths.get(extTmpPath + File.separator + Meta.CONFIG_FILE), StandardCopyOption.REPLACE_EXISTING);
+        Path bakConfigPath = Paths.get(extTmpPath + File.separator + Meta.CONFIG_FILE);
+        FileUtil.createFileSmart(bakConfigPath.toFile().getAbsolutePath());
+        Files.copy(Paths.get(configPath), bakConfigPath, StandardCopyOption.REPLACE_EXISTING);
       }
       String configBakPath = extDir + File.separator + Meta.CONFIG_FILE + ".bak";
       if (FileUtil.exists(configBakPath)) {
@@ -157,5 +175,70 @@ public class ExtensionUtil {
     //加载扩展脚本
     engine.eval(new FileReader(Paths.get(extensionInfo.getMeta().getFullPath(), extensionInfo.getHookScript().getScript()).toFile()));
     return engine;
+  }
+
+  /**
+   * 运行一个js方法
+   */
+  public static Object invoke(ExtensionInfo extensionInfo, Event event, Object param, boolean async) throws NoSuchMethodException, ScriptException, FileNotFoundException, InterruptedException {
+    //初始化js引擎
+    ScriptEngine engine = ExtensionUtil.buildExtensionRuntimeEngine(extensionInfo);
+    Invocable invocable = (Invocable) engine;
+    //执行resolve方法
+    Object result = invocable.invokeFunction(StringUtils.isEmpty(event.getMethod()) ? event.getOn() : event.getMethod(), param);
+    //结果为null或者异步调用直接返回
+    if (result == null || async) {
+      return result;
+    }
+    final Object[] ret = {null};
+    //判断是不是返回Promise对象
+    ScriptContext ctx = new SimpleScriptContext();
+    ctx.setAttribute("result", result, ScriptContext.ENGINE_SCOPE);
+    boolean isPromise = (boolean) engine.eval("!!result&&typeof result=='object'&&typeof result.then=='function'", ctx);
+    if (isPromise) {
+      //如果是返回的Promise则等待执行完成
+      CountDownLatch countDownLatch = new CountDownLatch(1);
+      invocable.invokeMethod(result, "then", (Function) o -> {
+        try {
+          ret[0] = o;
+        } catch (Exception e) {
+          LOGGER.error("An exception occurred while resolve()", e);
+        } finally {
+          countDownLatch.countDown();
+        }
+        return null;
+      });
+      invocable.invokeMethod(result, "catch", (Function) o -> {
+        countDownLatch.countDown();
+        return null;
+      });
+      //等待解析完成
+      countDownLatch.await();
+    } else {
+      ret[0] = result;
+    }
+    return ret[0];
+  }
+
+  public static void main(String[] args) {
+    String url = "https://d.pcs.baidu.com/file/ab83d33b3f250a6ff472b8ffa17c3e5f?fid=336129479-250528-831181624029689&dstime=1541581115&rt=sh&sign=FDtAERVY-DCb740ccc5511e5e8fedcff06b081203-aILjqoJW3OEzB4%2Bu7Wnxz63PUho%3D&expires=8h&chkv=1&chkbd=0&chkpc=et&dp-logid=7206180716394015240&dp-callid=0&shareid=3786359813&r=663179228";
+    String[] urlArray = url.split("\\?");
+    StringBuilder params = new StringBuilder(urlArray[1]);
+    String path = urlArray[0].substring(urlArray[0].lastIndexOf("/") + 1);
+    params.append("&path=" + path)
+        .append("&check_blue=1")
+        .append("&clienttype=8")
+        .append("&devuid=BDIMXV2-O_9A2DB23216984690875184DCA864434E-C_0-D_Z4Y7YWL9-M_408D5C4224FB-V_D8F90423")
+        .append("&dtype=1")
+        .append("&eck=1")
+        .append("&ehps=1")
+        .append("&err_ver=1")
+        .append("&es=1")
+        .append("&esl=1")
+        .append("&method=locatedownload")
+        .append("&ver=4")
+        .append("&version=2.1.13.11")
+        .append("&version_app=6.4.0.6");
+    System.out.println(params.toString());
   }
 }

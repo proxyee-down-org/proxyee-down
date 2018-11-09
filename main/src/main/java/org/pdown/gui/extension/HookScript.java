@@ -5,7 +5,12 @@ import java.util.Arrays;
 public class HookScript {
 
   public static final String EVENT_RESOLVE = "resolve";
+  public static final String EVENT_START = "start";
+  public static final String EVENT_RESUME = "resume";
+  public static final String EVENT_PAUSE = "pause";
   public static final String EVENT_ERROR = "error";
+  public static final String EVENT_DONE = "done";
+  public static final String EVENT_DELETE = "delete";
 
   private Event[] events;
   private String script;
