@@ -12,30 +12,46 @@
     <div class="proxy-switch-div">
       <b>{{ $t('extension.globalProxy') }}</b>
       <Switch v-model="proxySwitch"
-        @on-change="changeProxyMode"></Switch>
-      <Tooltip placement="bottom">
+        @on-change="changeProxyMode">
+      </Switch>
+
+      <Tooltip :content="$t('extension.proxyTip')"
+        theme="light">
         <Icon type="help-circled"
           @click="openUrl('https://github.com/proxyee-down-org/proxyee-down/wiki/%E5%AE%89%E8%A3%85%E6%89%A9%E5%B1%95')"
           class="action-icon tip-icon" />
-        <div slot="content">
-          <p>{{ $t('extension.proxyTip') }}</p>
-        </div>
       </Tooltip>
-      <Button type="info"
-        shape="circle"
-        icon="loop"
-        @click="loadExtensions"
-        :title="$t('tip.refresh')"></Button>
-      <Button type="info"
-        shape="circle"
-        icon="ios-copy"
-        @click="copyPac"
-        :title="$t('extension.copyPac')"></Button>
-      <Button type="info"
-        shape="circle"
-        icon="android-folder-open"
-        @click="installLocalExt"
-        :title="$t('extension.installLocalExt')"></Button>
+
+      <Tooltip class="icon-button"
+        :content="$t('tip.refresh')"
+        theme="light">
+        <Button type="info"
+          shape="circle"
+          icon="loop"
+          @click="loadExtensions">
+        </Button>
+      </Tooltip>
+
+      <Tooltip class="icon-button"
+        :content="$t('extension.copyPac')"
+        theme="light">
+        <Button type="info"
+          shape="circle"
+          icon="ios-copy"
+          @click="copyPac">
+        </Button>
+      </Tooltip>
+
+      <Tooltip class="icon-button"
+        :content="$t('extension.installLocalExt')"
+        theme="light">
+        <Button type="info"
+          shape="circle"
+          icon="android-folder-open"
+          @click="installLocalExt">
+        </Button>
+      </Tooltip>
+
     </div>
     <Tabs type="card"
       :animated="false"
@@ -474,7 +490,7 @@ export default {
 .proxy-switch-div b {
   padding-right: 10px;
 }
-.proxy-switch-div button {
+.proxy-switch-div .icon-button {
   margin-left: 25px;
 }
 .spin-icon-load {
