@@ -240,7 +240,10 @@ export default {
 
           &:nth-child(1) {
             width: 5%;
-            text-indent: 0.5em;
+
+            > label {
+              margin: 0 auto;
+            }
           }
           &:nth-child(2) {
             width: 30%;
