@@ -40,25 +40,29 @@
               <Icon v-if="task.info.status === 1"
                 class="action-icon"
                 type="ios-pause"
+                :title="$t('tasks.pauseDownloads')"
                 @click="$emit('on-pause', task)"></Icon>
               <Icon v-else-if="task.info.status !== 4"
                 class="action-icon"
                 type="ios-play"
+                :title="$t('tasks.continueDownloading')"
                 @click="$emit('on-resume', task)"></Icon>
               <Icon type="ios-trash"
                 class="action-icon"
+                :title="$t('tasks.deleteTask')"
                 @click="$emit('on-delete', task)"></Icon>
               <Icon class="action-icon"
                 type="ios-folder"
+                :title="$t('tasks.revealInFolder')"
                 @click="$emit('on-open', task)"></Icon>
               <Poptip placement="right-end"
                 :title="$t('tasks.detail')"
                 transfer
                 width="400"
                 trigger="click">
-                <Icon type="ios-eye-outline"
-                  style="padding-left: 0.625rem;padding-top: 0.1rem;"
-                  class="action-icon"></Icon>
+                <Icon class="action-icon"
+                  :title="$t('tasks.detail')"
+                  type="ios-eye-outline"></Icon>
                 <div class="file-detail"
                   slot="content">
                   <p>
@@ -236,7 +240,10 @@ export default {
 
           &:nth-child(1) {
             width: 5%;
-            text-indent: 0.5em;
+
+            > label {
+              margin: 0 auto;
+            }
           }
           &:nth-child(2) {
             width: 30%;
@@ -261,6 +268,19 @@ export default {
         .th {
           background-color: #f8f8f9;
           text-align: left;
+        }
+      }
+
+      .tds {
+        > .td:last-child {
+          .action-icon {
+            padding: 3px 5px;
+            margin-right: 5px;
+
+            &:last-child {
+              margin-right: 0;
+            }
+          }
         }
       }
 

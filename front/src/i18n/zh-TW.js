@@ -26,6 +26,7 @@ export default {
     pauseDownloads: '暫停下載',
     deleteTask: '刪除任務',
     deleteTaskTip: '是否刪除任務和檔案？',
+    revealInFolder: '打開下載目錄',
     method: '方法',
     url: '連結',
     fileName: '名稱',

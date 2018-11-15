@@ -26,6 +26,7 @@ export default {
     pauseDownloads: 'Pause',
     deleteTask: 'Delete Task',
     deleteTaskTip: 'Delete both task and file',
+    revealInFolder: 'Reveal in download folder',
     method: 'Method',
     url: 'URL',
     fileName: 'Name',
