@@ -4,31 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.Channel;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import java.awt.Desktop;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.function.Function;
+import io.netty.handler.codec.http.*;
 import javafx.application.Platform;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.SimpleScriptContext;
+import jdk.nashorn.internal.runtime.Undefined;
 import org.pdown.core.boot.HttpDownBootstrap;
 import org.pdown.core.dispatch.HttpDownCallback;
 import org.pdown.core.util.OsUtil;
@@ -56,6 +34,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RequestMapping("native")
 public class NativeController {
@@ -447,7 +438,7 @@ public class NativeController {
             try {
               //执行resolve方法
               Object result = ExtensionUtil.invoke(extensionInfo, event, taskRequest, false);
-              if (result != null) {
+              if (result != null && !(result instanceof Undefined)) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 String temp = objectMapper.writeValueAsString(result);
                 TaskForm taskForm = objectMapper.readValue(temp, TaskForm.class);

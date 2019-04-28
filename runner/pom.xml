@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.pdown.gui</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>proxyee-down</artifactId>
     <version>3.0</version>
   </parent>
 
