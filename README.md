@@ -3,7 +3,7 @@
 
 其次因为`JAVA`不太适合做客户端开发，打包后体积太大且内存占用太高，本人计划在空余时间用`GO`来重写一遍，目标是打造一个`体积小`、`跨平台`、`内存低`、`可扩展`、`免费`的下载器。
 
-新项目目前托管在[gopeed-core](https://github.com/monkeyWie/gopeed-core)，现处于初始化阶段，感兴趣的可以一起参与哦~
+新项目目前托管在[gopeed](https://github.com/monkeyWie/gopeed)，现处于初始化阶段，感兴趣的可以一起参与哦~
 
 ![](https://i.imgur.com/dUvNgmd.jpg)  
 
