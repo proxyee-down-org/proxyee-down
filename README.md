@@ -1,9 +1,11 @@
+## 续作出炉！！！
+
+新项目使用`golang`+`flutter`开发，支持所有平台的下载器，地址：https://github.com/GopeedLab/gopeed
+
 ## 暂停维护此项目
 首先感谢大家支持和反馈才使得proxyee-down能一直迭代到现在的版本，但由于本人精力有限，宣布暂时停止此项目的维护，并且关闭**issue**模块。
 
 其次因为`JAVA`不太适合做客户端开发，打包后体积太大且内存占用太高，本人计划在空余时间用`GO`来重写一遍，目标是打造一个`体积小`、`跨平台`、`内存低`、`可扩展`、`免费`的下载器。
-
-新项目目前托管在[gopeed](https://github.com/monkeyWie/gopeed)，现处于初始化阶段，感兴趣的可以一起参与哦~
 
 ![](https://i.imgur.com/dUvNgmd.jpg)  
 
